@@ -12,13 +12,16 @@ export class User {
     id: number;
 
     @Column()
-    name: string;
+    firstName: string;
+
+    @Column()
+    lastName: string;
 
     @Column({ unique: true })
     email: string;
 
-    @Column({ nullable: true })
-    age: number;
+    @Column()
+    password: string;
 
     @Column({ default: true })
     isActive: boolean;
