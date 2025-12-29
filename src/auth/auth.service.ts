@@ -4,10 +4,10 @@ import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from 'src/users/dto/createUser.dto';
+import { LoginDto } from './dto/login.dto';
 
 interface TokenPayload {
-    firstName: string;
-    lastName: string;
+    id: number,
     email: string;
 }
 
@@ -27,7 +27,7 @@ export class AuthService {
 
     async register(user: CreateUserDto) {
         const { firstName, lastName, email, password } = user;
-        
+
         try {
             const isUserExist = await this.userService.findByEmail(email);
 
@@ -42,12 +42,15 @@ export class AuthService {
                 lastName,
                 email,
                 password: hashedPassword,
-                createdAt: Date.now(),
-                updatedAt: Date.now(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
             };
 
             const savedUser = await this.userService.create(newUser);
-            const token = await this.generateToken({ firstName, lastName, email });
+            const token = await this.generateToken({
+                id: savedUser.id,
+                email
+            });
 
             return {
                 user: {
@@ -65,6 +68,38 @@ export class AuthService {
                 throw error;
             }
             throw new HttpException('Failed to register user', 500);
+        }
+    }
+
+    async login(userData: LoginDto) {
+        try {
+            const { email, password } = userData;
+            const user = await this.userService.findByEmail(email);
+
+            if (!user) throw new HttpException('email or password incorrect', 401);
+
+            if (!(await bcrypt.compare(password, user?.password))) {
+                throw new HttpException('email or password incorrect', 401);
+            }
+
+            const token = await this.generateToken({
+                id: user.id,
+                email
+            });
+            return {
+                user: {
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                },
+                token,
+            };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new HttpException('Failed to login', 500)
         }
     }
 }

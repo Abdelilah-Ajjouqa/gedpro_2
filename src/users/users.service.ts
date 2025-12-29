@@ -8,8 +8,8 @@ interface createUserInterface {
     lastName: string,
     email: string,
     password: string,
-    createdAt: number,
-    updatedAt: number,
+    createdAt: Date,
+    updatedAt: Date,
 }
 @Injectable()
 export class UsersService {
