@@ -1,0 +1,86 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gedpro_postgres
+    environment:
+      POSTGRES_USER: gedpro_user
+      POSTGRES_PASSWORD: gedpro_password
+      POSTGRES_DB: gedpro_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gedpro_user -d gedpro_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gedpro_network
+
+  mongodb:
+    image: mongo:7
+    container_name: gedpro_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: gedpro_user
+      MONGO_INITDB_ROOT_PASSWORD: gedpro_password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gedpro_network
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: "admin"
+      MINIO_ROOT_PASSWORD: "password123"
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio_data:/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gedpro_app
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: gedpro_user
+      POSTGRES_PASSWORD: gedpro_password
+      POSTGRES_DB: gedpro_db
+      MONGODB_URI: mongodb://gedpro_user:gedpro_password@mongodb:27017/gedpro?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - gedpro_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongodb_data:
+
+networks:
+  gedpro_network:
+    driver: bridge
