@@ -1,5 +1,6 @@
 import {
-    Controller, Post, UseInterceptors, UploadedFile, UseGuards, Req, ParseFilePipe, MaxFileSizeValidator
+    Controller, Post, UseInterceptors, UploadedFile, UseGuards, Req, ParseFilePipe, MaxFileSizeValidator,
+    Get
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentsService } from './documents.service';
@@ -13,7 +14,14 @@ import { CustomFileTypeValidator } from './validator/file-type.validator';
 
 @Controller('documents')
 export class DocumentsController {
-    constructor(private readonly documentsService: DocumentsService) {}
+    constructor(private readonly documentsService: DocumentsService) { }
+
+    @Get()
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @PermissionDecorator('documents:read')
+    async findAll(@Req() req: any) {
+        return this.documentsService.findAll(req.user as User);
+    }
 
     @Post('upload')
     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
@@ -32,8 +40,8 @@ export class DocumentsController {
         @UploadedFile(
             new ParseFilePipe({
                 validators: [
-                    new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), 
-                    new CustomFileTypeValidator({}) 
+                    new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+                    new CustomFileTypeValidator({})
                 ],
             }),
         ) file: Express.Multer.File,

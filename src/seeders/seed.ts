@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from 'src/app.module';
-import { Permission } from 'src/users/entities/permissions.entity';
-import { Role } from 'src/users/entities/role.entity';
+import { AppModule } from '../app.module';
+import { Permission } from '../users/entities/permissions.entity';
+import { Role } from '../users/entities/role.entity';
 import { DataSource } from 'typeorm';
 
 async function bootstrap() {
@@ -11,13 +11,14 @@ async function bootstrap() {
     const permissionRepo = dataSource.getRepository(Permission);
     const roleRepo = dataSource.getRepository(Role);
 
-    console.log('Starting Seeding');
+    console.log('Starting Smart Seeding...');
 
-    // Create Permissions
+    // Upsert Permissions
     const permissionsData = [
         { name: 'users:read', description: 'Can view users' },
         { name: 'users:create', description: 'Can create users' },
         { name: 'documents:upload', description: 'Can upload files' },
+        { name: 'documents:read', description: 'Can view own documents' },
     ];
 
     const savedPermissions: Permission[] = [];
@@ -25,13 +26,16 @@ async function bootstrap() {
         let permission = await permissionRepo.findOneBy({ name: p.name });
         if (!permission) {
             permission = permissionRepo.create(p);
-            await permissionRepo.save(permission);
             console.log(`Created permission: ${p.name}`);
+        } else {
+            permission.description = p.description;
+            console.log(`Found permission: ${p.name}`);
         }
+        await permissionRepo.save(permission);
         savedPermissions.push(permission);
     }
 
-    // Create Roles
+    // Upsert Roles
     const rolesData = [
         {
             name: 'Admin',
@@ -39,23 +43,26 @@ async function bootstrap() {
         },
         {
             name: 'Candidate',
-            permissions: savedPermissions.filter(p => p.name === 'documents:upload')
+            permissions: savedPermissions.filter(p =>
+                ['documents:upload', 'documents:read'].includes(p.name)
+            )
         }
     ];
 
     for (const r of rolesData) {
         let role = await roleRepo.findOneBy({ name: r.name });
         if (!role) {
-            role = roleRepo.create({
-                name: r.name,
-                permissions: r.permissions
-            });
-            await roleRepo.save(role);
-            console.log(`Created role: ${r.name}`);
+            role = roleRepo.create({ name: r.name });
+            console.log(`Creating role: ${r.name}`);
+        } else {
+            console.log(`Updating role: ${r.name}`);
         }
+
+        role.permissions = r.permissions;
+        await roleRepo.save(role);
     }
 
-    console.log('Seeding complete');
+    console.log('Seeding Complete!');
     await app.close();
 }
 bootstrap();

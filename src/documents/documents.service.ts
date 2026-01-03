@@ -11,6 +11,13 @@ export class DocumentsService {
         private documentRepository: Repository<Document>,
     ) {}
 
+    async findAll(user: User) {
+    return this.documentRepository.find({
+        where: { user: { id: user.id } },
+        order: { createdAt: 'DESC' },
+    });
+}
+
     async create(file: Express.Multer.File, user: User) {
         const newDoc = this.documentRepository.create({
             originalName: file.originalname,
