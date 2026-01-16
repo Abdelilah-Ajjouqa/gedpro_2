@@ -1,31 +1,31 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { permission_key } from '../decorator/auth.decorator';
+import { ROLES_KEY } from '../decorator/auth.decorator';
+import { Role } from '../../users/enums/role.enum';
 import { User } from '../../users/entities/user.entity';
+
 @Injectable()
-export class PermissionsGuard implements CanActivate {
+export class RolesGuard implements CanActivate {
     constructor(private reflector: Reflector) { }
 
     canActivate(context: ExecutionContext): boolean {
-        const requiredPermissions = this.reflector.getAllAndOverride<string[]>(permission_key, [
+        const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
             context.getHandler(),
             context.getClass(),
         ]);
 
-        if (!requiredPermissions) {
+        if (!requiredRoles) {
             return true;
         }
 
         const { user } = context.switchToHttp().getRequest();
 
-        if (!user || !user.role || !user.role.permissions) {
-            throw new ForbiddenException('Access Denied: User missing role or permissions');
+        if (!user || !user.role) {
+            throw new ForbiddenException('Access Denied: User missing role');
         }
 
         const userEntity = user as User;
 
-        return requiredPermissions.every((permission) =>
-            userEntity.role.permissions.some((p) => p.name === permission)
-        );
+        return requiredRoles.some((role) => userEntity.role === role);
     }
 }

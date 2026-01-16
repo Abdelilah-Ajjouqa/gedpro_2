@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
-import { Role } from './role.entity';
+import { Role } from '../enums/role.enum';
 
 @Entity('users')
 export class User {
@@ -21,7 +21,11 @@ export class User {
     @Column({ default: true })
     isActive: boolean;
 
-    @ManyToOne(() => Role, { eager: true })
+    @Column({
+        type: 'enum',
+        enum: Role,
+        default: Role.CANDIDATE
+    })
     role: Role;
 
     @CreateDateColumn()

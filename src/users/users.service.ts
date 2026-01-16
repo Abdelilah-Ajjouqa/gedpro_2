@@ -3,14 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 
+import { CreateUserDto } from './dto/createUser.dto';
+
 interface createUserInterface {
     firstName: string,
     lastName: string,
     email: string,
     password: string,
-    createdAt: Date,
-    updatedAt: Date,
 }
+
 @Injectable()
 export class UsersService {
     constructor(
@@ -18,7 +19,7 @@ export class UsersService {
         private userRepository: Repository<User>,
     ) { }
 
-    async create(userData: createUserInterface) {
+    async create(userData: CreateUserDto) {
         const user = this.userRepository.create(userData);
         return await this.userRepository.save(user);
     }

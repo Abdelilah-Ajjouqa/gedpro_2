@@ -6,26 +6,27 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentsService } from './documents.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { PermissionsGuard } from '../auth/guard/auth.guard';
-import { PermissionDecorator } from '../auth/decorator/auth.decorator';
+import { RolesGuard } from '../auth/guard/auth.guard';
+import { Roles } from '../auth/decorator/auth.decorator';
 import { User } from '../users/entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { CustomFileTypeValidator } from './validator/file-type.validator';
+import { Role } from '../users/enums/role.enum';
 
 @Controller('documents')
 export class DocumentsController {
     constructor(private readonly documentsService: DocumentsService) { }
 
     @Get()
-    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
-    @PermissionDecorator('documents:read')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.CANDIDATE, Role.ADMIN)
     async findAll(@Req() req: any) {
         return this.documentsService.findAll(req.user as User);
     }
 
     @Post('upload')
-    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
-    @PermissionDecorator('documents:upload')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.CANDIDATE, Role.ADMIN)
     @UseInterceptors(FileInterceptor('file', {
         storage: diskStorage({
             destination: './uploads',

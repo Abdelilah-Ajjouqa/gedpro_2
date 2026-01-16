@@ -5,17 +5,13 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from 'src/users/dto/createUser.dto';
 import { LoginDto } from './dto/login.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Role } from 'src/users/entities/role.entity';
-import { Repository } from 'typeorm';
+import { Role } from 'src/users/enums/role.enum';
 
 @Injectable()
 export class AuthService {
     constructor(
         private userService: UsersService,
         private readonly configService: ConfigService,
-        @InjectRepository(Role)
-        private roleRepository: Repository<Role>,
     ) { }
 
     private async generateToken(payload: { id: number, email: string }) {
@@ -25,7 +21,7 @@ export class AuthService {
     }
 
     async register(createUserDto: CreateUserDto) {
-        const { email, password, ...rest } = createUserDto;
+        const { email, password, role, ...rest } = createUserDto;
 
         // 1. Check if user already exists
         const isUserExist = await this.userService.findByEmail(email);
@@ -33,32 +29,23 @@ export class AuthService {
             throw new HttpException('User with this email already exists', 409);
         }
 
-        // 2. Fetch the Default Role (Candidate) from the DB
-        // This ensures every new user has permissions defined in your Seed Script
-        const defaultRole = await this.roleRepository.findOne({ where: { name: 'Candidate' } });
-
-        if (!defaultRole) {
-            throw new HttpException('System Error: Default role (Candidate) not found. Please run seed.', 500);
-        }
-
-        // 3. Hash the password
+        // 2. Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 4. Create the User Object with the Role
+        // 3. Create the User Object with the Role
         const newUser = {
             ...rest,
             email,
             password: hashedPassword,
-            role: defaultRole, // <--- CRITICAL: Linking the Entity
+            role: role || Role.CANDIDATE, // Default to Candidate if not provided
             createdAt: new Date(),
             updatedAt: new Date(),
         };
 
-        // 5. Save using UsersService
-        // (Ensure UsersService.create accepts the role property, or cast as any for now)
-        const savedUser = await this.userService.create(newUser as any);
+        // 4. Save using UsersService
+        const savedUser = await this.userService.create(newUser);
 
-        // 6. Generate Token
+        // 5. Generate Token
         const token = await this.generateToken({
             id: savedUser.id,
             email: savedUser.email
@@ -68,7 +55,7 @@ export class AuthService {
             user: {
                 id: savedUser.id,
                 email: savedUser.email,
-                role: savedUser.role, // Return role so frontend can hide/show buttons
+                role: savedUser.role,
             },
             token,
         };
@@ -97,7 +84,7 @@ export class AuthService {
 
         // 4. Return User (excluding password)
         const { password: _, ...result } = user;
-        
+
         return {
             user: result,
             token,
