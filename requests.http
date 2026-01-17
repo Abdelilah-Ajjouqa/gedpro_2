@@ -1,0 +1,57 @@
+@baseUrl = http://localhost:3000
+@authToken = {{login.response.body.token}}
+
+### 1. Register RH User
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "rh_test@gedpro.com",
+  "password": "password123",
+  "confirmPassword": "password123",
+  "firstName": "HR",
+  "lastName": "Manager",
+  "role": "rh"
+}
+
+### 2. Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "rh_test@gedpro.com",
+    "password": "password123"
+}
+
+### 3. Get Profile (Test Auth)
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{authToken}}
+
+### 4. Create Candidate
+POST {{baseUrl}}/candidates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "firstName": "Alice",
+    "lastName": "Candidate",
+    "email": "alice@example.com",
+    "phone": "555-0101"
+}
+
+### 5. List Candidates
+GET {{baseUrl}}/candidates
+Authorization: Bearer {{authToken}}
+
+### 6. Update Candidate State
+@candidateId = 1
+PATCH {{baseUrl}}/candidates/{{candidateId}}/state
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "state": "preselected",
+    "comment": "Moving to preselected phase"
+}
