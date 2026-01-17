@@ -7,6 +7,7 @@ import { mongodbConfig } from './config/mongodb.config';
 import { postgresConfig } from './config/postgres.config';
 import { AuthModule } from './auth/auth.module';
 import { DocumentsModule } from './documents/documents.module';
+import { CandidatesModule } from './candidates/candidates.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { DocumentsModule } from './documents/documents.module';
     UsersModule,
     DocumentsModule,
     AuthModule,
+    CandidatesModule,
   ],
   controllers: [],
   providers: [],
