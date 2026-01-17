@@ -8,6 +8,7 @@ import { postgresConfig } from './config/postgres.config';
 import { AuthModule } from './auth/auth.module';
 import { DocumentsModule } from './documents/documents.module';
 import { CandidatesModule } from './candidates/candidates.module';
+import { FormsModule } from './forms/forms.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CandidatesModule } from './candidates/candidates.module';
     DocumentsModule,
     AuthModule,
     CandidatesModule,
+    FormsModule,
   ],
   controllers: [],
   providers: [],
