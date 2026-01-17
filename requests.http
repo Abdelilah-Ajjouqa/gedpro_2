@@ -55,3 +55,44 @@ Content-Type: application/json
     "state": "preselected",
     "comment": "Moving to preselected phase"
 }
+
+### 7. Create Dynamic Form
+# @name createForm
+POST {{baseUrl}}/forms
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "title": "Interview Evaluation",
+    "description": "Standard technical interview form",
+    "fields": [
+        { "label": "Technical Rating (1-10)", "type": "number", "required": true },
+        { "label": "Communication", "type": "text", "required": true },
+        { "label": "Recommendation", "type": "select", "options": ["Hire", "No Hire", "Maybe"] }
+    ]
+}
+
+### 8. List Forms
+# @name listForms
+GET {{baseUrl}}/forms
+Authorization: Bearer {{authToken}}
+
+### 9. Get One Form
+@formId = {{listForms.response.body.$[0]._id}}
+GET {{baseUrl}}/forms/{{formId}}
+Authorization: Bearer {{authToken}}
+
+### 10. Submit Response
+# @name submitResponse
+POST {{baseUrl}}/forms/{{formId}}/submit
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "candidateId": 1,
+    "answers": {
+        "Technical Rating (1-10)": 9,
+        "Communication": "Excellent english skills",
+        "Recommendation": "Hire"
+    }
+}
