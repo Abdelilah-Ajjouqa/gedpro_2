@@ -12,7 +12,9 @@ import { User } from '../users/entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { CustomFileTypeValidator } from './validator/file-type.validator';
 import { Role } from '../users/enums/role.enum';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Documents')
 @Controller('documents')
 export class DocumentsController {
     constructor(private readonly documentsService: DocumentsService) { }

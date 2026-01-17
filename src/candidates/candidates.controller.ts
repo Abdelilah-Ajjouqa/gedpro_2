@@ -7,7 +7,9 @@ import { RolesGuard } from '../auth/guard/auth.guard';
 import { Roles } from '../auth/decorator/auth.decorator';
 import { Role } from '../users/enums/role.enum';
 import { User } from '../users/entities/user.entity';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Candidates')
 @Controller('candidates')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CandidatesController {
