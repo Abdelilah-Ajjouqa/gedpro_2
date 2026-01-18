@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { DocumentsModule } from './documents/documents.module';
 import { CandidatesModule } from './candidates/candidates.module';
 import { FormsModule } from './forms/forms.module';
+import { InterviewsModule } from './interviews/interviews.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { FormsModule } from './forms/forms.module';
     AuthModule,
     CandidatesModule,
     FormsModule,
+    InterviewsModule,
   ],
   controllers: [],
   providers: [],

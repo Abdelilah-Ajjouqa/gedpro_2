@@ -96,3 +96,27 @@ Content-Type: application/json
         "Recommendation": "Hire"
     }
 }
+
+### 11. Schedule Interview
+# @name scheduleInterview
+POST {{baseUrl}}/interviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "candidateId": 1,
+    "date": "2026-06-15T10:00:00Z",
+    "type": "HR",
+    "duration": 45,
+    "location": "Google Meet",
+    "attendees": []
+}
+
+### 12. List Interviews
+GET {{baseUrl}}/interviews
+Authorization: Bearer {{authToken}}
+
+### 13. Cancel Interview
+@interviewId = 1
+PATCH {{baseUrl}}/interviews/{{interviewId}}/cancel
+Authorization: Bearer {{authToken}}
