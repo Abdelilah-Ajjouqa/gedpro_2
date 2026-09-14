@@ -12,6 +12,8 @@ import { FormsModule } from './forms/forms.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { validateEnvironment } from './config/environment.validation';
 import { HealthModule } from './health/health.module';
+import { JobsModule } from './jobs/jobs.module';
+import { ApplicationsModule } from './applications/applications.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { HealthModule } from './health/health.module';
     FormsModule,
     InterviewsModule,
     HealthModule,
+    JobsModule,
+    ApplicationsModule,
   ],
   controllers: [],
   providers: [],

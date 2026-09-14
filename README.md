@@ -9,6 +9,8 @@ GEDPro is a NestJS backend MVP for applicant tracking and recruitment document m
 - Local PDF/JPG/PNG uploads with PostgreSQL metadata
 - Dynamic form creation and submission in MongoDB
 - Interview scheduling and cancellation
+- Job lifecycle and searchable, paginated job listings
+- Per-job applications with transactional stage history
 - OpenAPI documentation through Swagger
 
 ## Quick start with Docker
@@ -82,6 +84,8 @@ Use [requests.http](requests.http) with the VS Code REST Client. Public registra
 | Documents | `GET /documents`, `POST /documents/upload` |
 | Forms | `GET/POST /forms`, `POST /forms/:id/submit` |
 | Interviews | `GET/POST /interviews`, `PATCH /interviews/:id/cancel` |
+| Jobs | `GET/POST /jobs`, `PATCH /jobs/:id`, publish/close/archive actions |
+| Applications | `GET/POST /applications`, `PATCH /applications/:id/stage` |
 
 Uploaded files accept PDF, JPG, or PNG up to 5 MiB.
 
