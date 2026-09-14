@@ -1,18 +1,17 @@
 @baseUrl = http://localhost:3000
 @authToken = {{login.response.body.token}}
 
-### 1. Register RH User
+### 1. Register Candidate User
 # @name register
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "rh_test@gedpro.com",
+  "email": "candidate_test@gedpro.com",
   "password": "password123",
   "confirmPassword": "password123",
-  "firstName": "HR",
-  "lastName": "Manager",
-  "role": "rh"
+  "firstName": "Test",
+  "lastName": "Candidate"
 }
 
 ### 2. Login
@@ -21,7 +20,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "rh_test@gedpro.com",
+    "email": "candidate_test@gedpro.com",
     "password": "password123"
 }
 
