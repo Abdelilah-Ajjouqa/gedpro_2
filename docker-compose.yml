@@ -48,7 +48,8 @@ services:
       POSTGRES_USER: gedpro_user
       POSTGRES_PASSWORD: gedpro_password
       POSTGRES_DB: gedpro_db
-      DB_SYNCHRONIZE: "true"
+      DB_SYNCHRONIZE: "false"
+      DB_MIGRATIONS_RUN: "true"
       MONGODB_URI: mongodb://gedpro_user:gedpro_password@mongodb:27017/gedpro?authSource=admin
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       PORT: 3000

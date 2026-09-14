@@ -40,9 +40,35 @@ npm run build
 npm run start:dev
 ```
 
-`DB_SYNCHRONIZE=true` creates the development schema automatically. Set it to `false` in production and use migrations before deploying. Replace `JWT_SECRET` with a long random value in every non-local environment.
+Database schema changes are managed by TypeORM migrations. `DB_SYNCHRONIZE` must remain `false` in production; `DB_MIGRATIONS_RUN=true` applies pending migrations during application startup. Replace `JWT_SECRET` with a long random value in every non-local environment.
 
 The upload directory is created automatically. Change it with `UPLOAD_DIR` if needed.
+
+### Database migrations
+
+```bash
+# Generate a migration after changing entities
+npm run migration:generate -- src/database/migrations/DescribeChange
+
+# Apply or revert migrations
+npm run migration:run
+npm run migration:revert
+```
+
+### Bootstrap the first administrator
+
+Set `ADMIN_EMAIL` and an `ADMIN_PASSWORD` of at least 12 characters, then run:
+
+```bash
+npm run admin:bootstrap
+```
+
+The command is idempotent: it will not replace an existing account or its password.
+
+### Health checks
+
+- `GET /health` confirms the HTTP process is running.
+- `GET /health/ready` verifies both PostgreSQL and MongoDB connectivity.
 
 ## API smoke test
 

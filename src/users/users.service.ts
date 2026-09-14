@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 
 import { CreateUserDto } from './dto/createUser.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,16 @@ export class UsersService {
     ) { }
 
     async create(userData: CreateUserDto | DeepPartial<User>) {
+        if ('confirmPassword' in userData) {
+            if (userData.password !== userData.confirmPassword) {
+                throw new BadRequestException('Passwords do not match');
+            }
+            userData = {
+                ...userData,
+                password: await bcrypt.hash(userData.password, 12),
+            };
+            delete (userData as Partial<CreateUserDto>).confirmPassword;
+        }
         const user = this.userRepository.create(userData);
         return await this.userRepository.save(user);
     }

@@ -12,4 +12,6 @@ export const postgresConfig = async (
     database: configService.getOrThrow<string>('POSTGRES_DB'),
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     synchronize: configService.get<string>('DB_SYNCHRONIZE', 'false') === 'true',
+    migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
+    migrationsRun: configService.get<string>('DB_MIGRATIONS_RUN', 'true') === 'true',
 });

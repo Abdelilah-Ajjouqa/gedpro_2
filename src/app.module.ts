@@ -10,12 +10,15 @@ import { DocumentsModule } from './documents/documents.module';
 import { CandidatesModule } from './candidates/candidates.module';
 import { FormsModule } from './forms/forms.module';
 import { InterviewsModule } from './interviews/interviews.module';
+import { validateEnvironment } from './config/environment.validation';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate: validateEnvironment,
     }),
 
     MongooseModule.forRootAsync({
@@ -36,6 +39,7 @@ import { InterviewsModule } from './interviews/interviews.module';
     CandidatesModule,
     FormsModule,
     InterviewsModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
