@@ -1,16 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 
 import { CreateUserDto } from './dto/createUser.dto';
-
-interface createUserInterface {
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string,
-}
 
 @Injectable()
 export class UsersService {
@@ -19,7 +12,7 @@ export class UsersService {
         private userRepository: Repository<User>,
     ) { }
 
-    async create(userData: CreateUserDto) {
+    async create(userData: CreateUserDto | DeepPartial<User>) {
         const user = this.userRepository.create(userData);
         return await this.userRepository.save(user);
     }
@@ -33,7 +26,11 @@ export class UsersService {
     }
 
     async findByEmail(email: string) {
-        return await this.userRepository.findOne({ where: { email } });
+        return await this.userRepository
+            .createQueryBuilder('user')
+            .addSelect('user.password')
+            .where('user.email = :email', { email })
+            .getOne();
     }
 
     async update(id: number, updateData: Partial<User>) {

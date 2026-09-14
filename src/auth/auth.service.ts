@@ -21,7 +21,11 @@ export class AuthService {
     }
 
     async register(createUserDto: CreateUserDto) {
-        const { email, password, role, ...rest } = createUserDto;
+        const { email, password, confirmPassword: _, ...rest } = createUserDto;
+
+        if (password !== createUserDto.confirmPassword) {
+            throw new HttpException('Passwords do not match', 400);
+        }
 
         // 1. Check if user already exists
         const isUserExist = await this.userService.findByEmail(email);
@@ -37,7 +41,7 @@ export class AuthService {
             ...rest,
             email,
             password: hashedPassword,
-            role: role || Role.CANDIDATE, // Default to Candidate if not provided
+            role: Role.CANDIDATE,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
