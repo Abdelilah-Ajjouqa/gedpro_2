@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -27,28 +25,16 @@ services:
       MONGO_INITDB_ROOT_USERNAME: gedpro_user
       MONGO_INITDB_ROOT_PASSWORD: gedpro_password
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: ["CMD", "mongosh", "--username", "gedpro_user", "--password", "gedpro_password", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - gedpro_network
-
-  minio:
-    image: minio/minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: "admin"
-      MINIO_ROOT_PASSWORD: "password123"
-    command: server /data --console-address ":9001"
-    volumes:
-      - ./minio_data:/data
 
   app:
     build:
@@ -62,8 +48,11 @@ services:
       POSTGRES_USER: gedpro_user
       POSTGRES_PASSWORD: gedpro_password
       POSTGRES_DB: gedpro_db
+      DB_SYNCHRONIZE: "true"
       MONGODB_URI: mongodb://gedpro_user:gedpro_password@mongodb:27017/gedpro?authSource=admin
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      PORT: 3000
+      UPLOAD_DIR: uploads
     ports:
       - "3000:3000"
     volumes:

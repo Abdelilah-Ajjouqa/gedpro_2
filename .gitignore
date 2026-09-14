@@ -47,6 +47,8 @@ lerna-debug.log*
 .tmp
 
 # Runtime data
+/uploads/
+/minio_data/
 pids
 *.pid
 *.seed
