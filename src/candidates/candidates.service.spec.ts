@@ -4,6 +4,9 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Candidate } from './entities/candidate.entity';
 import { CandidateHistory } from './entities/candidate-history.entity';
+import { getModelToken } from '@nestjs/mongoose';
+import { FormResponse } from '../forms/schemas/form-response.schema';
+import { SecurityAuditService } from '../auth/security-audit.service';
 
 describe('CandidatesService', () => {
   let service: CandidatesService;
@@ -15,6 +18,8 @@ describe('CandidatesService', () => {
         { provide: getRepositoryToken(Candidate), useValue: {} },
         { provide: getRepositoryToken(CandidateHistory), useValue: {} },
         { provide: DataSource, useValue: {} },
+        { provide: getModelToken(FormResponse.name), useValue: {} },
+        { provide: SecurityAuditService, useValue: { record: jest.fn() } },
       ],
     }).compile();
 

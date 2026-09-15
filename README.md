@@ -6,6 +6,7 @@ GEDPro is a NestJS backend MVP for applicant tracking and recruitment document m
 
 - JWT authentication and role-based access (`admin`, `rh`, `manager`, `candidate`)
 - Candidate lifecycle with transactional history entries
+- Candidate search, tags/skills, ownership, duplicate merge, archiving, and privacy workflows
 - Local PDF/JPG/PNG uploads with PostgreSQL metadata
 - Dynamic form creation and submission in MongoDB
 - Interview scheduling and cancellation
@@ -103,6 +104,10 @@ Configure distinct random `JWT_SECRET` and `JWT_REFRESH_SECRET` values, explicit
 ### Configurable hiring pipelines
 
 Create a reusable pipeline before creating a job, then provide its `pipelineId` in the job request. Applications start in the first active stage and move using a `stageId`; moves outside the configured transition graph are rejected. Rejected and withdrawn applications require `POST /applications/:id/reopen`. Stages are archived rather than deleted, and `POST /applications/bulk-move` returns a result for every item.
+
+### Candidate management and privacy
+
+`GET /candidates` supports search, tag, skill, source, owner, archive, sorting, and pagination parameters. Candidate email and phone identifiers are normalized for duplicate review. Merge transfers applications, interviews, legacy history, and form responses; same-job application conflicts must be resolved first. Archive/restore and audited privacy export, deletion-request, and retention-aware erasure endpoints preserve recruitment history.
 
 ## Verification
 

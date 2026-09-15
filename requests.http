@@ -154,3 +154,22 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 { "toStageIds": [{{createPipeline.response.body.stages[1].id}}] }
+
+### Search candidate records
+GET {{baseUrl}}/candidates?search=alice&skill=typescript&page=1&limit=20
+Authorization: Bearer {{authToken}}
+
+### Update candidate metadata and consent
+PATCH {{baseUrl}}/candidates/{{candidateId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "tags": ["priority"], "skills": ["typescript"], "source": "referral", "privacyConsent": true }
+
+### Review duplicate candidates
+GET {{baseUrl}}/candidates/{{candidateId}}/duplicates
+Authorization: Bearer {{authToken}}
+
+### Export candidate personal data
+GET {{baseUrl}}/candidates/{{candidateId}}/privacy/export
+Authorization: Bearer {{authToken}}
