@@ -81,7 +81,7 @@ Use [requests.http](requests.http) with the VS Code REST Client. Public registra
 
 | Area | Endpoints |
 | --- | --- |
-| Auth | `POST /auth/register`, `POST /auth/login` |
+| Auth | Register, login, refresh rotation, logout, password reset, and email verification under `/auth` |
 | Users | `GET /users/profile`, `/users` CRUD (role-restricted) |
 | Candidates | `GET/POST /candidates`, `PATCH /candidates/:id/state` |
 | Documents | `GET /documents`, `POST /documents/upload` |
@@ -91,6 +91,12 @@ Use [requests.http](requests.http) with the VS Code REST Client. Public registra
 | Applications | `GET/POST /applications`, `PATCH /applications/:id/stage` |
 
 Uploaded files accept PDF, JPG, or PNG up to 5 MiB.
+
+### Authentication security
+
+Login and registration return a short-lived `accessToken`, a rotating `refreshToken`, and the backward-compatible `token` access-token alias. Refresh, reset, and verification secrets are stored only as hashes. Reset requests do not reveal whether an email exists, and logout or password reset revokes applicable sessions.
+
+Configure distinct random `JWT_SECRET` and `JWT_REFRESH_SECRET` values, explicit `CORS_ORIGINS`, and the token TTL, lockout, and rate-limit settings documented in `.env.example`. Email delivery is part of Phase 8; action tokens are ready for a delivery worker and are never returned or logged.
 
 ## Verification
 

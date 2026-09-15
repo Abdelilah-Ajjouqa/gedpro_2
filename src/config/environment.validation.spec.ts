@@ -8,6 +8,7 @@ const validConfig = {
   POSTGRES_DB: 'gedpro',
   MONGODB_URI: 'mongodb://localhost/gedpro',
   JWT_SECRET: 'a-secure-development-secret-with-32-chars',
+  JWT_REFRESH_SECRET: 'a-different-refresh-secret-with-32-chars',
 };
 
 describe('validateEnvironment', () => {

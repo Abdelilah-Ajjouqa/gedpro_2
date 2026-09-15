@@ -52,6 +52,8 @@ services:
       DB_MIGRATIONS_RUN: "true"
       MONGODB_URI: mongodb://gedpro_user:gedpro_password@mongodb:27017/gedpro?authSource=admin
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_REFRESH_SECRET: your-different-refresh-secret-change-in-production
+      CORS_ORIGINS: http://localhost:3000
       PORT: 3000
       UPLOAD_DIR: uploads
     ports:

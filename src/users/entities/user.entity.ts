@@ -21,6 +21,15 @@ export class User {
     @Column({ default: true })
     isActive: boolean;
 
+    @Column({ default: false })
+    emailVerified: boolean;
+
+    @Column({ type: 'integer', default: 0, select: false })
+    failedLoginAttempts: number;
+
+    @Column({ type: 'timestamp', nullable: true, select: false })
+    lockedUntil: Date | null;
+
     @Column({
         type: 'enum',
         enum: Role,

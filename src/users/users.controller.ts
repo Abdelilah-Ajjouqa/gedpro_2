@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto/createUser.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guard/auth.guard';
-import { Roles } from '../auth/decorator/auth.decorator';
+import { Permissions, Roles } from '../auth/decorator/auth.decorator';
 import { Role } from './enums/role.enum';
 import { User } from './entities/user.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -19,6 +19,7 @@ export class UsersController {
     @Post()
     @ApiOperation({ summary: 'Create a user with an assigned role' })
     @Roles(Role.ADMIN)
+    @Permissions('users:create')
     create(@Body() createUserDto: CreateUserDto) {
         return this.usersService.create(createUserDto);
     }
@@ -26,6 +27,7 @@ export class UsersController {
     @Get()
     @ApiOperation({ summary: 'List users' })
     @Roles(Role.ADMIN, Role.RH)
+    @Permissions('users:read')
     findAll() {
         return this.usersService.findAll();
     }
@@ -40,6 +42,7 @@ export class UsersController {
     @Get(':id')
     @ApiOperation({ summary: 'Get a user by ID' })
     @Roles(Role.ADMIN, Role.RH)
+    @Permissions('users:read')
     findOne(@Param('id') id: string) {
         return this.usersService.findOne(+id);
     }
@@ -47,6 +50,7 @@ export class UsersController {
     @Patch(':id')
     @ApiOperation({ summary: 'Update a user' })
     @Roles(Role.ADMIN)
+    @Permissions('users:update')
     update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
         return this.usersService.update(+id, updateUserDto);
     }
@@ -54,6 +58,7 @@ export class UsersController {
     @Delete(':id')
     @ApiOperation({ summary: 'Delete a user' })
     @Roles(Role.ADMIN)
+    @Permissions('users:delete')
     remove(@Param('id') id: string) {
         return this.usersService.remove(+id);
     }

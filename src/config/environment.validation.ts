@@ -6,6 +6,7 @@ const REQUIRED_VARIABLES = [
   'POSTGRES_DB',
   'MONGODB_URI',
   'JWT_SECRET',
+  'JWT_REFRESH_SECRET',
 ] as const;
 
 export function validateEnvironment(config: Record<string, unknown>) {
@@ -29,6 +30,10 @@ export function validateEnvironment(config: Record<string, unknown>) {
 
   if (String(config.JWT_SECRET).length < 32) {
     throw new Error('JWT_SECRET must contain at least 32 characters');
+  }
+  if (String(config.JWT_REFRESH_SECRET).length < 32) throw new Error('JWT_REFRESH_SECRET must contain at least 32 characters');
+  for (const key of ['ACCESS_TOKEN_TTL_SECONDS', 'REFRESH_TOKEN_TTL_SECONDS', 'ACTION_TOKEN_TTL_SECONDS', 'LOGIN_MAX_ATTEMPTS', 'LOGIN_LOCKOUT_SECONDS', 'RATE_LIMIT_WINDOW_SECONDS', 'RATE_LIMIT_MAX', 'AUTH_RATE_LIMIT_MAX']) {
+    if (config[key] !== undefined && (!Number.isInteger(Number(config[key])) || Number(config[key]) < 1)) throw new Error(`${key} must be a positive integer`);
   }
 
   if (config.NODE_ENV === 'production' && config.DB_SYNCHRONIZE === 'true') {

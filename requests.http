@@ -1,5 +1,6 @@
 @baseUrl = http://localhost:3000
 @authToken = {{login.response.body.token}}
+@refreshToken = {{login.response.body.refreshToken}}
 
 ### 1. Register Candidate User
 # @name register
@@ -27,6 +28,18 @@ Content-Type: application/json
 ### 3. Get Profile (Test Auth)
 GET {{baseUrl}}/users/profile
 Authorization: Bearer {{authToken}}
+
+### Rotate refresh token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{refreshToken}}" }
+
+### Request password reset (always returns the same generic response)
+POST {{baseUrl}}/auth/password-reset/request
+Content-Type: application/json
+
+{ "email": "candidate_test@gedpro.com" }
 
 ### 4. Create Candidate
 POST {{baseUrl}}/candidates

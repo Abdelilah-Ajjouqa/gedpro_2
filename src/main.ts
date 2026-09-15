@@ -8,6 +8,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   await mkdir(process.env.UPLOAD_DIR ?? 'uploads', { recursive: true });
   const app = await NestFactory.create(AppModule);
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
 
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
@@ -16,8 +17,9 @@ async function bootstrap() {
   }));
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000').split(',').map((value) => value.trim()).filter(Boolean);
   app.enableCors({
-    origin: true,
+    origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

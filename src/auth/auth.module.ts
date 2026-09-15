@@ -6,10 +6,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategy/jwt.strategy';
+import { AuthSession } from './entities/auth-session.entity';
+import { AuthActionToken } from './entities/auth-action-token.entity';
+import { SecurityAuditEvent } from './entities/security-audit-event.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([]),
+    TypeOrmModule.forFeature([AuthSession, AuthActionToken, SecurityAuditEvent]),
     UsersModule,
     PassportModule,
   ],
