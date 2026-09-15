@@ -15,6 +15,7 @@ import { HealthModule } from './health/health.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { SecurityMiddleware } from './common/middleware/security.middleware';
+import { PipelinesModule } from './pipelines/pipelines.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { SecurityMiddleware } from './common/middleware/security.middleware';
     HealthModule,
     JobsModule,
     ApplicationsModule,
+    PipelinesModule,
   ],
   controllers: [],
   providers: [],

@@ -132,3 +132,25 @@ Authorization: Bearer {{authToken}}
 @interviewId = 1
 PATCH {{baseUrl}}/interviews/{{interviewId}}/cancel
 Authorization: Bearer {{authToken}}
+
+### Create a reusable hiring pipeline
+# @name createPipeline
+POST {{baseUrl}}/pipelines
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Engineering pipeline",
+  "stages": [
+    { "name": "Applied", "category": "applied", "position": 1 },
+    { "name": "Technical review", "category": "screening", "position": 2 },
+    { "name": "Hired", "category": "hired", "position": 3 }
+  ]
+}
+
+### Configure an allowed transition
+PUT {{baseUrl}}/pipelines/{{createPipeline.response.body.id}}/stages/{{createPipeline.response.body.stages[0].id}}/transitions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "toStageIds": [{{createPipeline.response.body.stages[1].id}}] }

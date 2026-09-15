@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGenerate
 import { User } from '../../users/entities/user.entity';
 import { Application } from '../../applications/entities/application.entity';
 import { JobStatus } from '../enums/job-status.enum';
+import { Pipeline } from '../../pipelines/entities/pipeline.entity';
 
 @Entity('jobs')
 export class Job {
@@ -13,6 +14,7 @@ export class Job {
   @Column({ nullable: true }) employmentType?: string;
   @Column({ type: 'enum', enum: JobStatus, default: JobStatus.DRAFT }) status: JobStatus;
   @ManyToOne(() => User, { eager: true, nullable: false }) owner: User;
+  @ManyToOne(() => Pipeline, { eager: true, nullable: false }) pipeline: Pipeline;
   @OneToMany(() => Application, (application) => application.job) applications: Application[];
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;

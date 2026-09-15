@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { Pipeline } from '../pipelines/entities/pipeline.entity';
+import { Application } from '../applications/entities/application.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateJobDto, UpdateJobDto } from './dto/create-job.dto';
 import { ListJobsDto } from './dto/list-jobs.dto';
@@ -9,10 +11,12 @@ import { JobStatus } from './enums/job-status.enum';
 
 @Injectable()
 export class JobsService {
-  constructor(@InjectRepository(Job) private readonly jobs: Repository<Job>) {}
+  constructor(@InjectRepository(Job) private readonly jobs: Repository<Job>, private readonly dataSource: DataSource) {}
 
-  create(dto: CreateJobDto, owner: User) {
-    return this.jobs.save(this.jobs.create({ ...dto, owner }));
+  async create(dto: CreateJobDto, owner: User) {
+    const pipeline=await this.dataSource.getRepository(Pipeline).findOneBy({id:dto.pipelineId,archived:false});
+    if(!pipeline) throw new NotFoundException(`Pipeline with ID ${dto.pipelineId} not found`);
+    const {pipelineId:_,...values}=dto; return this.jobs.save(this.jobs.create({ ...values, owner, pipeline }));
   }
 
   async findAll(query: ListJobsDto) {
@@ -32,7 +36,8 @@ export class JobsService {
   async update(id: number, dto: UpdateJobDto) {
     const job = await this.findOne(id);
     if (job.status === JobStatus.ARCHIVED) throw new BadRequestException('Archived jobs cannot be edited');
-    return this.jobs.save(this.jobs.merge(job, dto));
+    const {pipelineId,...values}=dto; if(pipelineId!==undefined && pipelineId!==job.pipeline.id){ if(await this.dataSource.getRepository(Application).countBy({job:{id}})) throw new BadRequestException('A job pipeline cannot be changed after applications exist'); const pipeline=await this.dataSource.getRepository(Pipeline).findOneBy({id:pipelineId,archived:false}); if(!pipeline) throw new NotFoundException(`Pipeline with ID ${pipelineId} not found`); job.pipeline=pipeline; }
+    return this.jobs.save(this.jobs.merge(job, values));
   }
 
   async changeStatus(id: number, status: JobStatus) {

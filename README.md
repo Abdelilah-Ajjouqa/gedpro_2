@@ -11,6 +11,7 @@ GEDPro is a NestJS backend MVP for applicant tracking and recruitment document m
 - Interview scheduling and cancellation
 - Job lifecycle and searchable, paginated job listings
 - Per-job applications with transactional stage history
+- Reusable hiring pipelines with ordered custom stages and transition rules
 - OpenAPI documentation through Swagger
 
 ## Quick start with Docker
@@ -89,6 +90,7 @@ Use [requests.http](requests.http) with the VS Code REST Client. Public registra
 | Interviews | `GET/POST /interviews`, `PATCH /interviews/:id/cancel` |
 | Jobs | `GET/POST /jobs`, `PATCH /jobs/:id`, publish/close/archive actions |
 | Applications | `GET/POST /applications`, `PATCH /applications/:id/stage` |
+| Pipelines | Pipeline CRUD, stage ordering/archiving, and allowed transitions under `/pipelines` |
 
 Uploaded files accept PDF, JPG, or PNG up to 5 MiB.
 
@@ -97,6 +99,10 @@ Uploaded files accept PDF, JPG, or PNG up to 5 MiB.
 Login and registration return a short-lived `accessToken`, a rotating `refreshToken`, and the backward-compatible `token` access-token alias. Refresh, reset, and verification secrets are stored only as hashes. Reset requests do not reveal whether an email exists, and logout or password reset revokes applicable sessions.
 
 Configure distinct random `JWT_SECRET` and `JWT_REFRESH_SECRET` values, explicit `CORS_ORIGINS`, and the token TTL, lockout, and rate-limit settings documented in `.env.example`. Email delivery is part of Phase 8; action tokens are ready for a delivery worker and are never returned or logged.
+
+### Configurable hiring pipelines
+
+Create a reusable pipeline before creating a job, then provide its `pipelineId` in the job request. Applications start in the first active stage and move using a `stageId`; moves outside the configured transition graph are rejected. Rejected and withdrawn applications require `POST /applications/:id/reopen`. Stages are archived rather than deleted, and `POST /applications/bulk-move` returns a result for every item.
 
 ## Verification
 
