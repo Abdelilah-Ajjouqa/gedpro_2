@@ -3,6 +3,7 @@ import { FormsService } from './forms.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { Form } from './schemas/form.schema';
 import { FormResponse } from './schemas/form-response.schema';
+import { TimelineService } from '../timeline/timeline.service';
 
 describe('FormsService', () => {
   let service: FormsService;
@@ -13,6 +14,7 @@ describe('FormsService', () => {
         FormsService,
         { provide: getModelToken(Form.name), useValue: {} },
         { provide: getModelToken(FormResponse.name), useValue: {} },
+        { provide: TimelineService, useValue: { record: jest.fn() } },
       ],
     }).compile();
 

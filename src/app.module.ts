@@ -16,6 +16,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { SecurityMiddleware } from './common/middleware/security.middleware';
 import { PipelinesModule } from './pipelines/pipelines.module';
+import { TimelineModule } from './timeline/timeline.module';
 
 @Module({
   imports: [
@@ -47,8 +48,13 @@ import { PipelinesModule } from './pipelines/pipelines.module';
     JobsModule,
     ApplicationsModule,
     PipelinesModule,
+    TimelineModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule implements NestModule { configure(consumer: MiddlewareConsumer) { consumer.apply(SecurityMiddleware).forRoutes('*'); } }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(SecurityMiddleware).forRoutes('*');
+  }
+}

@@ -173,3 +173,19 @@ Authorization: Bearer {{authToken}}
 ### Export candidate personal data
 GET {{baseUrl}}/candidates/{{candidateId}}/privacy/export
 Authorization: Bearer {{authToken}}
+
+### Add an internal recruiter note to the candidate journey
+POST {{baseUrl}}/candidates/{{candidateId}}/timeline/notes
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "text": "Candidate prefers afternoon interviews.", "visibility": "internal" }
+
+### Read the first stable timeline page
+# @name candidateTimeline
+GET {{baseUrl}}/candidates/{{candidateId}}/timeline?limit=20
+Authorization: Bearer {{authToken}}
+
+### Continue with the opaque cursor from the prior page
+GET {{baseUrl}}/candidates/{{candidateId}}/timeline?limit=20&cursor={{candidateTimeline.response.body.nextCursor}}
+Authorization: Bearer {{authToken}}

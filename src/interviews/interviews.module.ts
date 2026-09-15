@@ -5,14 +5,16 @@ import { InterviewsController } from './interviews.controller';
 import { Interview } from './entities/interview.entity';
 import { UsersModule } from '../users/users.module';
 import { CandidatesModule } from '../candidates/candidates.module';
+import { TimelineModule } from '../timeline/timeline.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Interview]),
     UsersModule,
     CandidatesModule,
+    TimelineModule,
   ],
   controllers: [InterviewsController],
   providers: [InterviewsService],
 })
-export class InterviewsModule { }
+export class InterviewsModule {}

@@ -4,6 +4,14 @@ import { ApplicationHistory } from './entities/application-history.entity';
 import { Application } from './entities/application.entity';
 import { ApplicationsController } from './applications.controller';
 import { ApplicationsService } from './applications.service';
+import { TimelineModule } from '../timeline/timeline.module';
 
-@Module({ imports: [TypeOrmModule.forFeature([Application, ApplicationHistory])], controllers: [ApplicationsController], providers: [ApplicationsService] })
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Application, ApplicationHistory]),
+    TimelineModule,
+  ],
+  controllers: [ApplicationsController],
+  providers: [ApplicationsService],
+})
 export class ApplicationsModule {}

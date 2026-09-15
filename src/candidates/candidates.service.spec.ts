@@ -7,6 +7,7 @@ import { CandidateHistory } from './entities/candidate-history.entity';
 import { getModelToken } from '@nestjs/mongoose';
 import { FormResponse } from '../forms/schemas/form-response.schema';
 import { SecurityAuditService } from '../auth/security-audit.service';
+import { TimelineService } from '../timeline/timeline.service';
 
 describe('CandidatesService', () => {
   let service: CandidatesService;
@@ -20,6 +21,7 @@ describe('CandidatesService', () => {
         { provide: DataSource, useValue: {} },
         { provide: getModelToken(FormResponse.name), useValue: {} },
         { provide: SecurityAuditService, useValue: { record: jest.fn() } },
+        { provide: TimelineService, useValue: { record: jest.fn() } },
       ],
     }).compile();
 

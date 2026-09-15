@@ -5,16 +5,23 @@ import { CandidatesController } from './candidates.controller';
 import { Candidate } from './entities/candidate.entity';
 import { CandidateHistory } from './entities/candidate-history.entity';
 import { MongooseModule } from '@nestjs/mongoose';
-import { FormResponse, FormResponseSchema } from '../forms/schemas/form-response.schema';
+import {
+  FormResponse,
+  FormResponseSchema,
+} from '../forms/schemas/form-response.schema';
 import { SecurityAuditEvent } from '../auth/entities/security-audit-event.entity';
 import { SecurityAuditService } from '../auth/security-audit.service';
+import { TimelineModule } from '../timeline/timeline.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Candidate, CandidateHistory, SecurityAuditEvent]),
-    MongooseModule.forFeature([{name:FormResponse.name,schema:FormResponseSchema}]),
+    MongooseModule.forFeature([
+      { name: FormResponse.name, schema: FormResponseSchema },
+    ]),
+    TimelineModule,
   ],
   providers: [CandidatesService, SecurityAuditService],
-  controllers: [CandidatesController]
+  controllers: [CandidatesController],
 })
-export class CandidatesModule { }
+export class CandidatesModule {}
