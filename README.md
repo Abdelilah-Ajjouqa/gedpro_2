@@ -23,6 +23,7 @@ docker compose ps
 ```
 
 The API is available at `http://localhost:3000` and Swagger at `http://localhost:3000/api`.
+The machine-readable OpenAPI document is available at `http://localhost:3000/api-json`. Swagger preserves the bearer token entered through its Authorize button while the page remains open.
 
 The Compose stack starts the application, PostgreSQL 16, and MongoDB 7. PostgreSQL is exposed on `5432` and MongoDB on `27018` (to avoid common local MongoDB conflicts). Uploaded files are stored in `./uploads`; MinIO is not required because this MVP uses local disk storage.
 
@@ -71,6 +72,8 @@ The command is idempotent: it will not replace an existing account or its passwo
 
 - `GET /health` confirms the HTTP process is running.
 - `GET /health/ready` verifies both PostgreSQL and MongoDB connectivity.
+
+API errors use one predictable shape containing `statusCode`, `error`, `message`, `path`, and `timestamp`. Validation failures return `message` as a list of field-level problems.
 
 ## API smoke test
 

@@ -7,33 +7,39 @@ import { RolesGuard } from '../auth/guard/auth.guard';
 import { Roles } from '../auth/decorator/auth.decorator';
 import { Role } from '../users/enums/role.enum';
 import { User } from '../users/entities/user.entity';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiProtected } from '../common/swagger/api-protected.decorator';
 
 @ApiTags('Candidates')
+@ApiProtected()
 @Controller('candidates')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CandidatesController {
     constructor(private readonly candidatesService: CandidatesService) { }
 
     @Post()
+    @ApiOperation({ summary: 'Create a candidate' })
     @Roles(Role.RH, Role.ADMIN) // Only RH or Admin can create candidates manually
     create(@Body() createCandidateDto: CreateCandidateDto) {
         return this.candidatesService.create(createCandidateDto);
     }
 
     @Get()
+    @ApiOperation({ summary: 'List candidates' })
     @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
     findAll() {
         return this.candidatesService.findAll();
     }
 
     @Get(':id')
+    @ApiOperation({ summary: 'Get a candidate and lifecycle history' })
     @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
     findOne(@Param('id') id: string) {
         return this.candidatesService.findOne(+id);
     }
 
     @Patch(':id/state')
+    @ApiOperation({ summary: 'Change the legacy candidate lifecycle state' })
     @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
     updateState(
         @Param('id') id: string,

@@ -7,14 +7,17 @@ import { RolesGuard } from '../auth/guard/auth.guard';
 import { Roles } from '../auth/decorator/auth.decorator';
 import { Role } from '../users/enums/role.enum';
 import { User } from '../users/entities/user.entity';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiProtected } from '../common/swagger/api-protected.decorator';
 
 @ApiTags('Forms')
+@ApiProtected()
 @Controller('forms')
 export class FormsController {
     constructor(private readonly formsService: FormsService) { }
 
     @Post()
+    @ApiOperation({ summary: 'Create a dynamic form' })
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.RH, Role.ADMIN)
     create(@Body() createFormDto: CreateFormDto, @Req() req: any) {
@@ -22,6 +25,7 @@ export class FormsController {
     }
 
     @Get()
+    @ApiOperation({ summary: 'List dynamic forms' })
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
     findAll() {
@@ -29,6 +33,7 @@ export class FormsController {
     }
 
     @Get(':id')
+    @ApiOperation({ summary: 'Get a dynamic form' })
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.RH, Role.ADMIN, Role.MANAGER, Role.CANDIDATE)
     findOne(@Param('id') id: string) {
@@ -36,6 +41,7 @@ export class FormsController {
     }
 
     @Post(':id/submit')
+    @ApiOperation({ summary: 'Submit answers to a dynamic form' })
     @UseGuards(AuthGuard('jwt'), RolesGuard) // Optional: allow public submission? For now, restrict.
     // @Roles(Role.CANDIDATE, Role.RH) // Or any user
     submit(@Param('id') id: string, @Body() submitResponseDto: SubmitResponseDto, @Req() req: any) {

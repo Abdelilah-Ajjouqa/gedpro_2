@@ -1,6 +1,7 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger';
+import { ApiErrorDto } from '../common/swagger/api-error.dto';
 import { Connection } from 'mongoose';
 import { DataSource } from 'typeorm';
 
@@ -13,11 +14,16 @@ export class HealthController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Check whether the API process is alive' })
+  @ApiOkResponse({ schema: { example: { status: 'ok' } } })
   health() {
     return { status: 'ok' };
   }
 
   @Get('ready')
+  @ApiOperation({ summary: 'Check PostgreSQL and MongoDB readiness' })
+  @ApiOkResponse({ schema: { example: { status: 'ready', postgres: 'up', mongodb: 'up' } } })
+  @ApiServiceUnavailableResponse({ type: ApiErrorDto })
   async readiness() {
     try {
       if (!this.mongoConnection.db) {

@@ -1,11 +1,10 @@
 import { HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../users/users.service';
 import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
-import { CreateUserDto } from 'src/users/dto/createUser.dto';
-import { LoginDto } from './dto/login.dto';
-import { Role } from 'src/users/enums/role.enum';
+import { LoginDto, RegisterDto } from './dto/login.dto';
+import { Role } from '../users/enums/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +19,7 @@ export class AuthService {
         });
     }
 
-    async register(createUserDto: CreateUserDto) {
+    async register(createUserDto: RegisterDto) {
         const { email, password, confirmPassword: _, ...rest } = createUserDto;
 
         if (password !== createUserDto.confirmPassword) {

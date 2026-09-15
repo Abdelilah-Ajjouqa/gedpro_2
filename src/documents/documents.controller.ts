@@ -12,14 +12,17 @@ import { User } from '../users/entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { CustomFileTypeValidator } from './validator/file-type.validator';
 import { Role } from '../users/enums/role.enum';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiProtected } from '../common/swagger/api-protected.decorator';
 
 @ApiTags('Documents')
+@ApiProtected()
 @Controller('documents')
 export class DocumentsController {
     constructor(private readonly documentsService: DocumentsService) { }
 
     @Get()
+    @ApiOperation({ summary: 'List documents owned by the authenticated user' })
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.CANDIDATE, Role.ADMIN)
     async findAll(@Req() req: any) {
@@ -27,6 +30,10 @@ export class DocumentsController {
     }
 
     @Post('upload')
+    @ApiOperation({ summary: 'Upload a document' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({ schema: { type: 'object', required: ['file'], properties: { file: { type: 'string', format: 'binary', description: 'PDF, JPG, or PNG; maximum 5 MiB' } } } })
+    @ApiCreatedResponse({ description: 'Document metadata stored successfully' })
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.CANDIDATE, Role.ADMIN)
     @UseInterceptors(FileInterceptor('file', {
