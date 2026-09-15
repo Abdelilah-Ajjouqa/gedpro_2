@@ -348,7 +348,7 @@ Do not begin the next phase. Report completed items, verification evidence, rema
 | Phase | Status | Completion commit(s) | Notes |
 | --- | --- | --- | --- |
 | 1. Authentication and security | Complete | `dc3e68d` | Rotating hashed refresh sessions, logout/revocation, hashed single-use action tokens, lockout, rate limits, CORS/headers, capabilities, audit events, and security tests. Email delivery is deferred to Phase 8; tokens are persisted for a delivery worker and never returned or logged. |
-| 2. Configurable hiring pipelines | Complete | Pending commit | Relational reusable pipelines, ordered/archivable stages, transition graphs, job assignment, preserved enum migration, explicit reopen, bulk results, row locking/versioning, and E2E workflow coverage. |
+| 2. Configurable hiring pipelines | Complete | `c8251c8` | Relational reusable pipelines, ordered/archivable stages, transition graphs, job assignment, preserved enum migration, explicit reopen, bulk results, row locking/versioning, and E2E workflow coverage. |
 | 3. Candidate management | Not started | — | — |
 | 4. Unified activity timeline | Not started | — | — |
 | 5. Interviews and scorecards | Not started | — | — |
