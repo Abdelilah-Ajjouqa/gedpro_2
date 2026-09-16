@@ -53,19 +53,15 @@ describe('GEDPro health (e2e)', () => {
 
   it('runs a custom pipeline application workflow', async () => {
     const suffix = randomUUID();
-    const admin = await dataSource
-      .getRepository(User)
-      .save(
-        dataSource
-          .getRepository(User)
-          .create({
-            firstName: 'E2E',
-            lastName: 'Admin',
-            email: `${suffix}@example.com`,
-            password: await bcrypt.hash('E2ePassword123!', 4),
-            role: Role.ADMIN,
-          }),
-      );
+    const admin = await dataSource.getRepository(User).save(
+      dataSource.getRepository(User).create({
+        firstName: 'E2E',
+        lastName: 'Admin',
+        email: `${suffix}@example.com`,
+        password: await bcrypt.hash('E2ePassword123!', 4),
+        role: Role.ADMIN,
+      }),
+    );
     let jobId: number | undefined;
     let candidateId: number | undefined;
     let mergedSourceId: number | undefined;
@@ -146,6 +142,77 @@ describe('GEDPro health (e2e)', () => {
         .send({ stageId: screening.id, comment: 'Qualified' })
         .expect(200);
       expect(moved.body.currentStage.id).toBe(screening.id);
+      const template = await request(app.getHttpServer())
+        .post('/interviews/scorecard-templates')
+        .set(auth)
+        .send({
+          name: 'Engineering scorecard',
+          jobId,
+          stageId: screening.id,
+          criteria: [
+            {
+              key: 'technical',
+              label: 'Technical ability',
+              minRating: 1,
+              maxRating: 5,
+            },
+          ],
+        })
+        .expect(201);
+      const interviewDate = new Date(Date.now() + 7 * 86400000).toISOString();
+      const interview = await request(app.getHttpServer())
+        .post('/interviews')
+        .set(auth)
+        .send({
+          candidateId,
+          applicationId: application.body.id,
+          date: interviewDate,
+          interviewerIds: [admin.id],
+          round: 1,
+          scorecardTemplateId: template.body.id,
+          hideFeedbackUntilComplete: true,
+          feedbackDeadline: new Date(Date.now() + 8 * 86400000).toISOString(),
+          calendarProvider: 'internal',
+        })
+        .expect(201);
+      expect(interview.body.calendarSyncStatus).toBe('synced');
+      expect(interview.body.scorecards).toHaveLength(1);
+      await request(app.getHttpServer())
+        .post('/interviews')
+        .set(auth)
+        .send({
+          candidateId,
+          applicationId: application.body.id,
+          date: interviewDate,
+          interviewerIds: [admin.id],
+        })
+        .expect(409);
+      await request(app.getHttpServer())
+        .patch(`/interviews/${interview.body.id}/reschedule`)
+        .set(auth)
+        .send({ date: new Date(Date.now() + 9 * 86400000).toISOString() })
+        .expect(200);
+      await request(app.getHttpServer())
+        .post(
+          `/interviews/scorecards/${interview.body.scorecards[0].id}/submit`,
+        )
+        .set(auth)
+        .send({
+          ratings: { technical: 5 },
+          recommendation: 'strong_yes',
+          privateNotes: 'Excellent signal',
+        })
+        .expect(201);
+      const decision = await request(app.getHttpServer())
+        .get(`/interviews/applications/${application.body.id}/decision-summary`)
+        .set(auth)
+        .expect(200);
+      expect(decision.body).toMatchObject({ complete: 1, missing: [] });
+      await request(app.getHttpServer())
+        .patch(`/interviews/${interview.body.id}/outcome`)
+        .set(auth)
+        .send({ status: 'COMPLETED' })
+        .expect(200);
       await request(app.getHttpServer())
         .post(`/applications/${application.body.id}/timeline/notes`)
         .set(auth)
@@ -209,11 +276,11 @@ describe('GEDPro health (e2e)', () => {
         .set(auth)
         .expect(201);
     } finally {
-      if (jobId) await dataSource.getRepository(Job).delete(jobId);
       if (mergedSourceId)
         await dataSource.getRepository(Candidate).delete(mergedSourceId);
       if (candidateId)
         await dataSource.getRepository(Candidate).delete(candidateId);
+      if (jobId) await dataSource.getRepository(Job).delete(jobId);
       if (pipelineId)
         await dataSource.getRepository(Pipeline).delete(pipelineId);
       await dataSource.getRepository(User).delete(admin.id);

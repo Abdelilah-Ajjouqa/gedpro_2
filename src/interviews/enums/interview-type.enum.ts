@@ -1,5 +1,5 @@
 export enum InterviewType {
-    HR = 'HR',
-    TECHNICAL = 'TECHNICAL',
-    FINAL = 'FINAL',
+  HR = 'HR',
+  TECHNICAL = 'TECHNICAL',
+  FINAL = 'FINAL',
 }
