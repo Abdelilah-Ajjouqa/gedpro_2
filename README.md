@@ -82,17 +82,18 @@ API errors use one predictable shape containing `statusCode`, `error`, `message`
 
 Use [requests.http](requests.http) with the VS Code REST Client. Public registration always assigns the `candidate` role. After login, pass `Authorization: Bearer <token>` to protected routes. Administrative roles must be provisioned through a trusted process rather than public registration.
 
-| Area | Endpoints |
-| --- | --- |
-| Auth | Register, login, refresh rotation, logout, password reset, and email verification under `/auth` |
-| Users | `GET /users/profile`, `/users` CRUD (role-restricted) |
-| Candidates | `GET/POST /candidates`, `PATCH /candidates/:id/state` |
-| Documents | `GET /documents`, `POST /documents/upload`, `GET /documents/:id/download`, `GET /documents/:id/url`, `POST /documents/:id/replace`, `PATCH /documents/:id/archive`, `DELETE /documents/:id` |
-| Forms | Create/edit/publish/duplicate/archive under `/forms`; assignments, validated submissions, response review/filtering, and CSV export |
-| Interviews | `GET/POST /interviews`, `PATCH /interviews/:id/cancel` |
-| Jobs | `GET/POST /jobs`, `PATCH /jobs/:id`, publish/close/archive actions |
-| Applications | `GET/POST /applications`, `PATCH /applications/:id/stage` |
-| Pipelines | Pipeline CRUD, stage ordering/archiving, and allowed transitions under `/pipelines` |
+| Area           | Endpoints                                                                                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth           | Register, login, refresh rotation, logout, password reset, and email verification under `/auth`                                                                                             |
+| Users          | `GET /users/profile`, `/users` CRUD (role-restricted)                                                                                                                                       |
+| Candidates     | `GET/POST /candidates`, `PATCH /candidates/:id/state`                                                                                                                                       |
+| Documents      | `GET /documents`, `POST /documents/upload`, `GET /documents/:id/download`, `GET /documents/:id/url`, `POST /documents/:id/replace`, `PATCH /documents/:id/archive`, `DELETE /documents/:id` |
+| Forms          | Create/edit/publish/duplicate/archive under `/forms`; assignments, validated submissions, response review/filtering, and CSV export                                                         |
+| Interviews     | `GET/POST /interviews`, `PATCH /interviews/:id/cancel`                                                                                                                                      |
+| Jobs           | `GET/POST /jobs`, `PATCH /jobs/:id`, publish/close/archive actions                                                                                                                          |
+| Applications   | `GET/POST /applications`, `PATCH /applications/:id/stage`                                                                                                                                   |
+| Pipelines      | Pipeline CRUD, stage ordering/archiving, and allowed transitions under `/pipelines`                                                                                                         |
+| Responsible AI | CV extraction/correction, candidate search, explainable matching, interview questions, application summaries, feedback, and monitoring under `/ai`                                          |
 
 Uploaded files accept PDF, JPG, or PNG up to 5 MiB.
 
@@ -113,6 +114,10 @@ Create a reusable pipeline before creating a job, then provide its `pipelineId` 
 ### Forms and evaluations
 
 Forms begin as drafts. Publishing freezes the current version; editing a published form creates a new draft while the published version remains available. Field IDs remain stable and responses retain the exact title and field snapshot used at submission. Published forms can be assigned to a job, application, or pipeline stage. Responses validate required and conditional fields, types, selections, dates, and active document references. Recruiters can filter, review, and export responses as CSV.
+
+### Responsible AI
+
+AI endpoints are restricted to administrators, recruiters, and managers and always return advisory output. The bundled local provider supports deterministic CV extraction, token-based semantic similarity, evidence-backed job matching, interview-question drafts, and application summaries without an external model dependency. Matching uses an explicit allow-list and excludes identity and protected-characteristic fields. Every generation records its model, prompt version, sanitized inputs, output, latency, token estimate, zero local-provider cost, and requesting user. Human corrections, ratings, and overrides are retained for quality review; administrator monitoring reports guardrail violations. See [Responsible AI operations](docs/RESPONSIBLE_AI.md).
 
 ## Verification
 

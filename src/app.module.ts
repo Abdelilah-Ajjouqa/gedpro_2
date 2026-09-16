@@ -21,6 +21,7 @@ import { CommunicationsModule } from './communications/communications.module';
 import { ReportingModule } from './reporting/reporting.module';
 import { ObservabilityModule } from './common/observability/observability.module';
 import { ObservabilityMiddleware } from './common/middleware/observability.middleware';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ObservabilityMiddleware } from './common/middleware/observability.middl
     CommunicationsModule,
     ReportingModule,
     ObservabilityModule,
+    AiModule,
   ],
   controllers: [],
   providers: [],

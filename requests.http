@@ -277,3 +277,40 @@ Content-Type: application/json
   "from": "2026-01-01T00:00:00.000Z",
   "to": "2027-01-01T00:00:00.000Z"
 }
+
+### Extract structured fields from CV text
+# @name cvExtraction
+POST {{baseUrl}}/ai/cv-extractions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "candidateId": {{candidateId}},
+  "text": "Alice Example\nalice@example.com\nTypeScript NestJS PostgreSQL Docker"
+}
+
+### Correct an extraction without overwriting its original output
+PATCH {{baseUrl}}/ai/cv-extractions/{{cvExtraction.response.body.id}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{ "corrected": { "name": "Alice Example", "skills": ["typescript", "nestjs"] } }
+
+### Explainable advisory candidate-to-job match
+# @name aiMatch
+POST {{baseUrl}}/ai/job-matches
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{ "jobId": {{jobId}}, "candidateId": {{candidateId}} }
+
+### Record human feedback and override
+POST {{baseUrl}}/ai/generations/{{aiMatch.response.body.generationId}}/feedback
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{ "rating": 4, "override": { "disposition": "manual_review" } }
+
+### Administrator quality and bias-guardrail monitoring
+GET {{baseUrl}}/ai/monitoring
+Authorization: Bearer {{accessToken}}

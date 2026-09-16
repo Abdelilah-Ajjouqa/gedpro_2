@@ -154,6 +154,58 @@ describe('GEDPro health (e2e)', () => {
         .set(auth)
         .send({ jobId, candidateId })
         .expect(201);
+      const extraction = await request(app.getHttpServer())
+        .post('/ai/cv-extractions')
+        .set(auth)
+        .send({
+          candidateId,
+          text: 'E2E Candidate\ncandidate@example.com\nTypeScript NestJS Docker',
+        })
+        .expect(201);
+      expect(extraction.body).toMatchObject({
+        advisory: true,
+        extracted: { skills: ['typescript', 'nestjs', 'docker'] },
+      });
+      await request(app.getHttpServer())
+        .patch(`/ai/cv-extractions/${extraction.body.id}`)
+        .set(auth)
+        .send({ corrected: { skills: ['typescript', 'nestjs'] } })
+        .expect(200);
+      const matches = await request(app.getHttpServer())
+        .post('/ai/job-matches')
+        .set(auth)
+        .send({ jobId, candidateId })
+        .expect(201);
+      expect(matches.body).toMatchObject({
+        advisory: true,
+        suggestions: [
+          expect.objectContaining({
+            candidateId,
+            evidence: expect.objectContaining({
+              candidateSkills: ['typescript'],
+            }),
+          }),
+        ],
+      });
+      expect(matches.body.suggestions[0].evidence).not.toHaveProperty('email');
+      await request(app.getHttpServer())
+        .post(`/ai/generations/${matches.body.generationId}/feedback`)
+        .set(auth)
+        .send({ rating: 4, override: { disposition: 'needs_human_review' } })
+        .expect(201);
+      const aiSummary = await request(app.getHttpServer())
+        .post(`/ai/applications/${application.body.id}/summary`)
+        .set(auth)
+        .expect(201);
+      expect(aiSummary.body).toMatchObject({
+        advisory: true,
+        currentStage: 'Applied',
+      });
+      const monitoring = await request(app.getHttpServer())
+        .get('/ai/monitoring')
+        .set(auth)
+        .expect(200);
+      expect(monitoring.body.biasGuardrails.violations).toBe(0);
       const queuedMessage = await request(app.getHttpServer())
         .post('/communications')
         .set(auth)
