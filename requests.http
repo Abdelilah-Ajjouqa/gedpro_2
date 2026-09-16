@@ -220,4 +220,12 @@ Authorization: Bearer {{authToken}}
 
 ### Continue with the opaque cursor from the prior page
 GET {{baseUrl}}/candidates/{{candidateId}}/timeline?limit=20&cursor={{candidateTimeline.response.body.nextCursor}}
+
+### List candidate documents
+GET {{baseUrl}}/documents?candidateId={{candidateId}}
+Authorization: Bearer {{accessToken}}
+
+### Expiring document URL (replace 1 with an uploaded document ID)
+GET {{baseUrl}}/documents/1/url
+Authorization: Bearer {{accessToken}}
 Authorization: Bearer {{authToken}}

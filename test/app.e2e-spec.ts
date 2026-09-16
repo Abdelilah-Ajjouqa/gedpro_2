@@ -136,6 +136,40 @@ describe('GEDPro health (e2e)', () => {
         .set(auth)
         .send({ jobId, candidateId })
         .expect(201);
+      const document = await request(app.getHttpServer())
+        .post('/documents/upload')
+        .set(auth)
+        .field('applicationId', application.body.id)
+        .field('category', 'resume')
+        .attach('file', Buffer.from('%PDF-1.4 e2e resume'), 'resume.pdf')
+        .expect(201);
+      expect(document.body).toMatchObject({
+        category: 'resume',
+        version: 1,
+        mimeType: 'application/pdf',
+      });
+      expect(document.body.path).toBeUndefined();
+      await request(app.getHttpServer())
+        .get(`/documents/${document.body.id}/download?preview=true`)
+        .set(auth)
+        .expect('Content-Type', /application\/pdf/)
+        .expect(200);
+      await request(app.getHttpServer())
+        .post('/documents/upload')
+        .set(auth)
+        .field('candidateId', candidateId)
+        .attach('file', Buffer.from('%PDF-1.4 e2e resume'), 'copy.pdf')
+        .expect(409);
+      const replacement = await request(app.getHttpServer())
+        .post(`/documents/${document.body.id}/replace`)
+        .set(auth)
+        .attach('file', Buffer.from('%PDF-1.4 updated resume'), 'resume-v2.pdf')
+        .expect(201);
+      expect(replacement.body).toMatchObject({ version: 2 });
+      await request(app.getHttpServer())
+        .patch(`/documents/${replacement.body.id}/archive`)
+        .set(auth)
+        .expect(200);
       const moved = await request(app.getHttpServer())
         .patch(`/applications/${application.body.id}/stage`)
         .set(auth)

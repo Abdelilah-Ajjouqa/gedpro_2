@@ -7,7 +7,7 @@ GEDPro is a NestJS backend MVP for applicant tracking and recruitment document m
 - JWT authentication and role-based access (`admin`, `rh`, `manager`, `candidate`)
 - Candidate lifecycle with transactional history entries
 - Candidate search, tags/skills, ownership, duplicate merge, archiving, and privacy workflows
-- Local PDF/JPG/PNG uploads with PostgreSQL metadata
+- Versioned PDF/JPG/PNG document management with content-signature validation, checksums, retention, local development storage, and S3-compatible production storage
 - Dynamic form creation and submission in MongoDB
 - Interview scheduling and cancellation
 - Job lifecycle and searchable, paginated job listings
@@ -27,7 +27,7 @@ docker compose ps
 The API is available at `http://localhost:3000` and Swagger at `http://localhost:3000/api`.
 The machine-readable OpenAPI document is available at `http://localhost:3000/api-json`. Swagger preserves the bearer token entered through its Authorize button while the page remains open.
 
-The Compose stack starts the application, PostgreSQL 16, and MongoDB 7. PostgreSQL is exposed on `5432` and MongoDB on `27018` (to avoid common local MongoDB conflicts). Uploaded files are stored in `./uploads`; MinIO is not required because this MVP uses local disk storage.
+The Compose stack starts the application, PostgreSQL 16, MongoDB 7, and MinIO for production-style S3-compatible document storage. PostgreSQL is exposed on `5432`, MongoDB on `27018`, and MinIO on `9000` (console `9001`). Local non-production runs default to `./uploads`.
 
 Stop the stack with `docker compose down`. Add `-v` only when you intentionally want to delete database data.
 
@@ -86,7 +86,7 @@ Use [requests.http](requests.http) with the VS Code REST Client. Public registra
 | Auth | Register, login, refresh rotation, logout, password reset, and email verification under `/auth` |
 | Users | `GET /users/profile`, `/users` CRUD (role-restricted) |
 | Candidates | `GET/POST /candidates`, `PATCH /candidates/:id/state` |
-| Documents | `GET /documents`, `POST /documents/upload` |
+| Documents | `GET /documents`, `POST /documents/upload`, `GET /documents/:id/download`, `GET /documents/:id/url`, `POST /documents/:id/replace`, `PATCH /documents/:id/archive`, `DELETE /documents/:id` |
 | Forms | `GET/POST /forms`, `POST /forms/:id/submit` |
 | Interviews | `GET/POST /interviews`, `PATCH /interviews/:id/cancel` |
 | Jobs | `GET/POST /jobs`, `PATCH /jobs/:id`, publish/close/archive actions |
