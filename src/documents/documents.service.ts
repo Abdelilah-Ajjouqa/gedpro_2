@@ -71,7 +71,8 @@ export class DocumentsService {
     return doc;
   }
   private publicDoc(doc: Document) {
-    const { path, ...safe } = doc;
+    const safe: Partial<Document> = { ...doc };
+    delete safe.path;
     return safe;
   }
   async findAll(

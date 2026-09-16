@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [master, main]
 
 jobs:
   verify:
@@ -47,13 +47,15 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run lint
       - run: npm run build
-      - run: npm test -- --runInBand
+      - run: npm run test:cov
       - name: Verify migrations apply, roll back, and reapply
         run: |
           npm run migration:run
           npm run migration:revert
           npm run migration:run
       - run: npm run test:e2e -- --runInBand
+      - run: npm run openapi:check
       - name: Build production image
         run: docker build -t gedpro:${{ github.sha }} .

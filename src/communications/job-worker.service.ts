@@ -23,6 +23,7 @@ export class JobWorkerService implements OnModuleInit, OnModuleDestroy {
     @Inject(EMAIL_PROVIDER) private provider: EmailProvider,
   ) {}
   onModuleInit() {
+    if (process.env.DISABLE_BACKGROUND_WORKERS === 'true') return;
     this.jobs
       .update(
         {

@@ -34,7 +34,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? (payload as Record<string, unknown>)
         : {};
     const message =
-      status === HttpStatus.INTERNAL_SERVER_ERROR
+      status === Number(HttpStatus.INTERNAL_SERVER_ERROR)
         ? 'Internal server error'
         : ((details.message as string | string[] | undefined) ??
           String(payload ?? 'Request failed'));

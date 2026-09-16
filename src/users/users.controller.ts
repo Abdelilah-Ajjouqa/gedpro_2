@@ -15,7 +15,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guard/auth.guard';
 import { Permissions, Roles } from '../auth/decorator/auth.decorator';
 import { Role } from './enums/role.enum';
-import { User } from './entities/user.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiProtected } from '../common/swagger/api-protected.decorator';
 

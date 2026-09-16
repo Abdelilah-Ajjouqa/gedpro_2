@@ -19,6 +19,7 @@ export class ReportExportWorkerService
     private reports: ReportingService,
   ) {}
   onModuleInit() {
+    if (process.env.DISABLE_BACKGROUND_WORKERS === 'true') return;
     this.jobs
       .update(
         {

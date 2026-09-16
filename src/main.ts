@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { mkdir } from 'node:fs/promises';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { configureApiVersionAlias } from './common/middleware/api-version.middleware';
+import { createOpenApiDocument } from './common/swagger/openapi';
 
 async function bootstrap() {
   await mkdir(process.env.UPLOAD_DIR ?? 'uploads', { recursive: true });
@@ -32,17 +33,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('GEDPro API')
-    .setDescription(
-      'Applicant tracking API for users, candidates, jobs, applications, forms, documents, and interviews.',
-    )
-    .setVersion('1.0')
-    .addServer('/v1', 'Version 1 (recommended)')
-    .addServer('/', 'Legacy unversioned compatibility')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
+  const document = createOpenApiDocument(app);
   SwaggerModule.setup('api', app, document, {
     customSiteTitle: 'GEDPro API Documentation',
     swaggerOptions: { persistAuthorization: true },
@@ -50,4 +41,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();

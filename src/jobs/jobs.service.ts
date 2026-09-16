@@ -28,7 +28,8 @@ export class JobsService {
       throw new NotFoundException(
         `Pipeline with ID ${dto.pipelineId} not found`,
       );
-    const { pipelineId: _, ...values } = dto;
+    const values: Omit<CreateJobDto, 'pipelineId'> = { ...dto };
+    delete (values as Partial<CreateJobDto>).pipelineId;
     return this.jobs.save(this.jobs.create({ ...values, owner, pipeline }));
   }
 

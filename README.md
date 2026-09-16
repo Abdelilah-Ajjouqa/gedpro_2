@@ -28,6 +28,15 @@ docker compose ps
 The API is available at `http://localhost:3000` and Swagger at `http://localhost:3000/api`.
 The machine-readable OpenAPI document is available at `http://localhost:3000/api-json`. Swagger preserves the bearer token entered through its Authorize button while the page remains open.
 
+A version-controlled API contract is stored at [`docs/openapi.json`](docs/openapi.json). Frontend clients should target the `/v1` server from that document. Regenerate and verify it with:
+
+```bash
+npm run openapi:generate
+npm run openapi:check
+```
+
+The check fails when the committed contract is stale, an operation lacks a successful response, or a non-empty successful response lacks a content schema. Inferred entity schemas are used where possible; composite responses that do not yet have a dedicated DTO are deliberately represented as free-form JSON instead of an inaccurate generated type.
+
 The Compose stack starts the application, PostgreSQL 16, MongoDB 7, and MinIO for production-style S3-compatible document storage. PostgreSQL is exposed on `5432`, MongoDB on `27018`, and MinIO on `9000` (console `9001`). Local non-production runs default to `./uploads`.
 
 Stop the stack with `docker compose down`. Add `-v` only when you intentionally want to delete database data.
@@ -96,6 +105,20 @@ Use [requests.http](requests.http) with the VS Code REST Client. Public registra
 | Responsible AI | CV extraction/correction, candidate search, explainable matching, interview questions, application summaries, feedback, and monitoring under `/ai`                                          |
 
 Uploaded files accept PDF, JPG, or PNG up to 5 MiB.
+
+## Quality gates
+
+Run the same core checks used by CI before opening a pull request:
+
+```bash
+npm run lint
+npm run build
+npm run test:cov
+npm run test:e2e -- --runInBand
+npm run openapi:check
+```
+
+Coverage has an initial repository-wide floor of 30% for statements, branches, and lines, and 15% for functions. Raise these thresholds as coverage is added; do not lower them to accommodate new untested code. Type-aware unsafe-value findings in application code remain visible as warnings while request and ORM boundary types are tightened incrementally.
 
 ### Authentication security
 

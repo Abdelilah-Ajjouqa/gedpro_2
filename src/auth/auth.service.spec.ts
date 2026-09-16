@@ -1,5 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { createHash } from 'node:crypto';
 import { AuthService } from './auth.service';
 
 describe('AuthService security rules', () => {
@@ -38,7 +39,7 @@ describe('AuthService security rules', () => {
     };
     audit = { record: jest.fn() };
     const config: any = {
-      get: jest.fn((_k: string) => undefined),
+      get: jest.fn(() => undefined),
       getOrThrow: jest.fn((k: string) =>
         k === 'JWT_SECRET' ? 'a'.repeat(40) : 'b'.repeat(40),
       ),
@@ -53,8 +54,7 @@ describe('AuthService security rules', () => {
     });
     sessions.findOne.mockResolvedValue({
       id: 'session-1',
-      refreshTokenHash: require('crypto')
-        .createHash('sha256')
+      refreshTokenHash: createHash('sha256')
         .update(loggedIn.refreshToken)
         .digest('hex'),
       expiresAt: new Date(Date.now() + 10000),

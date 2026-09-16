@@ -13,6 +13,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import * as jwt from 'jsonwebtoken';
 import { IsNull, Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
+import { User } from '../users/entities/user.entity';
 import { Role } from '../users/enums/role.enum';
 import { LoginDto, RegisterDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/token.dto';
@@ -73,13 +74,11 @@ export class AuthService {
       expiresIn: this.seconds('ACCESS_TOKEN_TTL_SECONDS', 900),
     };
   }
-  private publicUser(user: any) {
-    const {
-      password: _p,
-      failedLoginAttempts: _f,
-      lockedUntil: _l,
-      ...safe
-    } = user;
+  private publicUser(user: User) {
+    const safe: Partial<User> = { ...user };
+    delete safe.password;
+    delete safe.failedLoginAttempts;
+    delete safe.lockedUntil;
     return safe;
   }
 
@@ -88,7 +87,8 @@ export class AuthService {
       throw new BadRequestException('Passwords do not match');
     if (await this.users.findByEmail(dto.email.toLowerCase()))
       throw new ConflictException('User with this email already exists');
-    const { confirmPassword: _, ...input } = dto;
+    const input: Omit<RegisterDto, 'confirmPassword'> = { ...dto };
+    delete (input as Partial<RegisterDto>).confirmPassword;
     const user = await this.users.create({
       ...input,
       email: dto.email.toLowerCase(),

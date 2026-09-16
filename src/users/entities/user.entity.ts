@@ -4,7 +4,6 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
 } from 'typeorm';
 import { Role } from '../enums/role.enum';
 
