@@ -1,4 +1,11 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { PipelineStage } from './pipeline-stage.entity';
 @Entity('pipelines')
 export class Pipeline {
@@ -7,7 +14,8 @@ export class Pipeline {
   @Column({ nullable: true }) description?: string;
   @Column({ default: true }) isTemplate: boolean;
   @Column({ default: false }) archived: boolean;
-  @OneToMany(() => PipelineStage, stage => stage.pipeline, { cascade: true }) stages: PipelineStage[];
+  @OneToMany(() => PipelineStage, (stage) => stage.pipeline, { cascade: true })
+  stages: PipelineStage[];
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
 }

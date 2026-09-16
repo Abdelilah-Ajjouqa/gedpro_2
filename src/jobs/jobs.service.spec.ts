@@ -21,6 +21,8 @@ describe('JobsService', () => {
 
   it('does not allow archived jobs to change status', async () => {
     repository.findOne.mockResolvedValue({ id: 1, status: JobStatus.ARCHIVED });
-    await expect(service.changeStatus(1, JobStatus.PUBLISHED)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.changeStatus(1, JobStatus.PUBLISHED),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

@@ -1,4 +1,10 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 
 export interface ApiErrorResponse {
@@ -15,16 +21,28 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
     const request = context.getRequest<Request>();
-    const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-    const payload = exception instanceof HttpException ? exception.getResponse() : undefined;
-    const details = typeof payload === 'object' && payload !== null ? payload as Record<string, unknown> : {};
-    const message = status === HttpStatus.INTERNAL_SERVER_ERROR
-      ? 'Internal server error'
-      : (details.message as string | string[] | undefined) ?? String(payload ?? 'Request failed');
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+    const payload =
+      exception instanceof HttpException ? exception.getResponse() : undefined;
+    const details =
+      typeof payload === 'object' && payload !== null
+        ? (payload as Record<string, unknown>)
+        : {};
+    const message =
+      status === HttpStatus.INTERNAL_SERVER_ERROR
+        ? 'Internal server error'
+        : ((details.message as string | string[] | undefined) ??
+          String(payload ?? 'Request failed'));
 
-    const exceptionName = exception instanceof HttpException
-      ? exception.name.replace(/Exception$/, '').replace(/([a-z])([A-Z])/g, '$1 $2')
-      : 'Internal Server Error';
+    const exceptionName =
+      exception instanceof HttpException
+        ? exception.name
+            .replace(/Exception$/, '')
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+        : 'Internal Server Error';
     const body: ApiErrorResponse = {
       statusCode: status,
       error: typeof details.error === 'string' ? details.error : exceptionName,

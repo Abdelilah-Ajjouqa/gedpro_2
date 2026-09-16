@@ -8,7 +8,7 @@ GEDPro is a NestJS backend MVP for applicant tracking and recruitment document m
 - Candidate lifecycle with transactional history entries
 - Candidate search, tags/skills, ownership, duplicate merge, archiving, and privacy workflows
 - Versioned PDF/JPG/PNG document management with content-signature validation, checksums, retention, local development storage, and S3-compatible production storage
-- Dynamic form creation and submission in MongoDB
+- Versioned forms and evaluations with stable field IDs, conditional validation, pipeline-stage assignment, review, and CSV export
 - Interview scheduling and cancellation
 - Job lifecycle and searchable, paginated job listings
 - Per-job applications with transactional stage history
@@ -87,7 +87,7 @@ Use [requests.http](requests.http) with the VS Code REST Client. Public registra
 | Users | `GET /users/profile`, `/users` CRUD (role-restricted) |
 | Candidates | `GET/POST /candidates`, `PATCH /candidates/:id/state` |
 | Documents | `GET /documents`, `POST /documents/upload`, `GET /documents/:id/download`, `GET /documents/:id/url`, `POST /documents/:id/replace`, `PATCH /documents/:id/archive`, `DELETE /documents/:id` |
-| Forms | `GET/POST /forms`, `POST /forms/:id/submit` |
+| Forms | Create/edit/publish/duplicate/archive under `/forms`; assignments, validated submissions, response review/filtering, and CSV export |
 | Interviews | `GET/POST /interviews`, `PATCH /interviews/:id/cancel` |
 | Jobs | `GET/POST /jobs`, `PATCH /jobs/:id`, publish/close/archive actions |
 | Applications | `GET/POST /applications`, `PATCH /applications/:id/stage` |
@@ -108,6 +108,10 @@ Create a reusable pipeline before creating a job, then provide its `pipelineId` 
 ### Candidate management and privacy
 
 `GET /candidates` supports search, tag, skill, source, owner, archive, sorting, and pagination parameters. Candidate email and phone identifiers are normalized for duplicate review. Merge transfers applications, interviews, legacy history, and form responses; same-job application conflicts must be resolved first. Archive/restore and audited privacy export, deletion-request, and retention-aware erasure endpoints preserve recruitment history.
+
+### Forms and evaluations
+
+Forms begin as drafts. Publishing freezes the current version; editing a published form creates a new draft while the published version remains available. Field IDs remain stable and responses retain the exact title and field snapshot used at submission. Published forms can be assigned to a job, application, or pipeline stage. Responses validate required and conditional fields, types, selections, dates, and active document references. Recruiters can filter, review, and export responses as CSV.
 
 ## Verification
 

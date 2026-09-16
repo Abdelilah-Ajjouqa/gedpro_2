@@ -1,25 +1,145 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-export class ConfigurablePipelines1789401200000 implements MigrationInterface { name='ConfigurablePipelines1789401200000';
- async up(q:QueryRunner){
-  await q.query(`CREATE TYPE "public"."pipeline_stages_category_enum" AS ENUM('applied','screening','interview','offer','hired','rejected','withdrawn')`);
-  await q.query(`CREATE TABLE "pipelines" ("id" SERIAL NOT NULL,"name" varchar NOT NULL,"description" varchar,"isTemplate" boolean NOT NULL DEFAULT true,"archived" boolean NOT NULL DEFAULT false,"createdAt" TIMESTAMP NOT NULL DEFAULT now(),"updatedAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "UQ_pipeline_name" UNIQUE("name"),CONSTRAINT "PK_pipelines" PRIMARY KEY("id"))`);
-  await q.query(`CREATE TABLE "pipeline_stages" ("id" SERIAL NOT NULL,"name" varchar NOT NULL,"category" "public"."pipeline_stages_category_enum" NOT NULL,"position" integer NOT NULL,"archived" boolean NOT NULL DEFAULT false,"pipelineId" integer NOT NULL,CONSTRAINT "UQ_pipeline_position" UNIQUE("pipelineId","position"),CONSTRAINT "PK_pipeline_stages" PRIMARY KEY("id"))`);
-  await q.query(`CREATE TABLE "pipeline_transitions" ("id" SERIAL NOT NULL,"fromStageId" integer NOT NULL,"toStageId" integer NOT NULL,CONSTRAINT "UQ_pipeline_transition" UNIQUE("fromStageId","toStageId"),CONSTRAINT "PK_pipeline_transitions" PRIMARY KEY("id"))`);
-  await q.query(`ALTER TABLE "pipeline_stages" ADD CONSTRAINT "FK_pipeline_stage_pipeline" FOREIGN KEY("pipelineId") REFERENCES "pipelines"("id") ON DELETE CASCADE`);
-  await q.query(`ALTER TABLE "pipeline_transitions" ADD CONSTRAINT "FK_transition_from" FOREIGN KEY("fromStageId") REFERENCES "pipeline_stages"("id") ON DELETE CASCADE`);
-  await q.query(`ALTER TABLE "pipeline_transitions" ADD CONSTRAINT "FK_transition_to" FOREIGN KEY("toStageId") REFERENCES "pipeline_stages"("id") ON DELETE CASCADE`);
-  await q.query(`INSERT INTO "pipelines"("name","description","isTemplate") VALUES('Default hiring pipeline','Migrated fixed application workflow',true)`);
-  await q.query(`INSERT INTO "pipeline_stages"("name","category","position","pipelineId") SELECT initcap(category),category::"public"."pipeline_stages_category_enum",position,p.id FROM "pipelines" p CROSS JOIN (VALUES('applied',1),('screening',2),('interview',3),('offer',4),('hired',5),('rejected',6),('withdrawn',7)) s(category,position) WHERE p.name='Default hiring pipeline'`);
-  await q.query(`INSERT INTO "pipeline_transitions"("fromStageId","toStageId") SELECT f.id,t.id FROM "pipeline_stages" f JOIN "pipeline_stages" t ON t."pipelineId"=f."pipelineId" WHERE (f.category::text,t.category::text) IN (('applied','screening'),('applied','rejected'),('applied','withdrawn'),('screening','interview'),('screening','rejected'),('screening','withdrawn'),('interview','offer'),('interview','rejected'),('interview','withdrawn'),('offer','hired'),('offer','rejected'),('offer','withdrawn'))`);
-  await q.query(`ALTER TABLE "jobs" ADD "pipelineId" integer`); await q.query(`UPDATE "jobs" SET "pipelineId"=(SELECT id FROM "pipelines" WHERE name='Default hiring pipeline')`); await q.query(`ALTER TABLE "jobs" ALTER COLUMN "pipelineId" SET NOT NULL`); await q.query(`ALTER TABLE "jobs" ADD CONSTRAINT "FK_job_pipeline" FOREIGN KEY("pipelineId") REFERENCES "pipelines"("id")`);
-  await q.query(`ALTER TABLE "applications" ADD "currentStageId" integer`); await q.query(`UPDATE "applications" a SET "currentStageId"=s.id FROM "pipeline_stages" s JOIN "jobs" j ON j."pipelineId"=s."pipelineId" WHERE j.id=a."jobId" AND s.category::text=a."currentStage"::text`); await q.query(`ALTER TABLE "applications" ALTER COLUMN "currentStageId" SET NOT NULL`); await q.query(`ALTER TABLE "applications" ADD "version" integer NOT NULL DEFAULT 1`); await q.query(`ALTER TABLE "applications" ADD CONSTRAINT "FK_application_stage" FOREIGN KEY("currentStageId") REFERENCES "pipeline_stages"("id") ON DELETE RESTRICT`);
-  await q.query(`ALTER TABLE "application_history" ADD "previousStageId" integer`); await q.query(`ALTER TABLE "application_history" ADD "newStageId" integer`); await q.query(`UPDATE "application_history" h SET "newStageId"=s.id FROM "pipeline_stages" s,"applications" a,"jobs" j WHERE a.id=h."applicationId" AND j.id=a."jobId" AND s."pipelineId"=j."pipelineId" AND s.category::text=h."newStage"::text`); await q.query(`UPDATE "application_history" h SET "previousStageId"=s.id FROM "pipeline_stages" s,"applications" a,"jobs" j WHERE a.id=h."applicationId" AND j.id=a."jobId" AND s."pipelineId"=j."pipelineId" AND s.category::text=h."previousStage"::text`); await q.query(`ALTER TABLE "application_history" ALTER COLUMN "newStageId" SET NOT NULL`); await q.query(`ALTER TABLE "application_history" ADD CONSTRAINT "FK_history_previous_stage" FOREIGN KEY("previousStageId") REFERENCES "pipeline_stages"("id") ON DELETE RESTRICT`); await q.query(`ALTER TABLE "application_history" ADD CONSTRAINT "FK_history_new_stage" FOREIGN KEY("newStageId") REFERENCES "pipeline_stages"("id") ON DELETE RESTRICT`);
-  await q.query(`ALTER TABLE "applications" DROP COLUMN "currentStage"`); await q.query(`DROP TYPE "public"."applications_currentstage_enum"`); await q.query(`ALTER TABLE "application_history" DROP COLUMN "previousStage"`); await q.query(`ALTER TABLE "application_history" DROP COLUMN "newStage"`); await q.query(`DROP TYPE "public"."application_history_previousstage_enum"`); await q.query(`DROP TYPE "public"."application_history_newstage_enum"`);
- }
- async down(q:QueryRunner){
-  await q.query(`CREATE TYPE "public"."applications_currentstage_enum" AS ENUM('applied','screening','interview','offer','hired','rejected','withdrawn')`); await q.query(`CREATE TYPE "public"."application_history_previousstage_enum" AS ENUM('applied','screening','interview','offer','hired','rejected','withdrawn')`); await q.query(`CREATE TYPE "public"."application_history_newstage_enum" AS ENUM('applied','screening','interview','offer','hired','rejected','withdrawn')`);
-  await q.query(`ALTER TABLE "applications" ADD "currentStage" "public"."applications_currentstage_enum"`); await q.query(`UPDATE "applications" a SET "currentStage"=s.category::text::"public"."applications_currentstage_enum" FROM "pipeline_stages" s WHERE s.id=a."currentStageId"`); await q.query(`ALTER TABLE "applications" ALTER COLUMN "currentStage" SET NOT NULL`); await q.query(`ALTER TABLE "applications" ALTER COLUMN "currentStage" SET DEFAULT 'applied'`);
-  await q.query(`ALTER TABLE "application_history" ADD "previousStage" "public"."application_history_previousstage_enum"`); await q.query(`ALTER TABLE "application_history" ADD "newStage" "public"."application_history_newstage_enum"`); await q.query(`UPDATE "application_history" h SET "previousStage"=s.category::text::"public"."application_history_previousstage_enum" FROM "pipeline_stages" s WHERE s.id=h."previousStageId"`); await q.query(`UPDATE "application_history" h SET "newStage"=s.category::text::"public"."application_history_newstage_enum" FROM "pipeline_stages" s WHERE s.id=h."newStageId"`); await q.query(`ALTER TABLE "application_history" ALTER COLUMN "newStage" SET NOT NULL`);
-  await q.query(`ALTER TABLE "application_history" DROP CONSTRAINT "FK_history_new_stage"`); await q.query(`ALTER TABLE "application_history" DROP CONSTRAINT "FK_history_previous_stage"`); await q.query(`ALTER TABLE "application_history" DROP COLUMN "newStageId"`); await q.query(`ALTER TABLE "application_history" DROP COLUMN "previousStageId"`); await q.query(`ALTER TABLE "applications" DROP CONSTRAINT "FK_application_stage"`); await q.query(`ALTER TABLE "applications" DROP COLUMN "version"`); await q.query(`ALTER TABLE "applications" DROP COLUMN "currentStageId"`); await q.query(`ALTER TABLE "jobs" DROP CONSTRAINT "FK_job_pipeline"`); await q.query(`ALTER TABLE "jobs" DROP COLUMN "pipelineId"`); await q.query(`DROP TABLE "pipeline_transitions"`); await q.query(`DROP TABLE "pipeline_stages"`); await q.query(`DROP TABLE "pipelines"`); await q.query(`DROP TYPE "public"."pipeline_stages_category_enum"`);
- }
+export class ConfigurablePipelines1789401200000 implements MigrationInterface {
+  name = 'ConfigurablePipelines1789401200000';
+  async up(q: QueryRunner) {
+    await q.query(
+      `CREATE TYPE "public"."pipeline_stages_category_enum" AS ENUM('applied','screening','interview','offer','hired','rejected','withdrawn')`,
+    );
+    await q.query(
+      `CREATE TABLE "pipelines" ("id" SERIAL NOT NULL,"name" varchar NOT NULL,"description" varchar,"isTemplate" boolean NOT NULL DEFAULT true,"archived" boolean NOT NULL DEFAULT false,"createdAt" TIMESTAMP NOT NULL DEFAULT now(),"updatedAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "UQ_pipeline_name" UNIQUE("name"),CONSTRAINT "PK_pipelines" PRIMARY KEY("id"))`,
+    );
+    await q.query(
+      `CREATE TABLE "pipeline_stages" ("id" SERIAL NOT NULL,"name" varchar NOT NULL,"category" "public"."pipeline_stages_category_enum" NOT NULL,"position" integer NOT NULL,"archived" boolean NOT NULL DEFAULT false,"pipelineId" integer NOT NULL,CONSTRAINT "UQ_pipeline_position" UNIQUE("pipelineId","position"),CONSTRAINT "PK_pipeline_stages" PRIMARY KEY("id"))`,
+    );
+    await q.query(
+      `CREATE TABLE "pipeline_transitions" ("id" SERIAL NOT NULL,"fromStageId" integer NOT NULL,"toStageId" integer NOT NULL,CONSTRAINT "UQ_pipeline_transition" UNIQUE("fromStageId","toStageId"),CONSTRAINT "PK_pipeline_transitions" PRIMARY KEY("id"))`,
+    );
+    await q.query(
+      `ALTER TABLE "pipeline_stages" ADD CONSTRAINT "FK_pipeline_stage_pipeline" FOREIGN KEY("pipelineId") REFERENCES "pipelines"("id") ON DELETE CASCADE`,
+    );
+    await q.query(
+      `ALTER TABLE "pipeline_transitions" ADD CONSTRAINT "FK_transition_from" FOREIGN KEY("fromStageId") REFERENCES "pipeline_stages"("id") ON DELETE CASCADE`,
+    );
+    await q.query(
+      `ALTER TABLE "pipeline_transitions" ADD CONSTRAINT "FK_transition_to" FOREIGN KEY("toStageId") REFERENCES "pipeline_stages"("id") ON DELETE CASCADE`,
+    );
+    await q.query(
+      `INSERT INTO "pipelines"("name","description","isTemplate") VALUES('Default hiring pipeline','Migrated fixed application workflow',true)`,
+    );
+    await q.query(
+      `INSERT INTO "pipeline_stages"("name","category","position","pipelineId") SELECT initcap(category),category::"public"."pipeline_stages_category_enum",position,p.id FROM "pipelines" p CROSS JOIN (VALUES('applied',1),('screening',2),('interview',3),('offer',4),('hired',5),('rejected',6),('withdrawn',7)) s(category,position) WHERE p.name='Default hiring pipeline'`,
+    );
+    await q.query(
+      `INSERT INTO "pipeline_transitions"("fromStageId","toStageId") SELECT f.id,t.id FROM "pipeline_stages" f JOIN "pipeline_stages" t ON t."pipelineId"=f."pipelineId" WHERE (f.category::text,t.category::text) IN (('applied','screening'),('applied','rejected'),('applied','withdrawn'),('screening','interview'),('screening','rejected'),('screening','withdrawn'),('interview','offer'),('interview','rejected'),('interview','withdrawn'),('offer','hired'),('offer','rejected'),('offer','withdrawn'))`,
+    );
+    await q.query(`ALTER TABLE "jobs" ADD "pipelineId" integer`);
+    await q.query(
+      `UPDATE "jobs" SET "pipelineId"=(SELECT id FROM "pipelines" WHERE name='Default hiring pipeline')`,
+    );
+    await q.query(`ALTER TABLE "jobs" ALTER COLUMN "pipelineId" SET NOT NULL`);
+    await q.query(
+      `ALTER TABLE "jobs" ADD CONSTRAINT "FK_job_pipeline" FOREIGN KEY("pipelineId") REFERENCES "pipelines"("id")`,
+    );
+    await q.query(`ALTER TABLE "applications" ADD "currentStageId" integer`);
+    await q.query(
+      `UPDATE "applications" a SET "currentStageId"=s.id FROM "pipeline_stages" s JOIN "jobs" j ON j."pipelineId"=s."pipelineId" WHERE j.id=a."jobId" AND s.category::text=a."currentStage"::text`,
+    );
+    await q.query(
+      `ALTER TABLE "applications" ALTER COLUMN "currentStageId" SET NOT NULL`,
+    );
+    await q.query(
+      `ALTER TABLE "applications" ADD "version" integer NOT NULL DEFAULT 1`,
+    );
+    await q.query(
+      `ALTER TABLE "applications" ADD CONSTRAINT "FK_application_stage" FOREIGN KEY("currentStageId") REFERENCES "pipeline_stages"("id") ON DELETE RESTRICT`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" ADD "previousStageId" integer`,
+    );
+    await q.query(`ALTER TABLE "application_history" ADD "newStageId" integer`);
+    await q.query(
+      `UPDATE "application_history" h SET "newStageId"=s.id FROM "pipeline_stages" s,"applications" a,"jobs" j WHERE a.id=h."applicationId" AND j.id=a."jobId" AND s."pipelineId"=j."pipelineId" AND s.category::text=h."newStage"::text`,
+    );
+    await q.query(
+      `UPDATE "application_history" h SET "previousStageId"=s.id FROM "pipeline_stages" s,"applications" a,"jobs" j WHERE a.id=h."applicationId" AND j.id=a."jobId" AND s."pipelineId"=j."pipelineId" AND s.category::text=h."previousStage"::text`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" ALTER COLUMN "newStageId" SET NOT NULL`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" ADD CONSTRAINT "FK_history_previous_stage" FOREIGN KEY("previousStageId") REFERENCES "pipeline_stages"("id") ON DELETE RESTRICT`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" ADD CONSTRAINT "FK_history_new_stage" FOREIGN KEY("newStageId") REFERENCES "pipeline_stages"("id") ON DELETE RESTRICT`,
+    );
+    await q.query(`ALTER TABLE "applications" DROP COLUMN "currentStage"`);
+    await q.query(`DROP TYPE "public"."applications_currentstage_enum"`);
+    await q.query(
+      `ALTER TABLE "application_history" DROP COLUMN "previousStage"`,
+    );
+    await q.query(`ALTER TABLE "application_history" DROP COLUMN "newStage"`);
+    await q.query(
+      `DROP TYPE "public"."application_history_previousstage_enum"`,
+    );
+    await q.query(`DROP TYPE "public"."application_history_newstage_enum"`);
+  }
+  async down(q: QueryRunner) {
+    await q.query(
+      `CREATE TYPE "public"."applications_currentstage_enum" AS ENUM('applied','screening','interview','offer','hired','rejected','withdrawn')`,
+    );
+    await q.query(
+      `CREATE TYPE "public"."application_history_previousstage_enum" AS ENUM('applied','screening','interview','offer','hired','rejected','withdrawn')`,
+    );
+    await q.query(
+      `CREATE TYPE "public"."application_history_newstage_enum" AS ENUM('applied','screening','interview','offer','hired','rejected','withdrawn')`,
+    );
+    await q.query(
+      `ALTER TABLE "applications" ADD "currentStage" "public"."applications_currentstage_enum"`,
+    );
+    await q.query(
+      `UPDATE "applications" a SET "currentStage"=s.category::text::"public"."applications_currentstage_enum" FROM "pipeline_stages" s WHERE s.id=a."currentStageId"`,
+    );
+    await q.query(
+      `ALTER TABLE "applications" ALTER COLUMN "currentStage" SET NOT NULL`,
+    );
+    await q.query(
+      `ALTER TABLE "applications" ALTER COLUMN "currentStage" SET DEFAULT 'applied'`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" ADD "previousStage" "public"."application_history_previousstage_enum"`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" ADD "newStage" "public"."application_history_newstage_enum"`,
+    );
+    await q.query(
+      `UPDATE "application_history" h SET "previousStage"=s.category::text::"public"."application_history_previousstage_enum" FROM "pipeline_stages" s WHERE s.id=h."previousStageId"`,
+    );
+    await q.query(
+      `UPDATE "application_history" h SET "newStage"=s.category::text::"public"."application_history_newstage_enum" FROM "pipeline_stages" s WHERE s.id=h."newStageId"`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" ALTER COLUMN "newStage" SET NOT NULL`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" DROP CONSTRAINT "FK_history_new_stage"`,
+    );
+    await q.query(
+      `ALTER TABLE "application_history" DROP CONSTRAINT "FK_history_previous_stage"`,
+    );
+    await q.query(`ALTER TABLE "application_history" DROP COLUMN "newStageId"`);
+    await q.query(
+      `ALTER TABLE "application_history" DROP COLUMN "previousStageId"`,
+    );
+    await q.query(
+      `ALTER TABLE "applications" DROP CONSTRAINT "FK_application_stage"`,
+    );
+    await q.query(`ALTER TABLE "applications" DROP COLUMN "version"`);
+    await q.query(`ALTER TABLE "applications" DROP COLUMN "currentStageId"`);
+    await q.query(`ALTER TABLE "jobs" DROP CONSTRAINT "FK_job_pipeline"`);
+    await q.query(`ALTER TABLE "jobs" DROP COLUMN "pipelineId"`);
+    await q.query(`DROP TABLE "pipeline_transitions"`);
+    await q.query(`DROP TABLE "pipeline_stages"`);
+    await q.query(`DROP TABLE "pipelines"`);
+    await q.query(`DROP TYPE "public"."pipeline_stages_category_enum"`);
+  }
 }

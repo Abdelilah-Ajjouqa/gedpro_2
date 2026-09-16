@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { MongooseModuleOptions } from '@nestjs/mongoose';
 
 export const mongodbConfig = async (
-    configService: ConfigService,
+  configService: ConfigService,
 ): Promise<MongooseModuleOptions> => ({
-    uri: configService.getOrThrow<string>('MONGODB_URI'),
+  uri: configService.getOrThrow<string>('MONGODB_URI'),
 });

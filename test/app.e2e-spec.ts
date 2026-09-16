@@ -258,6 +258,101 @@ describe('GEDPro health (e2e)', () => {
         .set(auth)
         .send({ status: 'COMPLETED' })
         .expect(200);
+      const form = await request(app.getHttpServer())
+        .post('/forms')
+        .set(auth)
+        .send({
+          title: 'Technical evaluation',
+          fields: [
+            {
+              id: 'recommendation',
+              label: 'Recommendation',
+              type: 'select',
+              required: true,
+              options: ['hire', 'reject'],
+            },
+            {
+              id: 'notes',
+              label: 'Notes',
+              type: 'text',
+              required: true,
+              condition: {
+                fieldId: 'recommendation',
+                operator: 'equals',
+                value: 'hire',
+              },
+            },
+          ],
+        })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/forms/${form.body._id}/publish`)
+        .set(auth)
+        .expect(201);
+      await request(app.getHttpServer())
+        .post(`/forms/${form.body._id}/assignments`)
+        .set(auth)
+        .send({ stageId: screening.id })
+        .expect(201);
+      const assignedForms = await request(app.getHttpServer())
+        .get(`/forms/assignments/application/${application.body.id}`)
+        .set(auth)
+        .expect(200);
+      expect(assignedForms.body.map((item: any) => item._id)).toContain(
+        form.body._id,
+      );
+      await request(app.getHttpServer())
+        .post(`/forms/${form.body._id}/submit`)
+        .set(auth)
+        .send({
+          applicationId: application.body.id,
+          answers: { recommendation: 'hire' },
+        })
+        .expect(400);
+      const response = await request(app.getHttpServer())
+        .post(`/forms/${form.body._id}/submit`)
+        .set(auth)
+        .send({
+          applicationId: application.body.id,
+          answers: { recommendation: 'hire', notes: 'Strong result' },
+        })
+        .expect(201);
+      await request(app.getHttpServer())
+        .put(`/forms/${form.body._id}`)
+        .set(auth)
+        .send({
+          title: 'Technical evaluation v2',
+          fields: [
+            {
+              id: 'recommendation',
+              label: 'Recommendation',
+              type: 'select',
+              required: true,
+              options: ['hire', 'reject', 'hold'],
+            },
+          ],
+        })
+        .expect(200);
+      const responses = await request(app.getHttpServer())
+        .get(`/forms/${form.body._id}/responses`)
+        .set(auth)
+        .expect(200);
+      expect(responses.body.data[0]).toMatchObject({
+        _id: response.body._id,
+        formVersion: 1,
+        formTitle: 'Technical evaluation',
+      });
+      expect(responses.body.data[0].fieldsSnapshot).toHaveLength(2);
+      await request(app.getHttpServer())
+        .patch(`/forms/${form.body._id}/responses/${response.body._id}/review`)
+        .set(auth)
+        .send({ status: 'approved', notes: 'Reviewed' })
+        .expect(200);
+      await request(app.getHttpServer())
+        .get(`/forms/${form.body._id}/responses/export`)
+        .set(auth)
+        .expect('Content-Type', /text\/csv/)
+        .expect(200);
       await request(app.getHttpServer())
         .post(`/applications/${application.body.id}/timeline/notes`)
         .set(auth)

@@ -1,7 +1,17 @@
-import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
-export enum AuthActionTokenType { PASSWORD_RESET = 'password_reset', EMAIL_VERIFICATION = 'email_verification' }
+export enum AuthActionTokenType {
+  PASSWORD_RESET = 'password_reset',
+  EMAIL_VERIFICATION = 'email_verification',
+}
 
 @Entity('auth_action_tokens')
 export class AuthActionToken {

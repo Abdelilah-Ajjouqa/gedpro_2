@@ -1,11 +1,88 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-export class CompleteCandidateManagement1789401400000 implements MigrationInterface{name='CompleteCandidateManagement1789401400000';
- async up(q:QueryRunner){
-  await q.query(`ALTER TABLE "candidates" ADD "normalizedEmail" varchar`);await q.query(`UPDATE "candidates" SET "normalizedEmail"=lower(trim("email"))`);await q.query(`ALTER TABLE "candidates" ALTER COLUMN "normalizedEmail" SET NOT NULL`);
-  await q.query(`ALTER TABLE "candidates" ADD "normalizedPhone" varchar`);await q.query(`UPDATE "candidates" SET "normalizedPhone"=regexp_replace("phone",'[^0-9+]','','g') WHERE "phone" IS NOT NULL`);
-  await q.query(`ALTER TABLE "candidates" ADD "tags" text[] NOT NULL DEFAULT '{}'`);await q.query(`ALTER TABLE "candidates" ADD "skills" text[] NOT NULL DEFAULT '{}'`);await q.query(`ALTER TABLE "candidates" ADD "source" varchar`);await q.query(`ALTER TABLE "candidates" ADD "ownerId" integer`);await q.query(`ALTER TABLE "candidates" ADD "archivedAt" TIMESTAMP`);await q.query(`ALTER TABLE "candidates" ADD "privacyConsent" boolean NOT NULL DEFAULT false`);await q.query(`ALTER TABLE "candidates" ADD "consentAt" TIMESTAMP`);await q.query(`ALTER TABLE "candidates" ADD "retentionUntil" TIMESTAMP`);await q.query(`ALTER TABLE "candidates" ADD "deletionRequestedAt" TIMESTAMP`);await q.query(`ALTER TABLE "candidates" ADD "mergedIntoId" integer`);await q.query(`ALTER TABLE "candidates" ADD "version" integer NOT NULL DEFAULT 1`);
-  await q.query(`CREATE INDEX "IDX_candidate_normalized_email" ON "candidates"("normalizedEmail")`);await q.query(`CREATE INDEX "IDX_candidate_normalized_phone" ON "candidates"("normalizedPhone")`);await q.query(`CREATE INDEX "IDX_candidate_active" ON "candidates"("archivedAt","mergedIntoId")`);await q.query(`CREATE INDEX "IDX_candidate_tags" ON "candidates" USING GIN("tags")`);await q.query(`CREATE INDEX "IDX_candidate_skills" ON "candidates" USING GIN("skills")`);
-  await q.query(`ALTER TABLE "candidates" ADD CONSTRAINT "FK_candidate_owner" FOREIGN KEY("ownerId") REFERENCES "users"("id") ON DELETE SET NULL`);await q.query(`ALTER TABLE "candidates" ADD CONSTRAINT "FK_candidate_merged" FOREIGN KEY("mergedIntoId") REFERENCES "candidates"("id") ON DELETE SET NULL`);
- }
- async down(q:QueryRunner){await q.query(`ALTER TABLE "candidates" DROP CONSTRAINT "FK_candidate_merged"`);await q.query(`ALTER TABLE "candidates" DROP CONSTRAINT "FK_candidate_owner"`);await q.query(`DROP INDEX "IDX_candidate_skills"`);await q.query(`DROP INDEX "IDX_candidate_tags"`);await q.query(`DROP INDEX "IDX_candidate_active"`);await q.query(`DROP INDEX "IDX_candidate_normalized_phone"`);await q.query(`DROP INDEX "IDX_candidate_normalized_email"`);for(const c of ['version','mergedIntoId','deletionRequestedAt','retentionUntil','consentAt','privacyConsent','archivedAt','ownerId','source','skills','tags','normalizedPhone','normalizedEmail'])await q.query(`ALTER TABLE "candidates" DROP COLUMN "${c}"`);}
+export class CompleteCandidateManagement1789401400000 implements MigrationInterface {
+  name = 'CompleteCandidateManagement1789401400000';
+  async up(q: QueryRunner) {
+    await q.query(`ALTER TABLE "candidates" ADD "normalizedEmail" varchar`);
+    await q.query(
+      `UPDATE "candidates" SET "normalizedEmail"=lower(trim("email"))`,
+    );
+    await q.query(
+      `ALTER TABLE "candidates" ALTER COLUMN "normalizedEmail" SET NOT NULL`,
+    );
+    await q.query(`ALTER TABLE "candidates" ADD "normalizedPhone" varchar`);
+    await q.query(
+      `UPDATE "candidates" SET "normalizedPhone"=regexp_replace("phone",'[^0-9+]','','g') WHERE "phone" IS NOT NULL`,
+    );
+    await q.query(
+      `ALTER TABLE "candidates" ADD "tags" text[] NOT NULL DEFAULT '{}'`,
+    );
+    await q.query(
+      `ALTER TABLE "candidates" ADD "skills" text[] NOT NULL DEFAULT '{}'`,
+    );
+    await q.query(`ALTER TABLE "candidates" ADD "source" varchar`);
+    await q.query(`ALTER TABLE "candidates" ADD "ownerId" integer`);
+    await q.query(`ALTER TABLE "candidates" ADD "archivedAt" TIMESTAMP`);
+    await q.query(
+      `ALTER TABLE "candidates" ADD "privacyConsent" boolean NOT NULL DEFAULT false`,
+    );
+    await q.query(`ALTER TABLE "candidates" ADD "consentAt" TIMESTAMP`);
+    await q.query(`ALTER TABLE "candidates" ADD "retentionUntil" TIMESTAMP`);
+    await q.query(
+      `ALTER TABLE "candidates" ADD "deletionRequestedAt" TIMESTAMP`,
+    );
+    await q.query(`ALTER TABLE "candidates" ADD "mergedIntoId" integer`);
+    await q.query(
+      `ALTER TABLE "candidates" ADD "version" integer NOT NULL DEFAULT 1`,
+    );
+    await q.query(
+      `CREATE INDEX "IDX_candidate_normalized_email" ON "candidates"("normalizedEmail")`,
+    );
+    await q.query(
+      `CREATE INDEX "IDX_candidate_normalized_phone" ON "candidates"("normalizedPhone")`,
+    );
+    await q.query(
+      `CREATE INDEX "IDX_candidate_active" ON "candidates"("archivedAt","mergedIntoId")`,
+    );
+    await q.query(
+      `CREATE INDEX "IDX_candidate_tags" ON "candidates" USING GIN("tags")`,
+    );
+    await q.query(
+      `CREATE INDEX "IDX_candidate_skills" ON "candidates" USING GIN("skills")`,
+    );
+    await q.query(
+      `ALTER TABLE "candidates" ADD CONSTRAINT "FK_candidate_owner" FOREIGN KEY("ownerId") REFERENCES "users"("id") ON DELETE SET NULL`,
+    );
+    await q.query(
+      `ALTER TABLE "candidates" ADD CONSTRAINT "FK_candidate_merged" FOREIGN KEY("mergedIntoId") REFERENCES "candidates"("id") ON DELETE SET NULL`,
+    );
+  }
+  async down(q: QueryRunner) {
+    await q.query(
+      `ALTER TABLE "candidates" DROP CONSTRAINT "FK_candidate_merged"`,
+    );
+    await q.query(
+      `ALTER TABLE "candidates" DROP CONSTRAINT "FK_candidate_owner"`,
+    );
+    await q.query(`DROP INDEX "IDX_candidate_skills"`);
+    await q.query(`DROP INDEX "IDX_candidate_tags"`);
+    await q.query(`DROP INDEX "IDX_candidate_active"`);
+    await q.query(`DROP INDEX "IDX_candidate_normalized_phone"`);
+    await q.query(`DROP INDEX "IDX_candidate_normalized_email"`);
+    for (const c of [
+      'version',
+      'mergedIntoId',
+      'deletionRequestedAt',
+      'retentionUntil',
+      'consentAt',
+      'privacyConsent',
+      'archivedAt',
+      'ownerId',
+      'source',
+      'skills',
+      'tags',
+      'normalizedPhone',
+      'normalizedEmail',
+    ])
+      await q.query(`ALTER TABLE "candidates" DROP COLUMN "${c}"`);
+  }
 }

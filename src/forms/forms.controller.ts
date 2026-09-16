@@ -1,50 +1,138 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
-import { FormsService } from './forms.service';
-import { CreateFormDto } from './dto/create-form.dto';
-import { SubmitResponseDto } from './dto/submit-response.dto';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '../auth/guard/auth.guard';
+import {
+  ApiBody,
+  ApiConflictResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from '../auth/decorator/auth.decorator';
-import { Role } from '../users/enums/role.enum';
-import { User } from '../users/entities/user.entity';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from '../auth/guard/auth.guard';
 import { ApiProtected } from '../common/swagger/api-protected.decorator';
-
-@ApiTags('Forms')
+import { User } from '../users/entities/user.entity';
+import { Role } from '../users/enums/role.enum';
+import { CreateFormDto, UpdateFormDto } from './dto/create-form.dto';
+import {
+  AssignFormDto,
+  ListResponsesDto,
+  ReviewResponseDto,
+  SubmitResponseDto,
+} from './dto/submit-response.dto';
+import { FormsService } from './forms.service';
+@ApiTags('Forms and evaluations')
 @ApiProtected()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('forms')
 export class FormsController {
-    constructor(private readonly formsService: FormsService) { }
-
-    @Post()
-    @ApiOperation({ summary: 'Create a dynamic form' })
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.RH, Role.ADMIN)
-    create(@Body() createFormDto: CreateFormDto, @Req() req: any) {
-        return this.formsService.createForm(createFormDto, req.user as User);
-    }
-
-    @Get()
-    @ApiOperation({ summary: 'List dynamic forms' })
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
-    findAll() {
-        return this.formsService.findAll();
-    }
-
-    @Get(':id')
-    @ApiOperation({ summary: 'Get a dynamic form' })
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.RH, Role.ADMIN, Role.MANAGER, Role.CANDIDATE)
-    findOne(@Param('id') id: string) {
-        return this.formsService.findOne(id);
-    }
-
-    @Post(':id/submit')
-    @ApiOperation({ summary: 'Submit answers to a dynamic form' })
-    @UseGuards(AuthGuard('jwt'), RolesGuard) // Optional: allow public submission? For now, restrict.
-    // @Roles(Role.CANDIDATE, Role.RH) // Or any user
-    submit(@Param('id') id: string, @Body() submitResponseDto: SubmitResponseDto, @Req() req: any) {
-        return this.formsService.submitResponse(id, submitResponseDto, req.user as User);
-    }
+  constructor(private readonly service: FormsService) {}
+  @Post()
+  @Roles(Role.RH, Role.ADMIN)
+  @ApiOperation({
+    summary: 'Create a draft form with stable field identifiers',
+  })
+  create(@Body() dto: CreateFormDto, @Req() req: { user: User }) {
+    return this.service.createForm(dto, req.user);
+  }
+  @Get() @Roles(Role.RH, Role.ADMIN, Role.MANAGER) findAll(
+    @Query('includeArchived') archived?: string,
+  ) {
+    return this.service.findAll(archived === 'true');
+  }
+  @Get('assignments/application/:applicationId')
+  @Roles(Role.RH, Role.ADMIN, Role.MANAGER, Role.CANDIDATE)
+  @ApiOperation({
+    summary:
+      'List forms automatically assigned for an application current stage',
+  })
+  assigned(@Param('applicationId') id: string) {
+    return this.service.assignedForApplication(Number(id));
+  }
+  @Get(':id') @Roles(Role.RH, Role.ADMIN, Role.MANAGER, Role.CANDIDATE) findOne(
+    @Param('id') id: string,
+  ) {
+    return this.service.findOne(id);
+  }
+  @Put(':id')
+  @Roles(Role.RH, Role.ADMIN)
+  @ApiOperation({
+    summary: 'Edit draft or create a new draft version of a published form',
+  })
+  update(@Param('id') id: string, @Body() dto: UpdateFormDto) {
+    return this.service.update(id, dto);
+  }
+  @Post(':id/publish') @Roles(Role.RH, Role.ADMIN) publish(
+    @Param('id') id: string,
+  ) {
+    return this.service.publish(id);
+  }
+  @Post(':id/duplicate') @Roles(Role.RH, Role.ADMIN) duplicate(
+    @Param('id') id: string,
+    @Req() req: { user: User },
+  ) {
+    return this.service.duplicate(id, req.user);
+  }
+  @Patch(':id/archive') @Roles(Role.RH, Role.ADMIN) archive(
+    @Param('id') id: string,
+  ) {
+    return this.service.archive(id);
+  }
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  @ApiConflictResponse({
+    description: 'Forms with responses cannot be deleted',
+  })
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
+  }
+  @Post(':id/assignments') @Roles(Role.RH, Role.ADMIN) assign(
+    @Param('id') id: string,
+    @Body() dto: AssignFormDto,
+    @Req() req: { user: User },
+  ) {
+    return this.service.assign(id, dto, req.user);
+  }
+  @Post(':id/submit')
+  @Roles(Role.CANDIDATE, Role.RH, Role.ADMIN, Role.MANAGER)
+  @ApiBody({ type: SubmitResponseDto })
+  submit(
+    @Param('id') id: string,
+    @Body() dto: SubmitResponseDto,
+    @Req() req: { user: User },
+  ) {
+    return this.service.submitResponse(id, dto, req.user);
+  }
+  @Get(':id/responses') @Roles(Role.RH, Role.ADMIN, Role.MANAGER) getResponses(
+    @Param('id') id: string,
+    @Query() query: ListResponsesDto,
+  ) {
+    return this.service.getResponses(id, query);
+  }
+  @Patch(':id/responses/:responseId/review')
+  @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
+  review(
+    @Param('responseId') responseId: string,
+    @Body() dto: ReviewResponseDto,
+    @Req() req: { user: User },
+  ) {
+    return this.service.review(responseId, dto, req.user);
+  }
+  @Get(':id/responses/export')
+  @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  export(@Param('id') id: string) {
+    return this.service.exportCsv(id);
+  }
 }

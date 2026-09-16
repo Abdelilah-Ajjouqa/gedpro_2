@@ -20,16 +20,18 @@ describe('validateEnvironment', () => {
   });
 
   it('reports missing required variables', () => {
-    expect(() => validateEnvironment({ ...validConfig, MONGODB_URI: '' })).toThrow(
-      'MONGODB_URI',
-    );
+    expect(() =>
+      validateEnvironment({ ...validConfig, MONGODB_URI: '' }),
+    ).toThrow('MONGODB_URI');
   });
 
   it('rejects schema synchronization in production', () => {
-    expect(() => validateEnvironment({
-      ...validConfig,
-      NODE_ENV: 'production',
-      DB_SYNCHRONIZE: 'true',
-    })).toThrow('DB_SYNCHRONIZE');
+    expect(() =>
+      validateEnvironment({
+        ...validConfig,
+        NODE_ENV: 'production',
+        DB_SYNCHRONIZE: 'true',
+      }),
+    ).toThrow('DB_SYNCHRONIZE');
   });
 });

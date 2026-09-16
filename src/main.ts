@@ -10,14 +10,19 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.getHttpAdapter().getInstance().disable('x-powered-by');
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000').split(',').map((value) => value.trim()).filter(Boolean);
+  const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
   app.enableCors({
     origin: corsOrigins,
     credentials: true,
@@ -27,7 +32,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('GEDPro API')
-    .setDescription('Applicant tracking API for users, candidates, jobs, applications, forms, documents, and interviews.')
+    .setDescription(
+      'Applicant tracking API for users, candidates, jobs, applications, forms, documents, and interviews.',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();

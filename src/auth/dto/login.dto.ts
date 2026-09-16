@@ -5,11 +5,11 @@ import { CreateUserDto } from '../../users/dto/createUser.dto';
 export class RegisterDto extends OmitType(CreateUserDto, ['role'] as const) {}
 
 export class LoginDto {
-    @IsEmail()
-    @IsNotEmpty()
-    email: string;
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 
-    @IsString()
-    @IsNotEmpty()
-    password: string;
+  @IsString()
+  @IsNotEmpty()
+  password: string;
 }

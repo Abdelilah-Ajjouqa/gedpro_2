@@ -78,9 +78,9 @@ Content-Type: application/json
     "title": "Interview Evaluation",
     "description": "Standard technical interview form",
     "fields": [
-        { "label": "Technical Rating (1-10)", "type": "number", "required": true },
-        { "label": "Communication", "type": "text", "required": true },
-        { "label": "Recommendation", "type": "select", "options": ["Hire", "No Hire", "Maybe"] }
+        { "id": "technical_rating", "label": "Technical Rating (1-10)", "type": "number", "required": true },
+        { "id": "communication", "label": "Communication", "type": "text", "required": true },
+        { "id": "recommendation", "label": "Recommendation", "type": "select", "options": ["Hire", "No Hire", "Maybe"] }
     ]
 }
 
@@ -94,6 +94,17 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/forms/{{formId}}
 Authorization: Bearer {{authToken}}
 
+### Publish the current immutable version
+POST {{baseUrl}}/forms/{{formId}}/publish
+Authorization: Bearer {{authToken}}
+
+### Assign automatically at a pipeline stage
+POST {{baseUrl}}/forms/{{formId}}/assignments
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "stageId": 1 }
+
 ### 10. Submit Response
 # @name submitResponse
 POST {{baseUrl}}/forms/{{formId}}/submit
@@ -103,11 +114,19 @@ Content-Type: application/json
 {
     "candidateId": 1,
     "answers": {
-        "Technical Rating (1-10)": 9,
-        "Communication": "Excellent english skills",
-        "Recommendation": "Hire"
+        "technical_rating": 9,
+        "communication": "Excellent English skills",
+        "recommendation": "Hire"
     }
 }
+
+### Filter evaluation responses
+GET {{baseUrl}}/forms/{{formId}}/responses?reviewStatus=pending&page=1&limit=20
+Authorization: Bearer {{authToken}}
+
+### Export evaluation responses
+GET {{baseUrl}}/forms/{{formId}}/responses/export
+Authorization: Bearer {{authToken}}
 
 ### 11. Schedule Interview
 # @name scheduleInterview

@@ -7,11 +7,9 @@ import { SecurityAuditEvent } from '../auth/entities/security-audit-event.entity
 import { SecurityAuditService } from '../auth/security-audit.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, SecurityAuditEvent]),
-  ],
+  imports: [TypeOrmModule.forFeature([User, SecurityAuditEvent])],
   controllers: [UsersController],
   providers: [UsersService, SecurityAuditService],
   exports: [UsersService, SecurityAuditService],
 })
-export class UsersModule { }
+export class UsersModule {}

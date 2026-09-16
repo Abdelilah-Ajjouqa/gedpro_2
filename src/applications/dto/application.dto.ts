@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 export class CreateApplicationDto {
   @IsInt() candidateId: number;
@@ -19,5 +29,16 @@ export class ListApplicationsDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;
 }
-export class BulkMoveItemDto { @IsInt() applicationId:number; @IsInt() stageId:number; @IsOptional() @IsString() comment?:string; @IsOptional() @IsString() @IsNotEmpty() rejectionReason?:string; }
-export class BulkMoveApplicationsDto { @IsArray() @ArrayMinSize(1) @ValidateNested({each:true}) @Type(()=>BulkMoveItemDto) items:BulkMoveItemDto[]; }
+export class BulkMoveItemDto {
+  @IsInt() applicationId: number;
+  @IsInt() stageId: number;
+  @IsOptional() @IsString() comment?: string;
+  @IsOptional() @IsString() @IsNotEmpty() rejectionReason?: string;
+}
+export class BulkMoveApplicationsDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => BulkMoveItemDto)
+  items: BulkMoveItemDto[];
+}

@@ -5,17 +5,17 @@ import { AppModule } from '../app.module';
 import { DataSource } from 'typeorm';
 
 async function bootstrap() {
-    const app = await NestFactory.createApplicationContext(AppModule);
-    const dataSource = app.get(DataSource);
+  const app = await NestFactory.createApplicationContext(AppModule);
+  const dataSource = app.get(DataSource);
 
-    console.log('Starting Smart Seeding...');
+  console.log('Starting Smart Seeding...');
 
-    // Seed logic removed as Roles are now Enums and hardcoded. 
-    // You can add User seeding here if needed (e.g. create a default Admin).
+  // Seed logic removed as Roles are now Enums and hardcoded.
+  // You can add User seeding here if needed (e.g. create a default Admin).
 
-    console.log('Seeding Complete!');
+  console.log('Seeding Complete!');
 
-    console.log('Seeding Complete!');
-    await app.close();
+  console.log('Seeding Complete!');
+  await app.close();
 }
 bootstrap();

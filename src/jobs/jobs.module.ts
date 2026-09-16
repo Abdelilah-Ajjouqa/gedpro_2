@@ -4,5 +4,10 @@ import { Job } from './entities/job.entity';
 import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
 
-@Module({ imports: [TypeOrmModule.forFeature([Job])], controllers: [JobsController], providers: [JobsService], exports: [JobsService] })
+@Module({
+  imports: [TypeOrmModule.forFeature([Job])],
+  controllers: [JobsController],
+  providers: [JobsService],
+  exports: [JobsService],
+})
 export class JobsModule {}
