@@ -39,6 +39,11 @@ export function validateEnvironment(config: Record<string, unknown>) {
   }
   if (String(config.JWT_REFRESH_SECRET).length < 32)
     throw new Error('JWT_REFRESH_SECRET must contain at least 32 characters');
+  if (
+    config.EMAIL_WEBHOOK_SECRET &&
+    String(config.EMAIL_WEBHOOK_SECRET).length < 32
+  )
+    throw new Error('EMAIL_WEBHOOK_SECRET must contain at least 32 characters');
   for (const key of [
     'ACCESS_TOKEN_TTL_SECONDS',
     'REFRESH_TOKEN_TTL_SECONDS',
@@ -48,6 +53,8 @@ export function validateEnvironment(config: Record<string, unknown>) {
     'RATE_LIMIT_WINDOW_SECONDS',
     'RATE_LIMIT_MAX',
     'AUTH_RATE_LIMIT_MAX',
+    'EMAIL_MAX_ATTEMPTS',
+    'JOB_POLL_INTERVAL_MS',
   ]) {
     if (
       config[key] !== undefined &&

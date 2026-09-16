@@ -5,11 +5,13 @@ import { Application } from './entities/application.entity';
 import { ApplicationsController } from './applications.controller';
 import { ApplicationsService } from './applications.service';
 import { TimelineModule } from '../timeline/timeline.module';
+import { CommunicationsModule } from '../communications/communications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Application, ApplicationHistory]),
     TimelineModule,
+    CommunicationsModule,
   ],
   controllers: [ApplicationsController],
   providers: [ApplicationsService],

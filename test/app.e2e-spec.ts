@@ -136,6 +136,39 @@ describe('GEDPro health (e2e)', () => {
         .set(auth)
         .send({ jobId, candidateId })
         .expect(201);
+      const queuedMessage = await request(app.getHttpServer())
+        .post('/communications')
+        .set(auth)
+        .send({
+          type: 'custom',
+          recipient: candidate.body.email,
+          candidateId,
+          applicationId: application.body.id,
+          variables: { subject: 'Next steps', message: '<b>Welcome</b>' },
+          idempotencyKey: `e2e-${suffix}-custom`,
+        })
+        .expect(201);
+      const duplicateMessage = await request(app.getHttpServer())
+        .post('/communications')
+        .set(auth)
+        .send({
+          type: 'custom',
+          recipient: candidate.body.email,
+          candidateId,
+          applicationId: application.body.id,
+          variables: { subject: 'Changed', message: 'Must not duplicate' },
+          idempotencyKey: `e2e-${suffix}-custom`,
+        })
+        .expect(201);
+      expect(duplicateMessage.body.id).toBe(queuedMessage.body.id);
+      const communicationHistory = await request(app.getHttpServer())
+        .get('/communications')
+        .query({ applicationId: application.body.id })
+        .set(auth)
+        .expect(200);
+      expect(communicationHistory.body.map((row: any) => row.id)).toContain(
+        queuedMessage.body.id,
+      );
       const document = await request(app.getHttpServer())
         .post('/documents/upload')
         .set(auth)

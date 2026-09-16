@@ -9,6 +9,7 @@ GEDPro is a NestJS backend MVP for applicant tracking and recruitment document m
 - Candidate search, tags/skills, ownership, duplicate merge, archiving, and privacy workflows
 - Versioned PDF/JPG/PNG document management with content-signature validation, checksums, retention, local development storage, and S3-compatible production storage
 - Versioned forms and evaluations with stable field IDs, conditional validation, pipeline-stage assignment, review, and CSV export
+- Versioned email templates, notification preferences, communication history, signed delivery webhooks, and a durable retrying background-job queue
 - Interview scheduling and cancellation
 - Job lifecycle and searchable, paginated job listings
 - Per-job applications with transactional stage history

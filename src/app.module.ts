@@ -17,6 +17,7 @@ import { ApplicationsModule } from './applications/applications.module';
 import { SecurityMiddleware } from './common/middleware/security.middleware';
 import { PipelinesModule } from './pipelines/pipelines.module';
 import { TimelineModule } from './timeline/timeline.module';
+import { CommunicationsModule } from './communications/communications.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { TimelineModule } from './timeline/timeline.module';
     ApplicationsModule,
     PipelinesModule,
     TimelineModule,
+    CommunicationsModule,
   ],
   controllers: [],
   providers: [],

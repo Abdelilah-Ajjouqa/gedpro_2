@@ -29,6 +29,21 @@ Content-Type: application/json
 GET {{baseUrl}}/users/profile
 Authorization: Bearer {{authToken}}
 
+### Queue an idempotent candidate communication
+POST {{baseUrl}}/communications
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "type": "interview_reminder",
+  "interviewId": 1,
+  "idempotencyKey": "interview-1-reminder-24h"
+}
+
+### Inspect application communication history
+GET {{baseUrl}}/communications?applicationId=1
+Authorization: Bearer {{authToken}}
+
 ### Rotate refresh token
 POST {{baseUrl}}/auth/refresh
 Content-Type: application/json

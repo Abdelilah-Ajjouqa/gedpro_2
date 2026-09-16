@@ -17,6 +17,7 @@ import {
   CALENDAR_PROVIDERS,
   InternalCalendarProvider,
 } from './calendar/calendar-provider';
+import { CommunicationsModule } from '../communications/communications.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import {
     UsersModule,
     CandidatesModule,
     TimelineModule,
+    CommunicationsModule,
   ],
   controllers: [InterviewsController],
   providers: [

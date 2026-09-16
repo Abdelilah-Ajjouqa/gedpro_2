@@ -29,6 +29,8 @@ import {
 } from './dto/application.dto';
 import { ApplicationHistory } from './entities/application-history.entity';
 import { Application } from './entities/application.entity';
+import { CommunicationsService } from '../communications/communications.service';
+import { CommunicationType } from '../communications/entities/communication.entity';
 @Injectable()
 export class ApplicationsService {
   constructor(
@@ -36,6 +38,7 @@ export class ApplicationsService {
     private applications: Repository<Application>,
     private dataSource: DataSource,
     private timeline: TimelineService,
+    private communications: CommunicationsService,
   ) {}
   async create(dto: CreateApplicationDto, actor: User) {
     const candidate = await this.dataSource
@@ -73,7 +76,7 @@ export class ApplicationsService {
       : actor;
     if (!owner)
       throw new NotFoundException(`Owner with ID ${dto.ownerId} not found`);
-    return this.dataSource.transaction(async (m) => {
+    const created = await this.dataSource.transaction(async (m) => {
       const app = await m.save(
         m.create(Application, {
           candidate,
@@ -111,6 +114,17 @@ export class ApplicationsService {
       );
       return app;
     });
+    void this.communications
+      .queue(
+        {
+          type: CommunicationType.APPLICATION_ACKNOWLEDGEMENT,
+          applicationId: created.id,
+          idempotencyKey: `application:${created.id}:acknowledgement`,
+        },
+        actor,
+      )
+      .catch(() => undefined);
+    return created;
   }
   async findAll(q: ListApplicationsDto) {
     const where: any = {};
@@ -140,7 +154,7 @@ export class ApplicationsService {
     actor: User,
     reopen = false,
   ) {
-    return this.dataSource.transaction(async (m) => {
+    const moved = await this.dataSource.transaction(async (m) => {
       const app = await m
         .createQueryBuilder(Application, 'application')
         .innerJoinAndSelect('application.currentStage', 'currentStage')
@@ -234,6 +248,25 @@ export class ApplicationsService {
       );
       return app;
     });
+    if (
+      [StageCategory.REJECTED, StageCategory.OFFER].includes(
+        moved.currentStage.category,
+      )
+    )
+      void this.communications
+        .queue(
+          {
+            type:
+              moved.currentStage.category === StageCategory.REJECTED
+                ? CommunicationType.REJECTION
+                : CommunicationType.OFFER,
+            applicationId: moved.id,
+            idempotencyKey: `application:${moved.id}:stage:${moved.currentStage.id}:v${moved.version}`,
+          },
+          actor,
+        )
+        .catch(() => undefined);
+    return moved;
   }
   reopen(id: number, dto: TransitionApplicationDto, actor: User) {
     return this.transition(id, dto, actor, true);

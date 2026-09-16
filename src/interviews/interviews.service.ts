@@ -34,6 +34,8 @@ import { Interview } from './entities/interview.entity';
 import { ScorecardTemplate } from './entities/scorecard-template.entity';
 import { Scorecard } from './entities/scorecard.entity';
 import { InterviewStatus } from './enums/interview-status.enum';
+import { CommunicationsService } from '../communications/communications.service';
+import { CommunicationType } from '../communications/entities/communication.entity';
 
 @Injectable()
 export class InterviewsService {
@@ -54,6 +56,7 @@ export class InterviewsService {
     private readonly stages: Repository<PipelineStage>,
     @Inject(CALENDAR_PROVIDERS) private readonly calendars: CalendarProvider[],
     private readonly timeline: TimelineService,
+    private readonly communications: CommunicationsService,
   ) {}
 
   private record(
@@ -250,6 +253,16 @@ export class InterviewsService {
         conflictingInterviewIds: conflicts.map((i) => i.id),
       });
     saved = await this.sync(saved, 'createEvent');
+    void this.communications
+      .queue(
+        {
+          type: CommunicationType.INTERVIEW_INVITATION,
+          interviewId: saved.id,
+          idempotencyKey: `interview:${saved.id}:invitation:${saved.date.toISOString()}`,
+        },
+        actor,
+      )
+      .catch(() => undefined);
     return this.getOne(saved.id, actor);
   }
   findAll() {
@@ -323,6 +336,16 @@ export class InterviewsService {
         conflictingInterviewIds: conflicts.map((i) => i.id),
       });
     saved = await this.sync(saved, 'updateEvent');
+    void this.communications
+      .queue(
+        {
+          type: CommunicationType.INTERVIEW_INVITATION,
+          interviewId: saved.id,
+          idempotencyKey: `interview:${saved.id}:rescheduled:${saved.date.toISOString()}`,
+        },
+        actor,
+      )
+      .catch(() => undefined);
     return saved;
   }
   async outcome(id: number, dto: InterviewOutcomeDto, actor: User) {
