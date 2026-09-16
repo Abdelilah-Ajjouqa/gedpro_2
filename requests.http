@@ -117,12 +117,44 @@ Content-Type: application/json
 
 {
     "candidateId": 1,
+    "applicationId": 1,
     "date": "2026-06-15T10:00:00Z",
     "type": "HR",
     "duration": 45,
     "location": "Google Meet",
-    "attendees": []
+    "interviewerIds": [1],
+    "attendeeIds": [],
+    "round": 1,
+    "scorecardTemplateId": 1,
+    "feedbackDeadline": "2026-06-16T10:00:00Z",
+    "hideFeedbackUntilComplete": true,
+    "calendarProvider": "internal"
 }
+
+### Create a job-linked scorecard template
+POST {{baseUrl}}/interviews/scorecard-templates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "name": "Technical", "jobId": 1, "criteria": [{ "key": "technical", "label": "Technical ability", "minRating": 1, "maxRating": 5 }] }
+
+### Reschedule with availability validation
+PATCH {{baseUrl}}/interviews/{{interviewId}}/reschedule
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "date": "2026-06-17T10:00:00Z", "duration": 60 }
+
+### Submit assigned feedback
+POST {{baseUrl}}/interviews/scorecards/1/submit
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{ "ratings": { "technical": 5 }, "recommendation": "strong_yes", "privateNotes": "Private reviewer notes" }
+
+### Hiring decision scorecard completion
+GET {{baseUrl}}/interviews/applications/1/decision-summary
+Authorization: Bearer {{authToken}}
 
 ### 12. List Interviews
 GET {{baseUrl}}/interviews

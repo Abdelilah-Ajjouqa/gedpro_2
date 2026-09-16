@@ -351,7 +351,7 @@ Do not begin the next phase. Report completed items, verification evidence, rema
 | 2. Configurable hiring pipelines | Complete | `c8251c8` | Relational reusable pipelines, ordered/archivable stages, transition graphs, job assignment, preserved enum migration, explicit reopen, bulk results, row locking/versioning, and E2E workflow coverage. |
 | 3. Candidate management | Complete | `4c71b5e` | Normalized duplicate detection, update/search/filter/sort/pagination, tags/skills/source/owner, archive/restore, controlled merge, consent/retention/export/erasure workflows, auditing, and E2E coverage. |
 | 4. Unified activity timeline | Complete | `d11236e` | Stable cursor-paginated candidate/application timelines, internal and candidate-visible notes, compact source references, candidate self-access controls, event writers for current recruitment modules, and relational-history backfills. Email/notification events will use the same writer when Phase 8 introduces those records. |
-| 5. Interviews and scorecards | Not started | — | — |
+| 5. Interviews and scorecards | Complete | `a2f2a61` | Application-linked multi-round panels, conflict detection and privileged overrides, rescheduling/outcomes, structured scorecards and missing-feedback summaries, hidden feedback, timeline audits, and failure-isolated calendar-provider abstraction. Google/Microsoft adapters remain deferred until credentials and Phase 8 delivery infrastructure exist. |
 | 6. Document management | Not started | — | — |
 | 7. Forms and evaluations | Not started | — | — |
 | 8. Communication and jobs | Not started | — | — |
