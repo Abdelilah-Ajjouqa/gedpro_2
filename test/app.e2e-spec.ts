@@ -154,6 +154,17 @@ describe('GEDPro health (e2e)', () => {
         .set(auth)
         .expect('Content-Type', /application\/pdf/)
         .expect(200);
+      const signed = await request(app.getHttpServer())
+        .get(`/documents/${document.body.id}/url`)
+        .set(auth)
+        .expect(200);
+      await request(app.getHttpServer())
+        .get(signed.body.url)
+        .expect('Content-Type', /application\/pdf/)
+        .expect(200);
+      await request(app.getHttpServer())
+        .get(`/document-download/${document.body.id}?token=1.invalid`)
+        .expect(403);
       await request(app.getHttpServer())
         .post('/documents/upload')
         .set(auth)
