@@ -61,6 +61,7 @@ export class JobWorkerService implements OnModuleInit, OnModuleDestroy {
         .where('job.status IN (:...statuses)', {
           statuses: [JobStatus.PENDING, JobStatus.RETRY],
         })
+        .andWhere('job.name = :name', { name: 'send-email' })
         .andWhere('job.runAt <= NOW()')
         .orderBy('job.runAt', 'ASC')
         .getOne();

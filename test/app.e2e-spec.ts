@@ -436,6 +436,27 @@ describe('GEDPro health (e2e)', () => {
         .set(auth)
         .expect(200);
       expect(exported.body.applications).toHaveLength(1);
+      const report = await request(app.getHttpServer())
+        .get('/reports/summary')
+        .query({ jobId })
+        .set(auth)
+        .expect(200);
+      expect(report.body.boundaries.toExclusive).toEqual(expect.any(String));
+      expect(report.body.totals.applications).toBe(1);
+      expect(report.body.funnel).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'Applied', count: 1 }),
+        ]),
+      );
+      const reportExport = await request(app.getHttpServer())
+        .post('/reports/exports')
+        .set(auth)
+        .send({ format: 'csv', jobId })
+        .expect(201);
+      expect(reportExport.body).toMatchObject({
+        format: 'csv',
+        status: 'pending',
+      });
       await request(app.getHttpServer())
         .post(`/candidates/${candidateId}/archive`)
         .set(auth)

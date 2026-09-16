@@ -18,6 +18,7 @@ import { SecurityMiddleware } from './common/middleware/security.middleware';
 import { PipelinesModule } from './pipelines/pipelines.module';
 import { TimelineModule } from './timeline/timeline.module';
 import { CommunicationsModule } from './communications/communications.module';
+import { ReportingModule } from './reporting/reporting.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { CommunicationsModule } from './communications/communications.module';
     PipelinesModule,
     TimelineModule,
     CommunicationsModule,
+    ReportingModule,
   ],
   controllers: [],
   providers: [],
