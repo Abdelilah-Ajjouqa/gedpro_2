@@ -4,10 +4,12 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { mkdir } from 'node:fs/promises';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { configureApiVersionAlias } from './common/middleware/api-version.middleware';
 
 async function bootstrap() {
   await mkdir(process.env.UPLOAD_DIR ?? 'uploads', { recursive: true });
   const app = await NestFactory.create(AppModule);
+  configureApiVersionAlias(app);
   app.getHttpAdapter().getInstance().disable('x-powered-by');
 
   app.useGlobalPipes(
@@ -36,6 +38,8 @@ async function bootstrap() {
       'Applicant tracking API for users, candidates, jobs, applications, forms, documents, and interviews.',
     )
     .setVersion('1.0')
+    .addServer('/v1', 'Version 1 (recommended)')
+    .addServer('/', 'Legacy unversioned compatibility')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);

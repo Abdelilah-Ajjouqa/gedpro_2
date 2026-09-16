@@ -11,6 +11,7 @@ import { randomUUID } from 'crypto';
 import { Job } from '../src/jobs/entities/job.entity';
 import { Candidate } from '../src/candidates/entities/candidate.entity';
 import { Pipeline } from '../src/pipelines/entities/pipeline.entity';
+import { configureApiVersionAlias } from '../src/common/middleware/api-version.middleware';
 
 describe('GEDPro health (e2e)', () => {
   let app: INestApplication<App>;
@@ -22,6 +23,7 @@ describe('GEDPro health (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    configureApiVersionAlias(app);
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -49,6 +51,22 @@ describe('GEDPro health (e2e)', () => {
       .get('/health/ready')
       .expect(200)
       .expect({ status: 'ready', postgres: 'up', mongodb: 'up' });
+  });
+
+  it('serves v1 aliases with correlation and metrics', async () => {
+    const versioned = await request(app.getHttpServer())
+      .get('/v1/health')
+      .set('X-Request-Id', 'e2e-correlation-id')
+      .expect('X-Request-Id', 'e2e-correlation-id')
+      .expect('API-Version', '1')
+      .expect(200);
+    expect(versioned.body).toEqual({ status: 'ok' });
+
+    const metrics = await request(app.getHttpServer())
+      .get('/v1/metrics')
+      .expect(200);
+    expect(metrics.text).toContain('gedpro_http_requests_total');
+    expect(metrics.text).toContain('route="/health"');
   });
 
   it('runs a custom pipeline application workflow', async () => {

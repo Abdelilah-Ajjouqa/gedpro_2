@@ -19,6 +19,8 @@ import { PipelinesModule } from './pipelines/pipelines.module';
 import { TimelineModule } from './timeline/timeline.module';
 import { CommunicationsModule } from './communications/communications.module';
 import { ReportingModule } from './reporting/reporting.module';
+import { ObservabilityModule } from './common/observability/observability.module';
+import { ObservabilityMiddleware } from './common/middleware/observability.middleware';
 
 @Module({
   imports: [
@@ -53,12 +55,13 @@ import { ReportingModule } from './reporting/reporting.module';
     TimelineModule,
     CommunicationsModule,
     ReportingModule,
+    ObservabilityModule,
   ],
   controllers: [],
   providers: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(SecurityMiddleware).forRoutes('*');
+    consumer.apply(ObservabilityMiddleware, SecurityMiddleware).forRoutes('*');
   }
 }

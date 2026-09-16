@@ -6,6 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { getRequestId } from '../observability/request-context';
 
 export interface ApiErrorResponse {
   statusCode: number;
@@ -13,6 +14,7 @@ export interface ApiErrorResponse {
   message: string | string[];
   path: string;
   timestamp: string;
+  requestId?: string;
 }
 
 @Catch()
@@ -49,6 +51,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message,
       path: request.originalUrl ?? request.url,
       timestamp: new Date().toISOString(),
+      requestId: getRequestId(),
     };
     response.status(status).json(body);
   }
