@@ -263,3 +263,17 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/documents/1/url
 Authorization: Bearer {{accessToken}}
 Authorization: Bearer {{authToken}}
+# Reporting summary (UTC [from,to) boundaries)
+GET {{baseUrl}}/reports/summary?from=2026-01-01T00:00:00.000Z&to=2027-01-01T00:00:00.000Z
+Authorization: Bearer {{accessToken}}
+
+### Queue an asynchronous Excel export
+POST {{baseUrl}}/reports/exports
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "format": "xlsx",
+  "from": "2026-01-01T00:00:00.000Z",
+  "to": "2027-01-01T00:00:00.000Z"
+}
