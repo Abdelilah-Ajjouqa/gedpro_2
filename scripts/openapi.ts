@@ -2,7 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { AppModule } from '../src/app.module';
-import { createOpenApiDocument } from '../src/common/swagger/openapi';
+import {
+  completeResponseContent,
+  createOpenApiDocument,
+} from '../src/common/swagger/openapi';
+import type { OpenAPIObject } from '@nestjs/swagger';
 import type {
   OperationObject,
   ResponseObject,
@@ -12,6 +16,20 @@ const outputPath = resolve(process.cwd(), 'docs', 'openapi.json');
 process.env.DISABLE_BACKGROUND_WORKERS = 'true';
 
 async function main() {
+  if (process.argv.includes('--refresh-responses')) {
+    const { readFile } = await import('node:fs/promises');
+    const document = JSON.parse(
+      await readFile(outputPath, 'utf8'),
+    ) as OpenAPIObject;
+    completeResponseContent(document);
+    await writeFile(
+      outputPath,
+      `${JSON.stringify(document, null, 2)}\n`,
+      'utf8',
+    );
+    return;
+  }
+
   const app = await NestFactory.create(AppModule, { logger: false });
   await app.init();
 
