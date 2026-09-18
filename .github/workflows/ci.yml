@@ -55,7 +55,7 @@ jobs:
           npm run migration:run
           npm run migration:revert
           npm run migration:run
-      - run: npm run test:e2e -- --runInBand
+      - run: npm run test:e2e
       - run: npm run openapi:check
       - name: Build production image
-        run: docker build -t gedpro:${{ github.sha }} .
+        run: docker build -f apps/api/Dockerfile -t gedpro-api:${{ github.sha }} .

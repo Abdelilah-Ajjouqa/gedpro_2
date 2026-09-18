@@ -1,6 +1,9 @@
 # compiled output
 /dist
 /node_modules
+**/dist
+**/.next
+**/coverage
 /build
 
 # Logs
@@ -48,6 +51,7 @@ lerna-debug.log*
 
 # Runtime data
 /uploads/
+**/uploads/
 /minio_data/
 pids
 *.pid

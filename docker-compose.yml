@@ -39,7 +39,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: apps/api/Dockerfile
     container_name: gedpro_app
     environment:
       NODE_ENV: production
@@ -56,7 +56,7 @@ services:
       EMAIL_PROVIDER: log
       EMAIL_WEBHOOK_SECRET: your-email-webhook-secret-change-in-production
       CORS_ORIGINS: http://localhost:3000
-      PORT: 3000
+      PORT: 3001
       UPLOAD_DIR: uploads
       DOCUMENT_STORAGE_PROVIDER: s3
       S3_ENDPOINT: minio
@@ -66,7 +66,7 @@ services:
       S3_SECRET_KEY: gedpro_minio_password
       S3_BUCKET: gedpro-documents
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
       - ./uploads:/app/uploads
     depends_on:
