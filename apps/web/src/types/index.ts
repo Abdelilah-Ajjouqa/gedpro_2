@@ -26,4 +26,41 @@ type DashboardData = {
   metrics: DashboardMetric[];
 };
 
-export type { DashboardData, DashboardMetric, MetricTone, Person };
+type CandidateStatus = 'new' | 'reviewing' | 'interview' | 'offer' | 'hired' | 'rejected';
+
+type StatusTone = 'neutral' | 'warning' | 'success' | 'danger';
+
+type Candidate = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  avatarUrl?: string;
+  rating: number;
+  appliedAt: string;
+  status: CandidateStatus;
+};
+
+type PipelineStage = {
+  id: CandidateStatus;
+  label: string;
+  candidates: Candidate[];
+};
+
+type StatusDefinition = {
+  label: string;
+  tone: StatusTone;
+  icon?: LucideIcon;
+};
+
+export type {
+  Candidate,
+  CandidateStatus,
+  DashboardData,
+  DashboardMetric,
+  MetricTone,
+  Person,
+  PipelineStage,
+  StatusDefinition,
+  StatusTone,
+};
