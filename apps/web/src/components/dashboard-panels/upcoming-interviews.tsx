@@ -7,7 +7,7 @@ import type { Interview } from '@/types';
 
 function UpcomingInterviews({ interviews }: { interviews: Interview[] }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card" aria-labelledby="upcoming-interviews-heading">
+    <section className="overflow-hidden rounded-xl border border-border bg-card" aria-labelledby="upcoming-interviews-heading">
       <PanelHeader
         title="Upcoming interviews"
         description={`${interviews.length} scheduled next`}

@@ -7,7 +7,7 @@ import type { ActivityEvent } from '@/types';
 
 function RecentActivity({ activity }: { activity: ActivityEvent[] }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card" aria-labelledby="recent-activity-heading">
+    <section className="overflow-hidden rounded-xl border border-border bg-card" aria-labelledby="recent-activity-heading">
       <PanelHeader title="Recent activity" description="Latest team updates" icon={Activity} action={<Button variant="ghost" size="sm">View all</Button>} />
       <h2 id="recent-activity-heading" className="sr-only">Recent activity</h2>
       <ol>

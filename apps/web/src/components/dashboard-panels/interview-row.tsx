@@ -1,6 +1,7 @@
 import { Building2, MoreHorizontal, Phone, Video } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Avatar } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { Interview } from '@/types';
 
@@ -12,15 +13,12 @@ const meetingConfig = {
 
 function InterviewRow({ interview }: { interview: Interview }) {
   const fullName = `${interview.candidate.firstName} ${interview.candidate.lastName}`;
-  const initials = `${interview.candidate.firstName[0]}${interview.candidate.lastName[0]}`;
   const meeting = meetingConfig[interview.meetingType];
   const MeetingIcon = meeting.icon;
 
   return (
-    <li className="flex flex-wrap items-center gap-3 px-4 py-3.5 sm:flex-nowrap sm:px-5">
-      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-bold text-secondary-foreground" aria-label={`${fullName} initials`}>
-        {initials}
-      </span>
+    <li className="flex flex-wrap items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/45 sm:flex-nowrap sm:px-5">
+      <Avatar src={interview.candidate.avatarUrl} firstName={interview.candidate.firstName} lastName={interview.candidate.lastName} size={36} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold" title={fullName}>{fullName}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground" title={interview.candidate.role}>{interview.candidate.role}</p>

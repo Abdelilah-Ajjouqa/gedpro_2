@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { MobileNav, PrimaryNav } from '@/components/app-shell/navigation';
 import { ThemeToggle } from '@/components/app-shell/theme-toggle';
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -19,7 +20,7 @@ function SearchAction() {
 }
 
 function UserMenu() {
-  return <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="h-10 gap-2 px-1.5 sm:pr-3" aria-label="Open user menu"><span className="grid size-7 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">AM</span><span className="hidden text-left lg:block"><span className="block text-xs font-semibold">Alex Morgan</span><span className="block text-[10px] text-muted-foreground">Hiring manager</span></span></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-52"><DropdownMenuLabel>My account</DropdownMenuLabel><DropdownMenuSeparator /><DropdownMenuItem><UserRound className="size-4" />Profile</DropdownMenuItem><DropdownMenuItem><Settings className="size-4" />Settings</DropdownMenuItem><DropdownMenuSeparator /><DropdownMenuItem><LogOut className="size-4" />Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu>;
+  return <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="h-10 gap-2 px-1.5 sm:pr-3" aria-label="Open user menu"><Avatar src="/assets/avatars/alex-morgan.jpg" firstName="Alex" lastName="Morgan" size={28} /><span className="hidden text-left lg:block"><span className="block text-xs font-semibold">Alex Morgan</span><span className="block text-[10px] text-muted-foreground">Hiring manager</span></span></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-52"><DropdownMenuLabel>My account</DropdownMenuLabel><DropdownMenuSeparator /><DropdownMenuItem><UserRound className="size-4" />Profile</DropdownMenuItem><DropdownMenuItem><Settings className="size-4" />Settings</DropdownMenuItem><DropdownMenuSeparator /><DropdownMenuItem><LogOut className="size-4" />Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu>;
 }
 
 function AppHeader() {

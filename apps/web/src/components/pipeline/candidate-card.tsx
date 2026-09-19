@@ -1,23 +1,17 @@
 import { CalendarDays, MoreHorizontal, Star } from 'lucide-react';
-import Image from 'next/image';
 
 import { StatusBadge } from '@/components/pipeline/status-badge';
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import type { Candidate } from '@/types';
-
-function getInitials(candidate: Candidate) {
-  return `${candidate.firstName.charAt(0)}${candidate.lastName.charAt(0)}`.toUpperCase();
-}
 
 function CandidateCard({ candidate }: { candidate: Candidate }) {
   const fullName = `${candidate.firstName} ${candidate.lastName}`;
 
   return (
-    <article className="rounded-lg border border-border bg-card p-3.5 shadow-sm">
+    <article className="rounded-lg border border-border bg-card p-3.5 shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md">
       <div className="flex items-start gap-3">
-        <div className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-secondary text-[11px] font-bold text-secondary-foreground" aria-label={candidate.avatarUrl ? `${fullName} profile photo` : `${fullName} initials`}>
-          {candidate.avatarUrl ? <Image src={candidate.avatarUrl} alt="" width={36} height={36} className="size-full object-cover" /> : getInitials(candidate)}
-        </div>
+        <Avatar src={candidate.avatarUrl} firstName={candidate.firstName} lastName={candidate.lastName} size={36} />
         <div className="min-w-0 flex-1">
           <h4 className="truncate text-sm font-semibold tracking-[-0.015em]" title={fullName}>{fullName}</h4>
           <p className="mt-0.5 truncate text-xs text-muted-foreground" title={candidate.role}>{candidate.role}</p>
