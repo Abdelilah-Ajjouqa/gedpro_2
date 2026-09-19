@@ -9,8 +9,8 @@ import { DashboardPanels } from '@/components/dashboard-panels/dashboard-panels'
 import { DashboardSummary } from '@/components/dashboard/dashboard-summary';
 import { HiringPipeline } from '@/components/pipeline/hiring-pipeline';
 import { Button } from '@/components/ui/button';
-import { getApiScope } from '@/lib/api-client';
-import { getCandidates, getDashboardMetrics, getPipeline, getRecentActivity, getUpcomingInterviews, type DashboardFilters } from '@/lib/dashboard-api';
+import { ApiError, getApiScope } from '@/lib/api-client';
+import { getCandidates, getDashboardMetrics, getPipeline, getRecentActivity, getUpcomingInterviews, login, type DashboardFilters } from '@/lib/dashboard-api';
 
 function LoadingState() {
   return <div className="space-y-5" aria-label="Loading dashboard"><div className="h-28 animate-pulse rounded-xl bg-muted" /><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-28 animate-pulse rounded-xl bg-muted" />)}</div><div className="h-80 animate-pulse rounded-xl bg-muted" /></div>;
@@ -20,6 +20,9 @@ export function DashboardClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [loginError, setLoginError] = useState<string>();
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const filters = useMemo<DashboardFilters>(() => ({
     jobId: Number(searchParams.get('jobId')) || undefined,
     search: searchParams.get('search') || undefined,
@@ -49,7 +52,34 @@ export function DashboardClient() {
     router.replace(`/?${next.toString()}`);
   }
 
+  async function signIn(event: React.FormEvent) {
+    event.preventDefault();
+    setIsSigningIn(true);
+    setLoginError(undefined);
+    try {
+      const session = await login(credentials.email, credentials.password);
+      window.localStorage.setItem('gedpro.accessToken', session.accessToken);
+      await Promise.all(queries.map((query) => query.refetch()));
+    } catch (reason) {
+      setLoginError(reason instanceof Error ? reason.message : 'Sign in failed.');
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
   if (isPending) return <LoadingState />;
+  if (error instanceof ApiError && error.status === 401) return (
+    <section className="mx-auto max-w-md rounded-xl border border-border bg-card p-6 shadow-sm" aria-labelledby="dashboard-sign-in-heading">
+      <h1 id="dashboard-sign-in-heading" className="text-xl font-semibold">Sign in to GEDPro</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Use your recruiter, manager, or administrator account to load the dashboard.</p>
+      <form className="mt-5 space-y-4" onSubmit={signIn}>
+        <label className="block text-sm font-medium">Email<input className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3" type="email" autoComplete="email" required value={credentials.email} onChange={(event) => setCredentials((current) => ({ ...current, email: event.target.value }))} /></label>
+        <label className="block text-sm font-medium">Password<input className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3" type="password" autoComplete="current-password" required value={credentials.password} onChange={(event) => setCredentials((current) => ({ ...current, password: event.target.value }))} /></label>
+        {loginError ? <p className="text-sm text-destructive" role="alert">{loginError}</p> : null}
+        <Button className="w-full" type="submit" disabled={isSigningIn}>{isSigningIn ? 'Signing in…' : 'Sign in'}</Button>
+      </form>
+    </section>
+  );
   if (error || !metrics.data || !pipeline.data || !interviews.data || !activity.data) return (
     <section className="rounded-xl border border-destructive/30 bg-card p-8 text-center" role="alert">
       <AlertCircle className="mx-auto size-8 text-destructive" /><h1 className="mt-3 text-lg font-semibold">Dashboard data is unavailable</h1>

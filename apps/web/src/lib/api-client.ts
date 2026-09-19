@@ -35,7 +35,12 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
 
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new ApiError(body?.message ?? `API request failed (${response.status})`, response.status);
+    const apiOrigin = new URL(API_URL).origin;
+    const isCallingWebApp = typeof window !== 'undefined' && apiOrigin === window.location.origin;
+    const message = isCallingWebApp && response.status === 404
+      ? 'The API URL points to the web server. Start both apps with `npm run dev` and open http://localhost:3000.'
+      : body?.message ?? `API request failed (${response.status})`;
+    throw new ApiError(message, response.status);
   }
 
   return response.json() as Promise<T>;

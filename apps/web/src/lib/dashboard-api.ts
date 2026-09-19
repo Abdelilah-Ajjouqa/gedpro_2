@@ -20,6 +20,12 @@ export type DashboardFilters = {
   limit: number;
 };
 
+type LoginResponse = { accessToken: string };
+
+export function login(email: string, password: string) {
+  return apiRequest<LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+}
+
 const statusByCategory: Record<string, CandidateStatus> = {
   applied: 'new', screening: 'reviewing', interview: 'interview', offer: 'offer', hired: 'hired', rejected: 'rejected', withdrawn: 'rejected',
 };

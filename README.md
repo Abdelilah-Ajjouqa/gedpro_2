@@ -29,6 +29,8 @@ Copy `apps/api/.env.example` to `apps/api/.env`, then start both applications:
 npm run dev
 ```
 
+Run this command from the repository root. The web workspace uses port 3000 explicitly so it cannot silently take the API's port when the API is not running.
+
 - Web: http://localhost:3000
 - API: http://localhost:3001
 - Swagger: http://localhost:3001/api
