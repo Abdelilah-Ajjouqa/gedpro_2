@@ -1,6 +1,6 @@
 import { BriefcaseBusiness, CalendarDays, Sparkles, UsersRound } from 'lucide-react';
 
-import type { DashboardData, PipelineStage } from '@/types';
+import type { DashboardData, DashboardPanelsData, PipelineStage } from '@/types';
 
 const dashboardFixture: DashboardData = {
   manager: {
@@ -96,4 +96,40 @@ async function getPipelineData(): Promise<PipelineStage[]> {
   return pipelineFixture;
 }
 
-export { getDashboardData, getPipelineData };
+const dashboardPanelsFixture: DashboardPanelsData = {
+  interviews: [
+    {
+      id: 'interview-olivia-brown',
+      candidate: { id: 'candidate-olivia-brown', firstName: 'Olivia', lastName: 'Brown', role: 'Backend Engineer' },
+      scheduledFor: 'Today',
+      timeLabel: '10:30 AM',
+      meetingType: 'video',
+    },
+    {
+      id: 'interview-liam-davis',
+      candidate: { id: 'candidate-liam-davis', firstName: 'Liam', lastName: 'Davis', role: 'Data Analyst' },
+      scheduledFor: 'Today',
+      timeLabel: '2:00 PM',
+      meetingType: 'video',
+    },
+    {
+      id: 'interview-sofia-martinez',
+      candidate: { id: 'candidate-sofia-martinez', firstName: 'Sofia', lastName: 'Martinez', role: 'Product Manager' },
+      scheduledFor: 'Tomorrow',
+      timeLabel: '11:00 AM',
+      meetingType: 'onsite',
+    },
+  ],
+  activity: [
+    { id: 'activity-hired', description: 'James Wilson was moved to Hired', timestamp: '12 min ago', type: 'candidate-hired', tone: 'success' },
+    { id: 'activity-offer', description: 'An offer was sent to Ava Thompson', timestamp: '48 min ago', type: 'offer-sent', tone: 'success' },
+    { id: 'activity-interview', description: 'Interview scheduled with Olivia Brown', timestamp: '2 hr ago', type: 'interview-scheduled', tone: 'warning' },
+    { id: 'activity-added', description: 'Maya Chen was added to the pipeline', timestamp: '4 hr ago', type: 'candidate-added', tone: 'neutral' },
+  ],
+};
+
+async function getDashboardPanelsData(): Promise<DashboardPanelsData> {
+  return dashboardPanelsFixture;
+}
+
+export { getDashboardData, getDashboardPanelsData, getPipelineData };

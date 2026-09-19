@@ -47,6 +47,29 @@ type PipelineStage = {
   candidates: Candidate[];
 };
 
+type Interview = {
+  id: string;
+  candidate: Person;
+  scheduledFor: string;
+  timeLabel: string;
+  meetingType: 'video' | 'phone' | 'onsite';
+};
+
+type ActivityTone = 'neutral' | 'warning' | 'success' | 'danger';
+
+type ActivityEvent = {
+  id: string;
+  description: string;
+  timestamp: string;
+  type: 'candidate-added' | 'interview-scheduled' | 'offer-sent' | 'candidate-hired';
+  tone: ActivityTone;
+};
+
+type DashboardPanelsData = {
+  interviews: Interview[];
+  activity: ActivityEvent[];
+};
+
 type StatusDefinition = {
   label: string;
   tone: StatusTone;
@@ -56,9 +79,13 @@ type StatusDefinition = {
 export type {
   Candidate,
   CandidateStatus,
+  ActivityEvent,
+  ActivityTone,
   DashboardData,
+  DashboardPanelsData,
   DashboardMetric,
   MetricTone,
+  Interview,
   Person,
   PipelineStage,
   StatusDefinition,
