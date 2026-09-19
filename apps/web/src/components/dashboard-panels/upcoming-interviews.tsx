@@ -16,7 +16,7 @@ function UpcomingInterviews({ interviews }: { interviews: Interview[] }) {
       />
       <h2 id="upcoming-interviews-heading" className="sr-only">Upcoming interviews</h2>
       <ul className="divide-y divide-border">
-        {interviews.map((interview) => <InterviewRow key={interview.id} interview={interview} />)}
+        {interviews.length ? interviews.map((interview) => <InterviewRow key={interview.id} interview={interview} />) : <li className="px-5 py-10 text-center text-sm text-muted-foreground">No upcoming interviews.</li>}
       </ul>
     </section>
   );

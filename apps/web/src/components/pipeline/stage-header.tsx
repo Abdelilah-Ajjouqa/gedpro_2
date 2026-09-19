@@ -1,7 +1,5 @@
-import type { CandidateStatus } from '@/types';
-
 type StageHeaderProps = {
-  id: CandidateStatus;
+  id: string;
   label: string;
   count: number;
 };

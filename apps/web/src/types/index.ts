@@ -32,6 +32,8 @@ type StatusTone = 'neutral' | 'warning' | 'success' | 'danger';
 
 type Candidate = {
   id: string;
+  applicationId?: number;
+  stageId?: number;
   firstName: string;
   lastName: string;
   role: string;
@@ -42,7 +44,9 @@ type Candidate = {
 };
 
 type PipelineStage = {
-  id: CandidateStatus;
+  id: string;
+  stageId?: number;
+  status: CandidateStatus;
   label: string;
   candidates: Candidate[];
 };

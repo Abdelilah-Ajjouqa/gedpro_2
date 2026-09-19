@@ -1,22 +1,13 @@
 import { AppShell } from '@/components/app-shell/app-shell';
-import { DashboardSummary } from '@/components/dashboard/dashboard-summary';
-import { DashboardPanels } from '@/components/dashboard-panels/dashboard-panels';
-import { HiringPipeline } from '@/components/pipeline/hiring-pipeline';
-import { getDashboardData, getDashboardPanelsData, getPipelineData } from '@/data';
+import { DashboardClient } from '@/components/dashboard/dashboard-client';
+import { QueryProvider } from '@/components/providers/query-provider';
+import { Suspense } from 'react';
 
-export default async function Home() {
-  const [dashboardData, pipelineData, panelsData] = await Promise.all([
-    getDashboardData(),
-    getPipelineData(),
-    getDashboardPanelsData(),
-  ]);
-
+export default function Home() {
   return (
     <AppShell>
       <main className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-        <DashboardSummary data={dashboardData} />
-        <HiringPipeline stages={pipelineData} />
-        <DashboardPanels data={panelsData} />
+        <QueryProvider><Suspense fallback={<div className="h-80 animate-pulse rounded-xl bg-muted" />}><DashboardClient /></Suspense></QueryProvider>
       </main>
     </AppShell>
   );
