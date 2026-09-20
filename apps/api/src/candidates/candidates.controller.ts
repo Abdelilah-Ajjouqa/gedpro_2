@@ -47,14 +47,15 @@ export class CandidatesController {
   }
   @Get() @ApiOperation({ summary: 'Search and filter active candidates' }) list(
     @Query() q: ListCandidatesDto,
+    @Req() r: { user: User },
   ) {
-    return this.service.findAll(q);
+    return this.service.findAll(q, r.user);
   }
   @Get(':id')
   @ApiOperation({ summary: 'Get an active candidate' })
   @ApiNotFoundResponse({ description: 'Candidate not found' })
-  one(@Param('id') id: string) {
-    return this.service.findOne(+id);
+  one(@Param('id') id: string, @Req() r: { user: User }) {
+    return this.service.findOne(+id, false, r.user);
   }
   @Patch(':id')
   @Roles(Role.RH, Role.ADMIN)
@@ -82,6 +83,7 @@ export class CandidatesController {
     return this.service.restore(+id, r.user);
   }
   @Get(':id/duplicates')
+  @Roles(Role.RH, Role.ADMIN)
   @ApiOperation({
     summary: 'Find candidates sharing normalized email or phone',
   })

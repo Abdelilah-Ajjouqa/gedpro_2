@@ -77,8 +77,23 @@ export class TimelineService {
   }
 
   private async authorize(candidate: Candidate, user: User) {
-    if (user.role !== Role.CANDIDATE) return;
-    if (candidate.normalizedEmail !== user.email.trim().toLowerCase())
+    if (user.role === Role.MANAGER) {
+      const permitted = await this.applications.count({
+        where: {
+          candidate: { id: candidate.id },
+          job: { owner: { id: user.id } },
+        },
+      });
+      if (!permitted)
+        throw new ForbiddenException(
+          'Candidate is outside the manager job scope',
+        );
+      return;
+    }
+    if (
+      user.role === Role.CANDIDATE &&
+      candidate.normalizedEmail !== user.email.trim().toLowerCase()
+    )
       throw new ForbiddenException(
         'Candidates may only read their own timeline',
       );

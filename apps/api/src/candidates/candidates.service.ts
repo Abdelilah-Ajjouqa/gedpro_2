@@ -31,6 +31,7 @@ import {
   TimelineTargetType,
 } from '../timeline/entities/timeline-event.entity';
 import { TimelineService } from '../timeline/timeline.service';
+import { Role } from '../users/enums/role.enum';
 @Injectable()
 export class CandidatesService {
   constructor(
@@ -92,10 +93,23 @@ export class CandidatesService {
     });
     return candidate;
   }
-  async findAll(q: ListCandidatesDto) {
+  async findAll(q: ListCandidatesDto, actor?: User) {
     const b = this.candidates
       .createQueryBuilder('candidate')
       .leftJoinAndSelect('candidate.owner', 'owner');
+    if (actor?.role === Role.MANAGER)
+      b.innerJoin(
+        Application,
+        'authorizedApplication',
+        'authorizedApplication.candidateId = candidate.id',
+      )
+        .innerJoin(
+          'authorizedApplication.job',
+          'authorizedJob',
+          'authorizedJob.ownerId = :managerId',
+          { managerId: actor.id },
+        )
+        .distinct(true);
     if (!q.includeArchived)
       b.andWhere('candidate.archivedAt IS NULL').andWhere(
         'candidate.mergedIntoId IS NULL',
@@ -120,7 +134,14 @@ export class CandidatesService {
       .getManyAndCount();
     return { data, total, page: q.page, limit: q.limit };
   }
-  async findOne(id: number, includeArchived = false) {
+  async findOne(id: number, includeArchived = false, actor?: User) {
+    if (
+      actor?.role === Role.MANAGER &&
+      !(await this.dataSource.getRepository(Application).count({
+        where: { candidate: { id }, job: { owner: { id: actor.id } } },
+      }))
+    )
+      throw new NotFoundException(`Candidate with ID ${id} not found`);
     const candidate = await this.candidates.findOne({
       where: {
         id,

@@ -2,6 +2,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { createHash } from 'node:crypto';
 import { AuthService } from './auth.service';
+import { AuthorizationService } from './authorization.service';
 
 describe('AuthService security rules', () => {
   const user: any = {
@@ -10,6 +11,7 @@ describe('AuthService security rules', () => {
     password: '',
     role: 'candidate',
     isActive: true,
+    emailVerified: true,
     failedLoginAttempts: 0,
     lockedUntil: null,
   };
@@ -22,6 +24,7 @@ describe('AuthService security rules', () => {
     user.password = await bcrypt.hash('correct-password', 4);
     users = {
       findByEmail: jest.fn().mockResolvedValue(user),
+      findAuthUser: jest.fn().mockResolvedValue(user),
       create: jest.fn(),
       update: jest.fn(),
     };
@@ -44,7 +47,14 @@ describe('AuthService security rules', () => {
         k === 'JWT_SECRET' ? 'a'.repeat(40) : 'b'.repeat(40),
       ),
     };
-    service = new AuthService(users, config, sessions, actions, audit);
+    service = new AuthService(
+      users,
+      config,
+      sessions,
+      actions,
+      audit,
+      new AuthorizationService(),
+    );
   });
 
   it('rotates refresh tokens and revokes the previous session', async () => {
@@ -93,6 +103,32 @@ describe('AuthService security rules', () => {
       message: 'If the account exists, instructions will be sent.',
     });
     expect(actions.save).not.toHaveBeenCalled();
+  });
+
+  it('rejects login before email verification', async () => {
+    user.emailVerified = false;
+    await expect(
+      service.login({ email: user.email, password: 'correct-password' }),
+    ).rejects.toThrow('Email verification required');
+    user.emailVerified = true;
+  });
+
+  it('registers an unverified candidate without issuing a session', async () => {
+    users.findByEmail
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ ...user, emailVerified: false });
+    users.create.mockResolvedValue({ ...user, emailVerified: false });
+    await expect(
+      service.register({
+        firstName: 'Test',
+        lastName: 'Candidate',
+        email: user.email,
+        password: 'long-password-123',
+        confirmPassword: 'long-password-123',
+      }),
+    ).resolves.toEqual({ message: 'Check your email to verify your account.' });
+    expect(sessions.save).not.toHaveBeenCalled();
+    expect(actions.save).toHaveBeenCalled();
   });
 
   it('locks an account after repeated bad passwords', async () => {

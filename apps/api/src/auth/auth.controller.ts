@@ -27,6 +27,7 @@ import {
   VerifyEmailDto,
 } from './dto/token.dto';
 import { AuthActionTokenType } from './entities/auth-action-token.entity';
+import { AuthSessionDto, MessageDto } from './dto/session.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -37,6 +38,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a candidate account' })
   @ApiCreatedResponse({
     description: 'Candidate account and access token created',
+    type: MessageDto,
   })
   @ApiBadRequestResponse({
     description: 'Invalid registration data or password mismatch',
@@ -53,7 +55,10 @@ export class AuthController {
 
   @Post('login')
   @ApiOperation({ summary: 'Log in with email and password' })
-  @ApiOkResponse({ description: 'Authenticated user and access token' })
+  @ApiOkResponse({
+    description: 'Authenticated user, capabilities, and token pair',
+    type: AuthSessionDto,
+  })
   @ApiUnauthorizedResponse({
     description: 'Email or password is incorrect',
     type: ApiErrorDto,
@@ -66,7 +71,10 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Rotate a refresh token' })
-  @ApiOkResponse({ description: 'New access and refresh token pair' })
+  @ApiOkResponse({
+    description: 'New session and rotated token pair',
+    type: AuthSessionDto,
+  })
   @ApiUnauthorizedResponse({
     description: 'Refresh token is invalid, expired, revoked, or reused',
     type: ApiErrorDto,

@@ -38,27 +38,28 @@ export class ApplicationsController {
     description: 'Candidate already applied to this job',
     type: ApiErrorDto,
   })
-  create(@Body() dto: CreateApplicationDto, @Req() req: any) {
-    return this.applications.create(dto, req.user as User);
+  create(@Body() dto: CreateApplicationDto, @Req() req: { user: User }) {
+    return this.applications.create(dto, req.user);
   }
   @Get() @ApiOperation({ summary: 'List applications with filters' }) findAll(
     @Query() query: ListApplicationsDto,
+    @Req() req: { user: User },
   ) {
-    return this.applications.findAll(query);
+    return this.applications.findAll(query, req.user);
   }
   @Get(':id')
   @ApiOperation({ summary: 'Get an application and its stage history' })
-  findOne(@Param('id') id: string) {
-    return this.applications.findOne(+id);
+  findOne(@Param('id') id: string, @Req() req: { user: User }) {
+    return this.applications.findOne(+id, req.user);
   }
   @Patch(':id/stage')
   @ApiOperation({ summary: 'Move an application to another stage' })
   transition(
     @Param('id') id: string,
     @Body() dto: TransitionApplicationDto,
-    @Req() req: any,
+    @Req() req: { user: User },
   ) {
-    return this.applications.transition(+id, dto, req.user as User);
+    return this.applications.transition(+id, dto, req.user);
   }
   @Post(':id/reopen')
   @ApiOperation({
@@ -67,13 +68,13 @@ export class ApplicationsController {
   reopen(
     @Param('id') id: string,
     @Body() dto: TransitionApplicationDto,
-    @Req() req: any,
+    @Req() req: { user: User },
   ) {
-    return this.applications.reopen(+id, dto, req.user as User);
+    return this.applications.reopen(+id, dto, req.user);
   }
   @Post('bulk-move')
   @ApiOperation({ summary: 'Move applications with per-item results' })
-  bulk(@Body() dto: BulkMoveApplicationsDto, @Req() req: any) {
-    return this.applications.bulkMove(dto, req.user as User);
+  bulk(@Body() dto: BulkMoveApplicationsDto, @Req() req: { user: User }) {
+    return this.applications.bulkMove(dto, req.user);
   }
 }

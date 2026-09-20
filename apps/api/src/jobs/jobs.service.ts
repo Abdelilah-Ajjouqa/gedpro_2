@@ -12,6 +12,7 @@ import { CreateJobDto, UpdateJobDto } from './dto/create-job.dto';
 import { ListJobsDto } from './dto/list-jobs.dto';
 import { Job } from './entities/job.entity';
 import { JobStatus } from './enums/job-status.enum';
+import { Role } from '../users/enums/role.enum';
 
 @Injectable()
 export class JobsService {
@@ -33,10 +34,12 @@ export class JobsService {
     return this.jobs.save(this.jobs.create({ ...values, owner, pipeline }));
   }
 
-  async findAll(query: ListJobsDto) {
+  async findAll(query: ListJobsDto, actor?: User) {
     const builder = this.jobs
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.owner', 'owner');
+    if (actor?.role === Role.MANAGER)
+      builder.andWhere('owner.id = :ownerId', { ownerId: actor.id });
     if (query.status)
       builder.andWhere('job.status = :status', { status: query.status });
     if (query.search)
@@ -52,8 +55,10 @@ export class JobsService {
     return { data, total, page: query.page, limit: query.limit };
   }
 
-  async findOne(id: number) {
-    const job = await this.jobs.findOne({ where: { id } });
+  async findOne(id: number, actor?: User) {
+    const where =
+      actor?.role === Role.MANAGER ? { id, owner: { id: actor.id } } : { id };
+    const job = await this.jobs.findOne({ where });
     if (!job) throw new NotFoundException(`Job with ID ${id} not found`);
     return job;
   }

@@ -23,6 +23,7 @@ import {
   AuthActionTokenType,
 } from './entities/auth-action-token.entity';
 import { SecurityAuditService } from './security-audit.service';
+import { AuthorizationService } from './authorization.service';
 
 @Injectable()
 export class AuthService {
@@ -34,6 +35,7 @@ export class AuthService {
     @InjectRepository(AuthActionToken)
     private readonly actionTokens: Repository<AuthActionToken>,
     private readonly audit: SecurityAuditService,
+    private readonly authorization: AuthorizationService,
   ) {}
 
   private hash(token: string) {
@@ -74,7 +76,7 @@ export class AuthService {
       expiresIn: this.seconds('ACCESS_TOKEN_TTL_SECONDS', 900),
     };
   }
-  private publicUser(user: User) {
+  publicUser(user: User) {
     const safe: Partial<User> = { ...user };
     delete safe.password;
     delete safe.failedLoginAttempts;
@@ -96,7 +98,12 @@ export class AuthService {
       role: Role.CANDIDATE,
     });
     await this.audit.record('account.registered', user.id, ip);
-    return { user: this.publicUser(user), ...(await this.issueTokens(user)) };
+    await this.requestAction(
+      user.email,
+      AuthActionTokenType.EMAIL_VERIFICATION,
+      ip,
+    );
+    return { message: 'Check your email to verify your account.' };
   }
   async login(dto: LoginDto, ip?: string) {
     const user = await this.users.findByEmail(dto.email.toLowerCase());
@@ -133,12 +140,20 @@ export class AuthService {
       } else await this.audit.record('login.failed', null, ip);
       throw new UnauthorizedException('Email or password incorrect');
     }
+    if (!user.emailVerified) {
+      await this.audit.record('login.email_unverified', user.id, ip);
+      throw new UnauthorizedException('Email verification required');
+    }
     await this.users.update(user.id, {
       failedLoginAttempts: 0,
       lockedUntil: null,
     });
     await this.audit.record('login.succeeded', user.id, ip);
-    return { user: this.publicUser(user), ...(await this.issueTokens(user)) };
+    return {
+      user: this.publicUser(user),
+      capabilities: this.authorization.capabilitiesFor(user.role),
+      ...(await this.issueTokens(user)),
+    };
   }
   async refresh(token: string, ip?: string) {
     let payload: any;
@@ -181,7 +196,14 @@ export class AuthService {
     }
     await this.sessions.update(session.id, { revokedAt: new Date() });
     await this.audit.record('refresh.rotated', session.user.id, ip);
-    return this.issueTokens(session.user);
+    const current = await this.users.findAuthUser(session.user.id);
+    if (!current || !current.emailVerified)
+      throw new UnauthorizedException('Invalid refresh token');
+    return {
+      user: this.publicUser(current),
+      capabilities: this.authorization.capabilitiesFor(current.role),
+      ...(await this.issueTokens(current)),
+    };
   }
   async logout(token: string, ip?: string) {
     const session = await this.sessions.findOne({

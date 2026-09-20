@@ -28,4 +28,37 @@ describe('OpenAPI response contracts', () => {
       }
     }
   });
+
+  it('publishes safe and complete authentication schemas', () => {
+    const path = resolve(process.cwd(), 'docs', 'openapi.json');
+    const document = JSON.parse(readFileSync(path, 'utf8')) as OpenAPIObject;
+    const schemas = document.components?.schemas ?? {};
+    const publicUser = schemas.PublicUserDto as {
+      properties?: Record<string, unknown>;
+    };
+    const session = schemas.AuthSessionDto as {
+      properties?: Record<string, unknown>;
+    };
+    const apiError = schemas.ApiErrorDto as {
+      properties?: Record<string, unknown>;
+    };
+
+    expect(Object.keys(publicUser.properties ?? {})).not.toEqual(
+      expect.arrayContaining([
+        'password',
+        'failedLoginAttempts',
+        'lockedUntil',
+      ]),
+    );
+    expect(Object.keys(session.properties ?? {})).toEqual(
+      expect.arrayContaining([
+        'user',
+        'capabilities',
+        'accessToken',
+        'refreshToken',
+        'expiresIn',
+      ]),
+    );
+    expect(apiError.properties).toHaveProperty('requestId');
+  });
 });

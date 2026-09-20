@@ -22,11 +22,11 @@ export class CreateUserDto {
   lastName: string;
 
   @IsNotEmpty()
-  @MinLength(6)
+  @MinLength(12)
   password: string;
 
   @IsNotEmpty()
-  @MinLength(6)
+  @MinLength(12)
   confirmPassword: string;
 
   @IsOptional()

@@ -30,20 +30,20 @@ export class JobsController {
   @Post()
   @ApiOperation({ summary: 'Create a draft job' })
   @Roles(Role.ADMIN, Role.RH)
-  create(@Body() dto: CreateJobDto, @Req() req: any) {
-    return this.jobs.create(dto, req.user as User);
+  create(@Body() dto: CreateJobDto, @Req() req: { user: User }) {
+    return this.jobs.create(dto, req.user);
   }
   @Get()
   @ApiOperation({ summary: 'List and search jobs' })
   @Roles(Role.ADMIN, Role.RH, Role.MANAGER)
-  findAll(@Query() query: ListJobsDto) {
-    return this.jobs.findAll(query);
+  findAll(@Query() query: ListJobsDto, @Req() req: { user: User }) {
+    return this.jobs.findAll(query, req.user);
   }
   @Get(':id')
   @ApiOperation({ summary: 'Get a job by ID' })
   @Roles(Role.ADMIN, Role.RH, Role.MANAGER)
-  findOne(@Param('id') id: string) {
-    return this.jobs.findOne(+id);
+  findOne(@Param('id') id: string, @Req() req: { user: User }) {
+    return this.jobs.findOne(+id, req.user);
   }
   @Patch(':id')
   @ApiOperation({ summary: 'Update a job' })

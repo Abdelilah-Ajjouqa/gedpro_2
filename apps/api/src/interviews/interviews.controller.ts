@@ -51,8 +51,8 @@ export class InterviewsController {
   @Get()
   @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
   @ApiOperation({ summary: 'List interviews' })
-  findAll() {
-    return this.service.findAll();
+  findAll(@Req() req: { user: User }) {
+    return this.service.findAll(req.user);
   }
   @Get(':id')
   @Roles(Role.RH, Role.ADMIN, Role.MANAGER)

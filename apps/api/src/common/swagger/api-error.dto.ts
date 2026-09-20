@@ -10,4 +10,6 @@ export class ApiErrorDto {
   message: string | string[];
   @ApiProperty({ example: '/jobs' }) path: string;
   @ApiProperty({ example: '2026-09-15T10:00:00.000Z' }) timestamp: string;
+  @ApiProperty({ required: false, example: 'req_01JABCDEF' })
+  requestId?: string;
 }

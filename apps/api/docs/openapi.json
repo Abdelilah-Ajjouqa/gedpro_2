@@ -116,7 +116,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/CurrentUserDto"
                 }
               }
             }
@@ -980,28 +980,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "user",
-                    "accessToken",
-                    "refreshToken",
-                    "token"
-                  ],
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    },
-                    "accessToken": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    },
-                    "token": {
-                      "type": "string",
-                      "description": "Backward-compatible access-token alias"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageDto"
                 }
               }
             }
@@ -1049,32 +1028,11 @@
         },
         "responses": {
           "200": {
-            "description": "Authenticated user and access token",
+            "description": "Authenticated user, capabilities, and token pair",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "user",
-                    "accessToken",
-                    "refreshToken",
-                    "token"
-                  ],
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    },
-                    "accessToken": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    },
-                    "token": {
-                      "type": "string",
-                      "description": "Backward-compatible access-token alias"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthSessionDto"
                 }
               }
             }
@@ -1112,32 +1070,11 @@
         },
         "responses": {
           "200": {
-            "description": "New access and refresh token pair",
+            "description": "New session and rotated token pair",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "user",
-                    "accessToken",
-                    "refreshToken",
-                    "token"
-                  ],
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    },
-                    "accessToken": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    },
-                    "token": {
-                      "type": "string",
-                      "description": "Backward-compatible access-token alias"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthSessionDto"
                 }
               }
             }
@@ -6924,6 +6861,10 @@
           "timestamp": {
             "type": "string",
             "example": "2026-09-15T10:00:00.000Z"
+          },
+          "requestId": {
+            "type": "string",
+            "example": "req_01JABCDEF"
           }
         },
         "required": [
@@ -6951,11 +6892,11 @@
           },
           "password": {
             "type": "string",
-            "minLength": 6
+            "minLength": 12
           },
           "confirmPassword": {
             "type": "string",
-            "minLength": 6
+            "minLength": 12
           },
           "role": {
             "type": "string",
@@ -7040,6 +6981,75 @@
           "updatedAt"
         ]
       },
+      "PublicUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "rh",
+              "manager",
+              "candidate"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "isActive",
+          "emailVerified",
+          "role",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CurrentUserDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/PublicUserDto"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "user",
+          "capabilities"
+        ]
+      },
       "UpdateUserDto": {
         "type": "object",
         "properties": {
@@ -7093,11 +7103,11 @@
           },
           "password": {
             "type": "string",
-            "minLength": 6
+            "minLength": 12
           },
           "confirmPassword": {
             "type": "string",
-            "minLength": 6
+            "minLength": 12
           }
         },
         "required": [
@@ -7106,6 +7116,17 @@
           "lastName",
           "password",
           "confirmPassword"
+        ]
+      },
+      "MessageDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
         ]
       },
       "LoginDto": {
@@ -7122,6 +7143,42 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "AuthSessionDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/PublicUserDto"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "Backward-compatible access-token alias"
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 900
+          }
+        },
+        "required": [
+          "user",
+          "capabilities",
+          "accessToken",
+          "refreshToken",
+          "token",
+          "expiresIn"
         ]
       },
       "RefreshTokenDto": {

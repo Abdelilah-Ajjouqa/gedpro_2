@@ -38,19 +38,6 @@ const pageOf = (items: OpenApiSchema): SchemaObject => ({
     limit: { type: 'integer' },
   },
 });
-const tokenPair: SchemaObject = {
-  type: 'object',
-  required: ['user', 'accessToken', 'refreshToken', 'token'],
-  properties: {
-    user: ref('User'),
-    accessToken: { type: 'string' },
-    refreshToken: { type: 'string' },
-    token: {
-      type: 'string',
-      description: 'Backward-compatible access-token alias',
-    },
-  },
-};
 const timelinePage: SchemaObject = {
   type: 'object',
   required: ['data', 'nextCursor'],
@@ -105,9 +92,9 @@ const responseSchemas = new Map<string, OpenApiSchema>([
       },
     },
   ],
-  ['POST /auth/register', tokenPair],
-  ['POST /auth/login', tokenPair],
-  ['POST /auth/refresh', tokenPair],
+  ['POST /auth/register', ref('MessageDto')],
+  ['POST /auth/login', ref('AuthSessionDto')],
+  ['POST /auth/refresh', ref('AuthSessionDto')],
   ['POST /auth/password-reset/request', message],
   ['POST /auth/password-reset/confirm', message],
   ['POST /auth/email-verification/request', message],

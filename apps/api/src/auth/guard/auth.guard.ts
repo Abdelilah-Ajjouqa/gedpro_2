@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY, ROLES_KEY } from '../decorator/auth.decorator';
 import { Role } from '../../users/enums/role.enum';
 import { User } from '../../users/entities/user.entity';
+import { AuthorizationService } from '../authorization.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -41,22 +42,17 @@ export class RolesGuard implements CanActivate {
     )
       return false;
     if (requiredPermissions) {
-      const capabilities: Record<Role, string[]> = {
-        [Role.ADMIN]: [
-          'users:create',
-          'users:read',
-          'users:update',
-          'users:delete',
-          '*',
-        ],
-        [Role.RH]: ['users:read'],
-        [Role.MANAGER]: [],
-        [Role.CANDIDATE]: [],
+      const aliases: Record<string, string> = {
+        'users:create': 'users:manage',
+        'users:update': 'users:manage',
+        'users:delete': 'users:manage',
       };
-      const granted = capabilities[userEntity.role] ?? [];
       if (
-        !requiredPermissions.every(
-          (permission) => granted.includes('*') || granted.includes(permission),
+        !AuthorizationService.hasEvery(
+          userEntity.role,
+          requiredPermissions.map(
+            (permission) => aliases[permission] ?? permission,
+          ),
         )
       )
         return false;

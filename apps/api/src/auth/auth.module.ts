@@ -9,6 +9,7 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import { AuthSession } from './entities/auth-session.entity';
 import { AuthActionToken } from './entities/auth-action-token.entity';
 import { SecurityAuditEvent } from './entities/security-audit-event.entity';
+import { AuthorizationService } from './authorization.service';
 
 @Module({
   imports: [
@@ -20,8 +21,8 @@ import { SecurityAuditEvent } from './entities/security-audit-event.entity';
     UsersModule,
     PassportModule,
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, AuthorizationService],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, AuthorizationService],
 })
 export class AuthModule {}

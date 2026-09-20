@@ -17,6 +17,10 @@ import { Permissions, Roles } from '../auth/decorator/auth.decorator';
 import { Role } from './enums/role.enum';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiProtected } from '../common/swagger/api-protected.decorator';
+import { AuthorizationService } from '../auth/authorization.service';
+import { CurrentUserDto } from '../auth/dto/session.dto';
+import { ApiOkResponse } from '@nestjs/swagger';
+import { User } from './entities/user.entity';
 
 @ApiTags('Users')
 @ApiProtected()
@@ -43,9 +47,13 @@ export class UsersController {
 
   @Get('profile')
   @ApiOperation({ summary: 'Get the authenticated user profile' })
+  @ApiOkResponse({ type: CurrentUserDto })
   @Roles(Role.ADMIN, Role.RH, Role.MANAGER, Role.CANDIDATE) // All roles
-  getProfile(@Req() req: any) {
-    return req.user;
+  getProfile(@Req() req: { user: User }) {
+    return {
+      user: req.user,
+      capabilities: AuthorizationService.capabilitiesFor(req.user.role),
+    };
   }
 
   @Get(':id')

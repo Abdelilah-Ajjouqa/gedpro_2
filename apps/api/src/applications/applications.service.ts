@@ -31,6 +31,7 @@ import { ApplicationHistory } from './entities/application-history.entity';
 import { Application } from './entities/application.entity';
 import { CommunicationsService } from '../communications/communications.service';
 import { CommunicationType } from '../communications/entities/communication.entity';
+import { Role } from '../users/enums/role.enum';
 @Injectable()
 export class ApplicationsService {
   constructor(
@@ -126,11 +127,13 @@ export class ApplicationsService {
       .catch(() => undefined);
     return created;
   }
-  async findAll(q: ListApplicationsDto) {
+  async findAll(q: ListApplicationsDto, actor?: User) {
     const where: any = {};
     if (q.jobId) where.job = { id: q.jobId };
     if (q.candidateId) where.candidate = { id: q.candidateId };
     if (q.stageId) where.currentStage = { id: q.stageId };
+    if (actor?.role === Role.MANAGER)
+      where.job = { ...(where.job ?? {}), owner: { id: actor.id } };
     const [data, total] = await this.applications.findAndCount({
       where,
       order: { createdAt: 'DESC' },
@@ -139,9 +142,13 @@ export class ApplicationsService {
     });
     return { data, total, page: q.page, limit: q.limit };
   }
-  async findOne(id: number) {
+  async findOne(id: number, actor?: User) {
+    const where =
+      actor?.role === Role.MANAGER
+        ? { id, job: { owner: { id: actor.id } } }
+        : { id };
     const app = await this.applications.findOne({
-      where: { id },
+      where,
       relations: { history: true },
     });
     if (!app)

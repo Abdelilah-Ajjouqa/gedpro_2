@@ -87,7 +87,11 @@ export class InterviewsService {
   private async people(ids: number[]) {
     const unique = [...new Set(ids)];
     const found = unique.length
-      ? await this.users.findBy({ id: In(unique), isActive: true })
+      ? await this.users.findBy({
+          id: In(unique),
+          isActive: true,
+          role: In([Role.ADMIN, Role.RH, Role.MANAGER]),
+        })
       : [];
     if (found.length !== unique.length)
       throw new BadRequestException(
@@ -179,6 +183,8 @@ export class InterviewsService {
       );
     if (application.candidate.id !== candidate.id)
       throw new BadRequestException('Application does not belong to candidate');
+    if (actor.role === Role.MANAGER && application.job.owner.id !== actor.id)
+      throw new ForbiddenException('Job is outside the manager scope');
     const reviewers = await this.people(
       dto.interviewerIds?.length ? dto.interviewerIds : [actor.id],
     );
@@ -265,8 +271,14 @@ export class InterviewsService {
       .catch(() => undefined);
     return this.getOne(saved.id, actor);
   }
-  findAll() {
-    return this.interviews.find({ order: { date: 'ASC' } });
+  findAll(actor: User) {
+    return this.interviews.find({
+      where:
+        actor.role === Role.MANAGER
+          ? { application: { job: { owner: { id: actor.id } } } }
+          : {},
+      order: { date: 'ASC' },
+    });
   }
   private async load(id: number) {
     const result = await this.interviews.findOne({
@@ -285,6 +297,13 @@ export class InterviewsService {
   }
   async getOne(id: number, actor: User) {
     const interview = await this.load(id);
+    if (
+      actor.role === Role.MANAGER &&
+      interview.application?.job.owner.id !== actor.id &&
+      interview.interviewer.id !== actor.id &&
+      !interview.attendees.some((attendee) => attendee.id === actor.id)
+    )
+      throw new ForbiddenException('Interview is outside the manager scope');
     const allSubmitted = interview.scorecards.every((row) => !!row.submittedAt);
     return {
       ...interview,
@@ -306,6 +325,11 @@ export class InterviewsService {
   }
   async reschedule(id: number, dto: RescheduleInterviewDto, actor: User) {
     const interview = await this.load(id);
+    if (
+      actor.role === Role.MANAGER &&
+      interview.application?.job.owner.id !== actor.id
+    )
+      throw new ForbiddenException('Job is outside the manager scope');
     if (
       ![InterviewStatus.SCHEDULED, InterviewStatus.RESCHEDULED].includes(
         interview.status,

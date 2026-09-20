@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { JobStatus } from './enums/job-status.enum';
+import { Role } from '../users/enums/role.enum';
 
 describe('JobsService', () => {
   const repository = { findOne: jest.fn(), save: jest.fn(), merge: jest.fn() };
@@ -24,5 +25,15 @@ describe('JobsService', () => {
     await expect(
       service.changeStatus(1, JobStatus.PUBLISHED),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('roots manager detail access in job ownership', async () => {
+    repository.findOne.mockResolvedValue(null);
+    await expect(
+      service.findOne(42, { id: 7, role: Role.MANAGER } as any),
+    ).rejects.toThrow('Job with ID 42 not found');
+    expect(repository.findOne).toHaveBeenCalledWith({
+      where: { id: 42, owner: { id: 7 } },
+    });
   });
 });
