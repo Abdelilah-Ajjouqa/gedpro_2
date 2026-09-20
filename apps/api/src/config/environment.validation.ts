@@ -22,7 +22,7 @@ export function validateEnvironment(config: Record<string, unknown>) {
   }
 
   const postgresPort = Number(config.POSTGRES_PORT);
-  const appPort = Number(config.PORT ?? 3000);
+  const appPort = Number(config.PORT ?? 3001);
   if (
     !Number.isInteger(postgresPort) ||
     postgresPort < 1 ||

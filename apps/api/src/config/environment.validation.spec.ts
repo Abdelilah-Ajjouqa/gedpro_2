@@ -15,7 +15,7 @@ describe('validateEnvironment', () => {
   it('normalizes numeric ports', () => {
     expect(validateEnvironment(validConfig)).toMatchObject({
       POSTGRES_PORT: 5432,
-      PORT: 3000,
+      PORT: 3001,
     });
   });
 

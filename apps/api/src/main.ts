@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger';
 import { mkdir } from 'node:fs/promises';
@@ -22,7 +23,9 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
+  const config = app.get(ConfigService);
+  const corsOrigins = config
+    .get<string>('CORS_ORIGINS', 'http://localhost:3000')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
@@ -39,6 +42,6 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(config.get<number>('PORT', 3001));
 }
 void bootstrap();
