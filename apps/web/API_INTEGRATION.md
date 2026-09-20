@@ -2,7 +2,7 @@
 
 The dashboard reads `NEXT_PUBLIC_API_URL` (default: `http://localhost:3001/v1`) and uses TanStack Query for request state and caching.
 
-On a `401` response the dashboard presents a sign-in form and stores the returned access token in `localStorage['gedpro.accessToken']`. A tenant or authorization scope can be stored in `localStorage['gedpro.tenantId']`; it is included in every query key to prevent cache reuse across scopes.
+Authentication lives under `/login`, `/register`, `/forgot-password`, and `/reset-password`. Access and refresh tokens are stored in browser storage, refresh tokens rotate after an expired access token, and protected pages redirect anonymous users to sign in. A tenant or authorization scope can be stored in `localStorage['gedpro.tenantId']`; it is included in every query key to prevent cache reuse across scopes.
 
 ## Cache policy
 
