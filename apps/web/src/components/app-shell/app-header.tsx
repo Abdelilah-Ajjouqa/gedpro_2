@@ -17,7 +17,7 @@ function Brand() {
 }
 
 function SearchAction() {
-  return <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label="Search candidates, jobs, and documents"><Search className="size-4" /></Button></TooltipTrigger><TooltipContent>Search</TooltipContent></Tooltip>;
+  return <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label="Search candidates" onClick={() => document.getElementById('candidate-search')?.focus()}><Search className="size-4" aria-hidden="true" /></Button></TooltipTrigger><TooltipContent>Search candidates</TooltipContent></Tooltip>;
 }
 
 function UserMenu() {

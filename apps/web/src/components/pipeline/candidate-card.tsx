@@ -39,7 +39,7 @@ function CandidateCard({ candidate, stages }: { candidate: Candidate; stages: Pi
   });
 
   return (
-    <article className="rounded-lg border border-border bg-card p-3.5 shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md">
+    <article className="rounded-lg border border-border bg-card p-3.5 shadow-sm transition-[border-color,box-shadow,transform] duration-200 motion-safe:hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md">
       <div className="flex items-start gap-3">
         <Avatar src={candidate.avatarUrl} firstName={candidate.firstName} lastName={candidate.lastName} size={36} />
         <div className="min-w-0 flex-1">

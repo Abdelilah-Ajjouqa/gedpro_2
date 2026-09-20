@@ -14,11 +14,11 @@ function HiringPipeline({ stages }: { stages: PipelineStageType[] }) {
         </div>
         <Button size="sm"><Plus className="size-4" />Add candidate</Button>
       </div>
-      <div className="-mx-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8" tabIndex={0} aria-label="Hiring pipeline stages">
+      {stages.length ? <div className="-mx-4 overflow-x-auto px-4 pb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8" tabIndex={0} aria-label="Hiring pipeline stages. Scroll horizontally to view all stages.">
         <div className="grid min-w-[1180px] grid-cols-5 gap-3 xl:min-w-[1240px] 2xl:min-w-0 2xl:gap-4">
           {stages.map((stage, index) => <PipelineStage key={stage.id} stage={stage} stages={stages} isLast={index === stages.length - 1} />)}
         </div>
-      </div>
+      </div> : <div className="rounded-xl border border-dashed border-border px-5 py-12 text-center"><p className="text-sm font-medium">No pipeline stages available</p><p className="mt-1 text-xs text-muted-foreground">Create a pipeline and its stages to start tracking candidates.</p></div>}
     </section>
   );
 }

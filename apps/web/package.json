@@ -6,7 +6,9 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --max-warnings=0"
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit --incremental false",
+    "check": "npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",

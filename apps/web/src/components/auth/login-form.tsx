@@ -8,6 +8,10 @@ import { FormField } from '@/components/auth/auth-shell';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 
+function safeNextPath(value: string | null) {
+  return value?.startsWith('/') && !value.startsWith('//') ? value : '/';
+}
+
 export function LoginForm() {
   const { signIn } = useAuth();
   const router = useRouter();
@@ -19,7 +23,7 @@ export function LoginForm() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setPending(true); setError(undefined);
-    try { await signIn(values.email, values.password); router.replace(searchParams.get('next') || '/'); }
+    try { await signIn(values.email, values.password); router.replace(safeNextPath(searchParams.get('next'))); }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'Unable to sign in.'); }
     finally { setPending(false); }
   }
