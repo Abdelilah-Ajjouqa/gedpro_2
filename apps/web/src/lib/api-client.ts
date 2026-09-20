@@ -1,84 +1,67 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/v1';
-const ACCESS_TOKEN_KEY = 'gedpro.accessToken';
-const REFRESH_TOKEN_KEY = 'gedpro.refreshToken';
-let refreshRequest: Promise<string | undefined> | undefined;
+const API_URL = '/api/bff';
+const CSRF_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-gedpro-csrf' : 'gedpro-csrf';
+
+export type ApiErrorPayload = { statusCode?: number; error?: string; message?: string | string[]; path?: string; timestamp?: string; requestId?: string };
+export type ApiErrorKind = 'validation' | 'unauthenticated' | 'forbidden' | 'not-found' | 'conflict' | 'rate-limited' | 'server' | 'network' | 'aborted' | 'unexpected';
+
+function errorKind(status: number): ApiErrorKind {
+  if (status === 400 || status === 422) return 'validation';
+  if (status === 401) return 'unauthenticated';
+  if (status === 403) return 'forbidden';
+  if (status === 404) return 'not-found';
+  if (status === 409) return 'conflict';
+  if (status === 429) return 'rate-limited';
+  if (status >= 500) return 'server';
+  return 'unexpected';
+}
 
 export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = 'ApiError';
+  readonly messages: string[];
+  readonly kind: ApiErrorKind;
+  constructor(message: string | string[], readonly status: number, readonly payload?: ApiErrorPayload) {
+    const messages = Array.isArray(message) ? message : [message];
+    super(messages.join(' ')); this.name = 'ApiError'; this.messages = messages; this.kind = errorKind(status);
   }
 }
 
-function getAccessToken() {
-  if (typeof window === 'undefined') return undefined;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY) ?? undefined;
+function cookieValue(name: string) {
+  if (typeof document === 'undefined') return undefined;
+  return document.cookie.split('; ').find((entry) => entry.startsWith(`${name}=`))?.slice(name.length + 1);
 }
 
-export function saveTokens(accessToken: string, refreshToken: string) {
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+async function csrfToken() {
+  const existing = cookieValue(CSRF_COOKIE); if (existing) return decodeURIComponent(existing);
+  const response = await fetch(`${API_URL}/auth/csrf`, { credentials: 'same-origin', cache: 'no-store' });
+  if (!response.ok) throw new ApiError('Unable to establish request security.', response.status);
+  return ((await response.json()) as { token: string }).token;
 }
 
-export function clearTokens() {
-  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
-  window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+export function clearLegacySession() {
+  if (typeof window === 'undefined') return;
+  for (const key of ['gedpro.accessToken', 'gedpro.refreshToken', 'gedpro.tenantId']) window.localStorage.removeItem(key);
 }
 
-export function hasSession() {
-  return typeof window !== 'undefined' && Boolean(window.localStorage.getItem(ACCESS_TOKEN_KEY) || window.localStorage.getItem(REFRESH_TOKEN_KEY));
-}
+export function getApiScope(userId?: number) { return userId ? `user:${userId}` : 'anonymous'; }
 
-async function refreshAccessToken() {
-  if (typeof window === 'undefined') return undefined;
-  const refreshToken = window.localStorage.getItem(REFRESH_TOKEN_KEY);
-  if (!refreshToken) return undefined;
-  if (!refreshRequest) refreshRequest = fetch(`${API_URL}/auth/refresh`, {
-    method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken }),
-  }).then(async (response) => {
-    if (!response.ok) { clearTokens(); return undefined; }
-    const session = await response.json() as { accessToken: string; refreshToken: string };
-    saveTokens(session.accessToken, session.refreshToken);
-    return session.accessToken;
-  }).finally(() => { refreshRequest = undefined; });
-  return refreshRequest;
-}
-
-export function getApiScope() {
-  if (typeof window === 'undefined') return 'anonymous';
-  return window.localStorage.getItem('gedpro.tenantId') ?? 'current-user';
-}
-
-export async function apiRequest<T>(path: string, init?: RequestInit, allowRefresh = true): Promise<T> {
-  const token = getAccessToken();
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-    signal: init?.signal,
-  });
-
-  if (response.status === 401 && allowRefresh && !path.startsWith('/auth/')) {
-    const refreshedToken = await refreshAccessToken();
-    if (refreshedToken) return apiRequest<T>(path, init, false);
+export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const method = (init.method ?? 'GET').toUpperCase();
+  const headers = new Headers(init.headers); headers.set('accept', headers.get('accept') ?? 'application/json');
+  if (init.body && !(init.body instanceof FormData) && !headers.has('content-type')) headers.set('content-type', 'application/json');
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) headers.set('x-csrf-token', await csrfToken());
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...init, method, headers, credentials: 'same-origin', cache: 'no-store' });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    throw new ApiError('Unable to reach the server.', 0, { message: 'Network error' });
   }
-
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    const apiOrigin = new URL(API_URL).origin;
-    const isCallingWebApp = typeof window !== 'undefined' && apiOrigin === window.location.origin;
-    const message = isCallingWebApp && response.status === 404
-      ? 'The API URL points to the web server. Start both apps with `npm run dev` and open http://localhost:3000.'
-      : body?.message ?? `API request failed (${response.status})`;
-    throw new ApiError(message, response.status);
+    const payload = (await response.json().catch(() => undefined)) as ApiErrorPayload | undefined;
+    throw new ApiError(payload?.message ?? `API request failed (${response.status})`, response.status, payload);
   }
-
-  return response.json() as Promise<T>;
+  if (response.status === 204) return undefined as T;
+  const contentType = response.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) return response.json() as Promise<T>;
+  if (contentType.startsWith('text/')) return response.text() as Promise<T>;
+  return response.blob() as Promise<T>;
 }

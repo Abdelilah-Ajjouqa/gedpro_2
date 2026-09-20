@@ -10,6 +10,7 @@ import { DashboardSummary } from '@/components/dashboard/dashboard-summary';
 import { HiringPipeline } from '@/components/pipeline/hiring-pipeline';
 import { Button } from '@/components/ui/button';
 import { getApiScope } from '@/lib/api-client';
+import { useAuth } from '@/components/providers/auth-provider';
 import { getCandidates, getDashboardMetrics, getPipeline, getRecentActivity, getUpcomingInterviews, type DashboardFilters } from '@/lib/dashboard-api';
 
 function LoadingState() {
@@ -17,6 +18,7 @@ function LoadingState() {
 }
 
 export function DashboardClient() {
+  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
@@ -28,7 +30,7 @@ export function DashboardClient() {
     page: Math.max(1, Number(searchParams.get('page')) || 1),
     limit: Math.min(100, Math.max(1, Number(searchParams.get('limit')) || 50)),
   }), [searchParams]);
-  const scope = getApiScope();
+  const scope = getApiScope(user?.id);
   const queries = useQueries({ queries: [
     { queryKey: ['dashboard-metrics', { ...filters, scope }], queryFn: ({ signal }) => getDashboardMetrics(filters, signal), staleTime: 45_000 },
     { queryKey: ['pipeline', filters.jobId, { ...filters, scope }], queryFn: ({ signal }) => getPipeline(filters, signal), staleTime: 20_000 },

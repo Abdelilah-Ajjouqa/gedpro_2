@@ -10,6 +10,7 @@ type ApiPipeline = { id: number; stages: ApiStage[] };
 type ApiApplication = { id: number; candidate: ApiPerson; job: { id: number; title: string }; currentStage: ApiStage; createdAt: string };
 type ApiInterview = { id: number; candidate: ApiPerson; application?: { job?: { title?: string } }; date: string; location?: string | null; calendarProvider?: string | null };
 type ApiReport = { totals?: { applications?: number }; };
+type CurrentUserResponse = { user: ApiPerson; capabilities: string[] };
 
 export type DashboardFilters = {
   jobId?: number;
@@ -33,7 +34,7 @@ function params(values: Record<string, string | number | undefined>) {
 export async function getDashboardMetrics(filters: DashboardFilters, signal?: AbortSignal): Promise<DashboardData> {
   const query = params({ jobId: filters.jobId });
   const [profile, report, candidates, jobs, interviews] = await Promise.all([
-    apiRequest<ApiPerson>('/users/profile', { signal }),
+    apiRequest<CurrentUserResponse>('/users/profile', { signal }),
     apiRequest<ApiReport>(`/reports/summary${query ? `?${query}` : ''}`, { signal }),
     apiRequest<Page<ApiPerson>>('/candidates?limit=1', { signal }),
     apiRequest<Page<unknown>>('/jobs?status=published&limit=1', { signal }),
@@ -42,7 +43,7 @@ export async function getDashboardMetrics(filters: DashboardFilters, signal?: Ab
   const today = new Date();
   const newToday = report.totals?.applications ?? 0;
   return {
-    manager: { id: String(profile.id), firstName: profile.firstName, lastName: profile.lastName, role: profile.role ?? 'Hiring manager' },
+    manager: { id: String(profile.user.id), firstName: profile.user.firstName, lastName: profile.user.lastName, role: profile.user.role ?? 'Hiring manager' },
     dateLabel: new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(today),
     greeting: today.getHours() < 12 ? 'Good morning' : today.getHours() < 18 ? 'Good afternoon' : 'Good evening',
     metrics: [

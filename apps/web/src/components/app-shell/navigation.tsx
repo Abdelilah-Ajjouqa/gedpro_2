@@ -6,14 +6,15 @@ import { usePathname } from 'next/navigation';
 
 import { SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/components/providers/auth-provider';
 
 const navigation = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/candidates', label: 'Candidates', icon: Users },
-  { href: '/jobs', label: 'Jobs', icon: BriefcaseBusiness },
-  { href: '/interviews', label: 'Interviews', icon: CalendarDays },
-  { href: '/documents', label: 'Documents', icon: FileText },
-];
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, capability: 'dashboard:view', available: true },
+  { href: '/candidates', label: 'Candidates', icon: Users, capability: 'candidates:read', available: false },
+  { href: '/jobs', label: 'Jobs', icon: BriefcaseBusiness, capability: 'jobs:read', available: false },
+  { href: '/interviews', label: 'Interviews', icon: CalendarDays, capability: 'interviews:read', available: false },
+  { href: '/documents', label: 'Documents', icon: FileText, capability: 'documents:read', available: false },
+] as const;
 
 function NavLink({ href, label, icon: Icon, mobile = false }: (typeof navigation)[number] & { mobile?: boolean }) {
   const pathname = usePathname();
@@ -29,11 +30,13 @@ function NavLink({ href, label, icon: Icon, mobile = false }: (typeof navigation
 }
 
 function PrimaryNav() {
-  return <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary navigation">{navigation.map((item) => <NavLink key={item.href} {...item} />)}</nav>;
+  const { hasCapability } = useAuth();
+  return <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary navigation">{navigation.filter((item) => item.available && hasCapability(item.capability)).map((item) => <NavLink key={item.href} {...item} />)}</nav>;
 }
 
 function MobileNav() {
-  return <nav className="mt-8 grid gap-1" aria-label="Mobile navigation">{navigation.map((item) => <NavLink key={item.href} {...item} mobile />)}</nav>;
+  const { hasCapability } = useAuth();
+  return <nav className="mt-8 grid gap-1" aria-label="Mobile navigation">{navigation.filter((item) => item.available && hasCapability(item.capability)).map((item) => <NavLink key={item.href} {...item} mobile />)}</nav>;
 }
 
 export { MobileNav, PrimaryNav };

@@ -10,17 +10,22 @@ export type AuthUser = {
 
 export type AuthSession = {
   user: AuthUser;
-  accessToken: string;
-  refreshToken: string;
+  capabilities: string[];
   expiresIn: number;
 };
+
+export type CurrentUser = Pick<AuthSession, 'user' | 'capabilities'>;
 
 export function login(email: string, password: string) {
   return apiRequest<AuthSession>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 }
 
 export function register(input: { firstName: string; lastName: string; email: string; password: string; confirmPassword: string }) {
-  return apiRequest<AuthSession>('/auth/register', { method: 'POST', body: JSON.stringify(input) });
+  return apiRequest<{ message: string }>('/auth/register', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function getCurrentUser(signal?: AbortSignal) {
+  return apiRequest<CurrentUser>('/users/profile', { signal });
 }
 
 export function requestPasswordReset(email: string) {

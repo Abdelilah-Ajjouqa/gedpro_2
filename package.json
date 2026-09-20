@@ -17,6 +17,8 @@
     "test:e2e": "npm run test:e2e --workspace @gedpro/api",
     "openapi:generate": "npm run openapi:generate --workspace @gedpro/api",
     "openapi:check": "npm run openapi:check --workspace @gedpro/api",
+    "api:types:generate": "npm run api:types:generate --workspace @gedpro/web",
+    "api:types:check": "npm run openapi:check && npm run api:types:check --workspace @gedpro/web",
     "migration:run": "npm run migration:run --workspace @gedpro/api",
     "migration:revert": "npm run migration:revert --workspace @gedpro/api",
     "seed": "npm run seed --workspace @gedpro/api",

@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryProvider } from '@/components/providers/query-provider';
+import { NotificationProvider } from '@/shared/components/notifications';
 
 import './globals.css';
 
@@ -16,7 +18,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider><TooltipProvider>{children}</TooltipProvider></AuthProvider>
+          <QueryProvider><AuthProvider><NotificationProvider><TooltipProvider>{children}</TooltipProvider></NotificationProvider></AuthProvider></QueryProvider>
         </ThemeProvider>
       </body>
     </html>
