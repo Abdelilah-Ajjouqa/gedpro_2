@@ -4507,7 +4507,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/JobResponseDto"
                 }
               }
             }
@@ -4581,6 +4581,43 @@
                 "published",
                 "closed",
                 "archived"
+              ]
+            }
+          },
+          {
+            "name": "ownerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "title",
+                "status"
+              ]
+            }
+          },
+          {
+            "name": "direction",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           }
@@ -4670,7 +4707,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/JobResponseDto"
                 }
               }
             }
@@ -4716,6 +4753,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4734,7 +4779,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/JobResponseDto"
                 }
               }
             }
@@ -4782,15 +4827,23 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/JobResponseDto"
                 }
               }
             }
@@ -4838,15 +4891,23 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/JobResponseDto"
                 }
               }
             }
@@ -4883,6 +4944,70 @@
         ]
       }
     },
+    "/jobs/{id}/reopen": {
+      "post": {
+        "operationId": "JobsController_reopen",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reopen a closed job",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
     "/jobs/{id}/archive": {
       "post": {
         "operationId": "JobsController_archive",
@@ -4894,15 +5019,23 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Job"
+                  "$ref": "#/components/schemas/JobResponseDto"
                 }
               }
             }
@@ -4936,6 +5069,682 @@
         "summary": "Archive a job",
         "tags": [
           "Jobs"
+        ]
+      }
+    },
+    "/pipelines": {
+      "post": {
+        "operationId": "PipelinesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePipelineDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a reusable pipeline template",
+        "tags": [
+          "Pipelines"
+        ]
+      },
+      "get": {
+        "operationId": "PipelinesController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "archived",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "isTemplate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "latestRevisionOnly",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List active pipelines and ordered stages",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/pipelines/{id}": {
+      "get": {
+        "operationId": "PipelinesController_one",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pipeline not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get pipeline transition graph",
+        "tags": [
+          "Pipelines"
+        ]
+      },
+      "patch": {
+        "operationId": "PipelinesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePipelineDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update pipeline metadata",
+        "tags": [
+          "Pipelines"
+        ]
+      },
+      "delete": {
+        "operationId": "PipelinesController_archive",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive a pipeline",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/pipelines/{id}/stages": {
+      "post": {
+        "operationId": "PipelinesController_add",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineStageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a custom stage",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/pipelines/{id}/stages/order": {
+      "put": {
+        "operationId": "PipelinesController_order",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderStagesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incomplete or invalid ordering"
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reorder all pipeline stages",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/pipelines/{id}/stages/{stageId}": {
+      "delete": {
+        "operationId": "PipelinesController_archiveStage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineStageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive a stage without deleting history",
+        "tags": [
+          "Pipelines"
+        ]
+      },
+      "patch": {
+        "operationId": "PipelinesController_updateStage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineStageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a stage on an unused pipeline revision",
+        "tags": [
+          "Pipelines"
+        ]
+      }
+    },
+    "/pipelines/{id}/stages/{stageId}/transitions": {
+      "put": {
+        "operationId": "PipelinesController_transitions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTransitionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PipelineTransitionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace allowed outgoing transitions",
+        "tags": [
+          "Pipelines"
         ]
       }
     },
@@ -5369,564 +6178,6 @@
         "summary": "Move applications with per-item results",
         "tags": [
           "Applications"
-        ]
-      }
-    },
-    "/pipelines": {
-      "post": {
-        "operationId": "PipelinesController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePipelineDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Pipeline"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a reusable pipeline template",
-        "tags": [
-          "Pipelines"
-        ]
-      },
-      "get": {
-        "operationId": "PipelinesController_list",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Pipeline"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List active pipelines and ordered stages",
-        "tags": [
-          "Pipelines"
-        ]
-      }
-    },
-    "/pipelines/{id}": {
-      "get": {
-        "operationId": "PipelinesController_one",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Pipeline"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Pipeline not found"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get pipeline transition graph",
-        "tags": [
-          "Pipelines"
-        ]
-      },
-      "patch": {
-        "operationId": "PipelinesController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePipelineDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Pipeline"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update pipeline metadata",
-        "tags": [
-          "Pipelines"
-        ]
-      },
-      "delete": {
-        "operationId": "PipelinesController_archive",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Pipeline"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Archive a pipeline",
-        "tags": [
-          "Pipelines"
-        ]
-      }
-    },
-    "/pipelines/{id}/stages": {
-      "post": {
-        "operationId": "PipelinesController_add",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateStageDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PipelineStage"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Add a custom stage",
-        "tags": [
-          "Pipelines"
-        ]
-      }
-    },
-    "/pipelines/{id}/stages/order": {
-      "put": {
-        "operationId": "PipelinesController_order",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReorderStagesDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Pipeline"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Incomplete or invalid ordering"
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Reorder all pipeline stages",
-        "tags": [
-          "Pipelines"
-        ]
-      }
-    },
-    "/pipelines/{id}/stages/{stageId}": {
-      "delete": {
-        "operationId": "PipelinesController_archiveStage",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "stageId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PipelineStage"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Archive a stage without deleting history",
-        "tags": [
-          "Pipelines"
-        ]
-      }
-    },
-    "/pipelines/{id}/stages/{stageId}/transitions": {
-      "put": {
-        "operationId": "PipelinesController_transitions",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "stageId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetTransitionsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PipelineTransition"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Replace allowed outgoing transitions",
-        "tags": [
-          "Pipelines"
         ]
       }
     },
@@ -7834,6 +8085,7 @@
             "type": "string"
           },
           "category": {
+            "type": "string",
             "enum": [
               "applied",
               "screening",
@@ -7842,8 +8094,7 @@
               "hired",
               "rejected",
               "withdrawn"
-            ],
-            "type": "string"
+            ]
           },
           "position": {
             "type": "number"
@@ -7856,6 +8107,9 @@
             "items": {
               "$ref": "#/components/schemas/PipelineTransition"
             }
+          },
+          "version": {
+            "type": "number"
           }
         },
         "required": [
@@ -7865,7 +8119,8 @@
           "category",
           "position",
           "archived",
-          "outgoingTransitions"
+          "outgoingTransitions",
+          "version"
         ]
       },
       "Pipeline": {
@@ -7899,6 +8154,9 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "version": {
+            "type": "number"
           }
         },
         "required": [
@@ -7908,7 +8166,8 @@
           "archived",
           "stages",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "version"
         ]
       },
       "Job": {
@@ -7930,16 +8189,24 @@
             "type": "string"
           },
           "employmentType": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "full_time",
+              "part_time",
+              "contract",
+              "temporary",
+              "internship",
+              "other"
+            ]
           },
           "status": {
+            "type": "string",
             "enum": [
               "draft",
               "published",
               "closed",
               "archived"
-            ],
-            "type": "string"
+            ]
           },
           "owner": {
             "$ref": "#/components/schemas/User"
@@ -7968,6 +8235,13 @@
           "closedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "reopenedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
           }
         },
         "required": [
@@ -7979,7 +8253,8 @@
           "pipeline",
           "applications",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "version"
         ]
       },
       "ApplicationHistory": {
@@ -8800,13 +9075,177 @@
           },
           "employmentType": {
             "type": "string",
-            "maxLength": 80
+            "enum": [
+              "full_time",
+              "part_time",
+              "contract",
+              "temporary",
+              "internship",
+              "other"
+            ]
           }
         },
         "required": [
           "pipelineId",
           "title",
           "description"
+        ]
+      },
+      "JobOwnerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "JobPipelineRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "JobResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "employmentType": {
+            "enum": [
+              "full_time",
+              "part_time",
+              "contract",
+              "temporary",
+              "internship",
+              "other"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "closed",
+              "archived"
+            ],
+            "type": "string"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/JobOwnerDto"
+          },
+          "pipeline": {
+            "$ref": "#/components/schemas/JobPipelineRefDto"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "closedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "reopenedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "number"
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "status",
+          "owner",
+          "pipeline",
+          "createdAt",
+          "updatedAt",
+          "version",
+          "allowedActions"
+        ]
+      },
+      "JobListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobResponseDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
         ]
       },
       "UpdateJobDto": {
@@ -8832,7 +9271,331 @@
           },
           "employmentType": {
             "type": "string",
-            "maxLength": 80
+            "enum": [
+              "full_time",
+              "part_time",
+              "contract",
+              "temporary",
+              "internship",
+              "other"
+            ]
+          }
+        }
+      },
+      "CreateStageDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "category": {
+            "enum": [
+              "applied",
+              "screening",
+              "interview",
+              "offer",
+              "hired",
+              "rejected",
+              "withdrawn"
+            ],
+            "type": "string"
+          },
+          "position": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "position"
+        ]
+      },
+      "CreatePipelineDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string"
+          },
+          "isTemplate": {
+            "type": "object",
+            "default": true
+          },
+          "stages": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateStageDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "isTemplate",
+          "stages"
+        ]
+      },
+      "PipelineTransitionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "toStageId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "toStageId"
+        ]
+      },
+      "PipelineStageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "applied",
+              "screening",
+              "interview",
+              "offer",
+              "hired",
+              "rejected",
+              "withdrawn"
+            ],
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          },
+          "outgoingTransitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineTransitionDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "position",
+          "archived",
+          "version",
+          "outgoingTransitions"
+        ]
+      },
+      "ReadinessIssueDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "stageIds": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "PipelineReadinessDto": {
+        "type": "object",
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadinessIssueDto"
+            }
+          }
+        },
+        "required": [
+          "ready",
+          "issues"
+        ]
+      },
+      "PipelineResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "isTemplate": {
+            "type": "boolean"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineStageResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "jobCount": {
+            "type": "number"
+          },
+          "inUse": {
+            "type": "boolean"
+          },
+          "canArchive": {
+            "type": "boolean"
+          },
+          "canChangeRevision": {
+            "type": "boolean"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/PipelineReadinessDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "isTemplate",
+          "archived",
+          "stages",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "PipelineListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineResponseDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "UpdatePipelineDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string"
+          },
+          "isTemplate": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ReorderStagesDto": {
+        "type": "object",
+        "properties": {
+          "stageIds": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "stageIds"
+        ]
+      },
+      "SetTransitionsDto": {
+        "type": "object",
+        "properties": {
+          "toStageIds": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "toStageIds"
+        ]
+      },
+      "UpdateStageDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "screening",
+              "interview",
+              "offer",
+              "hired",
+              "rejected",
+              "withdrawn"
+            ]
           }
         }
       },
@@ -8908,108 +9671,6 @@
         },
         "required": [
           "items"
-        ]
-      },
-      "CreateStageDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "category": {
-            "enum": [
-              "applied",
-              "screening",
-              "interview",
-              "offer",
-              "hired",
-              "rejected",
-              "withdrawn"
-            ],
-            "type": "string"
-          },
-          "position": {
-            "type": "number",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "name",
-          "category",
-          "position"
-        ]
-      },
-      "CreatePipelineDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "description": {
-            "type": "string"
-          },
-          "isTemplate": {
-            "type": "object",
-            "default": true
-          },
-          "stages": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateStageDto"
-            }
-          }
-        },
-        "required": [
-          "name",
-          "isTemplate",
-          "stages"
-        ]
-      },
-      "UpdatePipelineDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "description": {
-            "type": "string"
-          },
-          "isTemplate": {
-            "type": "boolean"
-          }
-        }
-      },
-      "ReorderStagesDto": {
-        "type": "object",
-        "properties": {
-          "stageIds": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "type": "number"
-            }
-          }
-        },
-        "required": [
-          "stageIds"
-        ]
-      },
-      "SetTransitionsDto": {
-        "type": "object",
-        "properties": {
-          "toStageIds": {
-            "type": "array",
-            "items": {
-              "type": "number"
-            }
-          }
-        },
-        "required": [
-          "toStageIds"
         ]
       },
       "CreateReportExportDto": {

@@ -5,6 +5,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from 'typeorm';
 import { PipelineStage } from './pipeline-stage.entity';
 @Entity('pipelines')
@@ -18,4 +19,5 @@ export class Pipeline {
   stages: PipelineStage[];
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
+  @VersionColumn() version: number;
 }

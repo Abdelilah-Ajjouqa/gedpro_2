@@ -15,6 +15,10 @@ export interface ApiErrorResponse {
   path: string;
   timestamp: string;
   requestId?: string;
+  code?: string;
+  expectedVersion?: number;
+  currentVersion?: number;
+  issues?: unknown;
 }
 
 @Catch()
@@ -52,6 +56,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.originalUrl ?? request.url,
       timestamp: new Date().toISOString(),
       requestId: getRequestId(),
+      code: typeof details.code === 'string' ? details.code : undefined,
+      expectedVersion:
+        typeof details.expectedVersion === 'number'
+          ? details.expectedVersion
+          : undefined,
+      currentVersion:
+        typeof details.currentVersion === 'number'
+          ? details.currentVersion
+          : undefined,
+      issues: details.issues,
     };
     response.status(status).json(body);
   }

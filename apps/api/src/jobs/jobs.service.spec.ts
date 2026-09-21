@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { JobStatus } from './enums/job-status.enum';
 import { Role } from '../users/enums/role.enum';
@@ -24,7 +24,7 @@ describe('JobsService', () => {
     repository.findOne.mockResolvedValue({ id: 1, status: JobStatus.ARCHIVED });
     await expect(
       service.changeStatus(1, JobStatus.PUBLISHED),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('roots manager detail access in job ownership', async () => {

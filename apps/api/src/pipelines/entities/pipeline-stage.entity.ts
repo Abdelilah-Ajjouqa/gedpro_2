@@ -5,6 +5,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   Unique,
+  VersionColumn,
 } from 'typeorm';
 import { Pipeline } from './pipeline.entity';
 import { StageCategory } from '../enums/stage-category.enum';
@@ -24,4 +25,5 @@ export class PipelineStage {
   @Column({ default: false }) archived: boolean;
   @OneToMany(() => PipelineTransition, (transition) => transition.fromStage)
   outgoingTransitions: PipelineTransition[];
+  @VersionColumn() version: number;
 }

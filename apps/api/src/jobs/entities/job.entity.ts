@@ -6,11 +6,13 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Application } from '../../applications/entities/application.entity';
 import { JobStatus } from '../enums/job-status.enum';
 import { Pipeline } from '../../pipelines/entities/pipeline.entity';
+import { EmploymentType } from '../enums/employment-type.enum';
 
 @Entity('jobs')
 export class Job {
@@ -19,7 +21,8 @@ export class Job {
   @Column({ type: 'text' }) description: string;
   @Column({ nullable: true }) department?: string;
   @Column({ nullable: true }) location?: string;
-  @Column({ nullable: true }) employmentType?: string;
+  @Column({ type: 'enum', enum: EmploymentType, nullable: true })
+  employmentType?: EmploymentType;
   @Column({ type: 'enum', enum: JobStatus, default: JobStatus.DRAFT })
   status: JobStatus;
   @ManyToOne(() => User, { eager: true, nullable: false }) owner: User;
@@ -31,4 +34,6 @@ export class Job {
   @UpdateDateColumn() updatedAt: Date;
   @Column({ type: 'timestamp', nullable: true }) publishedAt?: Date;
   @Column({ type: 'timestamp', nullable: true }) closedAt?: Date;
+  @Column({ type: 'timestamp', nullable: true }) reopenedAt?: Date;
+  @VersionColumn() version: number;
 }
