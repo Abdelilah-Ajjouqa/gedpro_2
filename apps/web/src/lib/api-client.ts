@@ -1,8 +1,8 @@
 const API_URL = '/api/bff';
 const CSRF_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-gedpro-csrf' : 'gedpro-csrf';
 
-export type ApiErrorPayload = { statusCode?: number; error?: string; message?: string | string[]; path?: string; timestamp?: string; requestId?: string };
-export type ApiErrorKind = 'validation' | 'unauthenticated' | 'forbidden' | 'not-found' | 'conflict' | 'rate-limited' | 'server' | 'network' | 'aborted' | 'unexpected';
+export type ApiErrorPayload = { statusCode?: number; error?: string; code?: string; message?: string | string[]; path?: string; timestamp?: string; requestId?: string; expectedVersion?: number; currentVersion?: number };
+export type ApiErrorKind = 'validation' | 'unauthenticated' | 'forbidden' | 'not-found' | 'conflict' | 'stale' | 'rate-limited' | 'server' | 'network' | 'aborted' | 'unexpected';
 
 function errorKind(status: number): ApiErrorKind {
   if (status === 400 || status === 422) return 'validation';
@@ -10,6 +10,7 @@ function errorKind(status: number): ApiErrorKind {
   if (status === 403) return 'forbidden';
   if (status === 404) return 'not-found';
   if (status === 409) return 'conflict';
+  if (status === 412 || status === 428) return 'stale';
   if (status === 429) return 'rate-limited';
   if (status >= 500) return 'server';
   return 'unexpected';

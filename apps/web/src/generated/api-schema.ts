@@ -1126,6 +1126,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/jobs/{id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen a closed job */
+        post: operations["JobsController_reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/jobs/{id}/archive": {
         parameters: {
             query?: never;
@@ -1137,92 +1154,6 @@ export interface paths {
         put?: never;
         /** Archive a job */
         post: operations["JobsController_archive"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/applications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List applications with filters */
-        get: operations["ApplicationsController_findAll"];
-        put?: never;
-        /** Open an application for a published job */
-        post: operations["ApplicationsController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/applications/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get an application and its stage history */
-        get: operations["ApplicationsController_findOne"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/applications/{id}/stage": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Move an application to another stage */
-        patch: operations["ApplicationsController_transition"];
-        trace?: never;
-    };
-    "/applications/{id}/reopen": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Explicitly reopen a rejected or withdrawn application */
-        post: operations["ApplicationsController_reopen"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/applications/bulk-move": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Move applications with per-item results */
-        post: operations["ApplicationsController_bulk"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1314,7 +1245,8 @@ export interface paths {
         delete: operations["PipelinesController_archiveStage"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Edit a stage on an unused pipeline revision */
+        patch: operations["PipelinesController_updateStage"];
         trace?: never;
     };
     "/pipelines/{id}/stages/{stageId}/transitions": {
@@ -1328,6 +1260,92 @@ export interface paths {
         /** Replace allowed outgoing transitions */
         put: operations["PipelinesController_transitions"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List applications with filters */
+        get: operations["ApplicationsController_findAll"];
+        put?: never;
+        /** Open an application for a published job */
+        post: operations["ApplicationsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an application and its stage history */
+        get: operations["ApplicationsController_findOne"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/applications/{id}/stage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Move an application to another stage */
+        patch: operations["ApplicationsController_transition"];
+        trace?: never;
+    };
+    "/applications/{id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explicitly reopen a rejected or withdrawn application */
+        post: operations["ApplicationsController_reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/applications/bulk-move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move applications with per-item results */
+        post: operations["ApplicationsController_bulk"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1828,6 +1846,7 @@ export interface components {
             position: number;
             archived: boolean;
             outgoingTransitions: components["schemas"]["PipelineTransition"][];
+            version: number;
         };
         Pipeline: {
             id: number;
@@ -1840,6 +1859,7 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            version: number;
         };
         Job: {
             id: number;
@@ -1847,7 +1867,8 @@ export interface components {
             description: string;
             department?: string;
             location?: string;
-            employmentType?: string;
+            /** @enum {string} */
+            employmentType?: "full_time" | "part_time" | "contract" | "temporary" | "internship" | "other";
             /** @enum {string} */
             status: "draft" | "published" | "closed" | "archived";
             owner: components["schemas"]["User"];
@@ -1861,6 +1882,9 @@ export interface components {
             publishedAt?: string;
             /** Format: date-time */
             closedAt?: string;
+            /** Format: date-time */
+            reopenedAt?: string;
+            version: number;
         };
         ApplicationHistory: {
             id: number;
@@ -2062,7 +2086,49 @@ export interface components {
             description: string;
             department?: string;
             location?: string;
-            employmentType?: string;
+            /** @enum {string} */
+            employmentType?: "full_time" | "part_time" | "contract" | "temporary" | "internship" | "other";
+        };
+        JobOwnerDto: {
+            id: number;
+            firstName: string;
+            lastName: string;
+        };
+        JobPipelineRefDto: {
+            id: number;
+            name: string;
+        };
+        JobResponseDto: {
+            id: number;
+            title: string;
+            description: string;
+            department?: string | null;
+            location?: string | null;
+            /** @enum {string|null} */
+            employmentType?: "full_time" | "part_time" | "contract" | "temporary" | "internship" | "other" | null;
+            /** @enum {string} */
+            status: "draft" | "published" | "closed" | "archived";
+            owner: components["schemas"]["JobOwnerDto"];
+            pipeline: components["schemas"]["JobPipelineRefDto"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            publishedAt?: string | null;
+            /** Format: date-time */
+            closedAt?: string | null;
+            /** Format: date-time */
+            reopenedAt?: string | null;
+            version: number;
+            allowedActions: string[];
+        };
+        JobListResponseDto: {
+            data: components["schemas"]["JobResponseDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
         };
         UpdateJobDto: {
             pipelineId?: number;
@@ -2070,7 +2136,85 @@ export interface components {
             description?: string;
             department?: string;
             location?: string;
-            employmentType?: string;
+            /** @enum {string} */
+            employmentType?: "full_time" | "part_time" | "contract" | "temporary" | "internship" | "other";
+        };
+        CreateStageDto: {
+            name: string;
+            /** @enum {string} */
+            category: "applied" | "screening" | "interview" | "offer" | "hired" | "rejected" | "withdrawn";
+            position: number;
+        };
+        CreatePipelineDto: {
+            name: string;
+            description?: string;
+            /** @default true */
+            isTemplate: Record<string, never>;
+            stages: components["schemas"]["CreateStageDto"][];
+        };
+        PipelineTransitionDto: {
+            id: number;
+            toStageId: number;
+        };
+        PipelineStageResponseDto: {
+            id: number;
+            name: string;
+            /** @enum {string} */
+            category: "applied" | "screening" | "interview" | "offer" | "hired" | "rejected" | "withdrawn";
+            position: number;
+            archived: boolean;
+            version: number;
+            outgoingTransitions: components["schemas"]["PipelineTransitionDto"][];
+        };
+        ReadinessIssueDto: {
+            code: string;
+            message: string;
+            stageIds?: number[];
+        };
+        PipelineReadinessDto: {
+            ready: boolean;
+            issues: components["schemas"]["ReadinessIssueDto"][];
+        };
+        PipelineResponseDto: {
+            id: number;
+            name: string;
+            description?: string | null;
+            isTemplate: boolean;
+            archived: boolean;
+            stages: components["schemas"]["PipelineStageResponseDto"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            version: number;
+            jobCount?: number;
+            inUse?: boolean;
+            canArchive?: boolean;
+            canChangeRevision?: boolean;
+            readiness?: components["schemas"]["PipelineReadinessDto"];
+        };
+        PipelineListResponseDto: {
+            data: components["schemas"]["PipelineResponseDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+        UpdatePipelineDto: {
+            name?: string;
+            description?: string;
+            isTemplate?: boolean;
+        };
+        ReorderStagesDto: {
+            stageIds: number[];
+        };
+        SetTransitionsDto: {
+            toStageIds: number[];
+        };
+        UpdateStageDto: {
+            name?: string;
+            /** @enum {string} */
+            category?: "applied" | "screening" | "interview" | "offer" | "hired" | "rejected" | "withdrawn";
         };
         CreateApplicationDto: {
             candidateId: number;
@@ -2091,30 +2235,6 @@ export interface components {
         };
         BulkMoveApplicationsDto: {
             items: components["schemas"]["BulkMoveItemDto"][];
-        };
-        CreateStageDto: {
-            name: string;
-            /** @enum {string} */
-            category: "applied" | "screening" | "interview" | "offer" | "hired" | "rejected" | "withdrawn";
-            position: number;
-        };
-        CreatePipelineDto: {
-            name: string;
-            description?: string;
-            /** @default true */
-            isTemplate: Record<string, never>;
-            stages: components["schemas"]["CreateStageDto"][];
-        };
-        UpdatePipelineDto: {
-            name?: string;
-            description?: string;
-            isTemplate?: boolean;
-        };
-        ReorderStagesDto: {
-            stageIds: number[];
-        };
-        SetTransitionsDto: {
-            toStageIds: number[];
         };
         CreateReportExportDto: {
             /** @description Inclusive UTC boundary */
@@ -5187,6 +5307,9 @@ export interface operations {
                 limit: components["schemas"]["Object"];
                 search?: string;
                 status?: "draft" | "published" | "closed" | "archived";
+                ownerId?: number;
+                sort: "createdAt" | "updatedAt" | "title" | "status";
+                direction: "asc" | "desc";
             };
             header?: never;
             path?: never;
@@ -5245,7 +5368,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["JobResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5284,7 +5407,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["JobResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5310,7 +5433,9 @@ export interface operations {
     JobsController_update: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -5327,7 +5452,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["JobResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5353,7 +5478,9 @@ export interface operations {
     JobsController_publish: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -5361,12 +5488,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["JobResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5392,7 +5519,9 @@ export interface operations {
     JobsController_close: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -5400,12 +5529,53 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["JobResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    JobsController_reopen: {
+        parameters: {
+            query?: never;
+            header: {
+                "if-match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5431,6 +5601,132 @@ export interface operations {
     JobsController_archive: {
         parameters: {
             query?: never;
+            header: {
+                "if-match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_list: {
+        parameters: {
+            query: {
+                page: components["schemas"]["Object"];
+                limit: components["schemas"]["Object"];
+                search?: string;
+                archived: components["schemas"]["Object"];
+                isTemplate: components["schemas"]["Object"];
+                latestRevisionOnly: components["schemas"]["Object"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineListResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePipelineDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_one: {
+        parameters: {
+            query?: never;
             header?: never;
             path: {
                 id: string;
@@ -5439,12 +5735,322 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Pipeline not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PipelinesController_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePipelineDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStageDto"];
+            };
+        };
+        responses: {
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["PipelineStageResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderStagesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineResponseDto"];
+                };
+            };
+            /** @description Incomplete or invalid ordering */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_archiveStage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                stageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStageResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_updateStage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                stageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStageResponseDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    PipelinesController_transitions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                stageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetTransitionsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineTransitionDto"][];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5713,389 +6319,6 @@ export interface operations {
                             [key: string]: unknown;
                         }[];
                     };
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    PipelinesController_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Pipeline"][];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    PipelinesController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreatePipelineDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Pipeline"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    PipelinesController_one: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Pipeline"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description Pipeline not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    PipelinesController_archive: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Pipeline"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    PipelinesController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdatePipelineDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Pipeline"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    PipelinesController_add: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateStageDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PipelineStage"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    PipelinesController_order: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReorderStagesDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Pipeline"];
-                };
-            };
-            /** @description Incomplete or invalid ordering */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    PipelinesController_archiveStage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                stageId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PipelineStage"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    PipelinesController_transitions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                stageId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetTransitionsDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PipelineTransition"][];
                 };
             };
             /** @description Missing, invalid, or expired access token */

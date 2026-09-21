@@ -1,0 +1,2 @@
+import { Suspense } from 'react'; import { AppShell } from '@/components/app-shell/app-shell'; import { ProtectedRoute } from '@/components/auth/protected-route'; import { PipelinesPage } from '@/features/pipelines/pipelines-page';
+export default function Page() { return <ProtectedRoute capability="pipelines:read"><AppShell><Suspense fallback={<main className="p-8">Loading pipelines…</main>}><PipelinesPage /></Suspense></AppShell></ProtectedRoute>; }
