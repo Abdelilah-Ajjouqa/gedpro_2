@@ -10,7 +10,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 
 const navigation = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, capability: 'dashboard:view', available: true },
-  { href: '/candidates', label: 'Candidates', icon: Users, capability: 'candidates:read', available: false },
+  { href: '/candidates', label: 'Candidates', icon: Users, capability: 'candidates:read', available: true },
   { href: '/jobs', label: 'Jobs', icon: BriefcaseBusiness, capability: 'jobs:read', available: true },
   { href: '/interviews', label: 'Interviews', icon: CalendarDays, capability: 'interviews:read', available: false },
   { href: '/documents', label: 'Documents', icon: FileText, capability: 'documents:read', available: false },

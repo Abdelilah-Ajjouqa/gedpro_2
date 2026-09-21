@@ -438,7 +438,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search and filter active candidates */
+        /** Search and filter candidates */
         get: operations["CandidatesController_list"];
         put?: never;
         /** Create a normalized candidate record */
@@ -542,10 +542,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Export candidate personal and recruitment data */
-        get: operations["CandidatesController_export"];
+        get?: never;
         put?: never;
-        post?: never;
+        /** Export candidate personal and recruitment data */
+        post: operations["CandidatesController_export"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1705,52 +1705,93 @@ export interface components {
             tags?: string[];
             skills?: string[];
             source?: string;
-            ownerId?: number;
+            ownerId?: number | null;
             privacyConsent?: boolean;
             retentionUntil?: string;
         };
-        CandidateHistory: {
+        CandidateOwnerDto: {
             id: number;
-            candidate: components["schemas"]["Candidate"];
+            firstName: string;
+            lastName: string;
+        };
+        CandidateStateHistoryDto: {
+            id: number;
             /** @enum {string} */
             previousState: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
             /** @enum {string} */
             newState: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
-            comment: string;
-            changedBy: components["schemas"]["User"];
+            comment?: string | null;
             /** Format: date-time */
             changedAt: string;
+            changedBy?: components["schemas"]["CandidateOwnerDto"] | null;
         };
-        Candidate: {
+        CandidatePrivacyStatusDto: {
+            consent: boolean;
+            /** Format: date-time */
+            consentAt?: string | null;
+            /** Format: date-time */
+            retentionUntil?: string | null;
+            /** Format: date-time */
+            deletionRequestedAt?: string | null;
+            /** Format: date-time */
+            erasedAt?: string | null;
+            erasureBlocked: boolean;
+            allowedActions: string[];
+        };
+        CandidateDetailDto: {
             id: number;
             firstName: string;
             lastName: string;
             email: string;
-            normalizedEmail: string;
-            phone: string;
-            normalizedPhone?: string;
+            phone?: string | null;
             tags: string[];
             skills: string[];
-            source?: string;
-            owner?: components["schemas"]["User"];
-            /** Format: date-time */
-            archivedAt?: string;
-            privacyConsent: boolean;
-            /** Format: date-time */
-            consentAt?: string;
-            /** Format: date-time */
-            retentionUntil?: string;
-            /** Format: date-time */
-            deletionRequestedAt?: string;
-            mergedInto?: components["schemas"]["Candidate"];
+            source?: string | null;
+            owner?: components["schemas"]["CandidateOwnerDto"] | null;
             /** @enum {string} */
-            currentState: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
-            history: components["schemas"]["CandidateHistory"][];
+            state: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
+            /** @enum {string} */
+            disposition: "active" | "archived" | "merged" | "erased";
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
             version: number;
+            stateHistory: components["schemas"]["CandidateStateHistoryDto"][];
+            mergedInto?: {
+                id: number;
+                displayName: string;
+            };
+            privacy?: components["schemas"]["CandidatePrivacyStatusDto"] | null;
+            applicationCount: number;
+            allowedActions: string[];
+        };
+        CandidateListItemDto: {
+            id: number;
+            firstName: string;
+            lastName: string;
+            email: string;
+            phone?: string | null;
+            tags: string[];
+            skills: string[];
+            source?: string | null;
+            owner?: components["schemas"]["CandidateOwnerDto"] | null;
+            /** @enum {string} */
+            state: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
+            /** @enum {string} */
+            disposition: "active" | "archived" | "merged" | "erased";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            version: number;
+        };
+        CandidateListResponseDto: {
+            data: components["schemas"]["CandidateListItemDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
         };
         UpdateCandidateDto: {
             firstName?: string;
@@ -1760,10 +1801,31 @@ export interface components {
             phone?: string;
             tags?: string[];
             skills?: string[];
-            source?: string;
-            ownerId?: number;
+            source?: string | null;
+            ownerId?: number | null;
             privacyConsent?: boolean;
             retentionUntil?: string;
+        };
+        CandidateDuplicateDto: {
+            id: number;
+            firstName: string;
+            lastName: string;
+            email: string;
+            phone?: string | null;
+            tags: string[];
+            skills: string[];
+            source?: string | null;
+            owner?: components["schemas"]["CandidateOwnerDto"] | null;
+            /** @enum {string} */
+            state: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
+            /** @enum {string} */
+            disposition: "active" | "archived" | "merged" | "erased";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            version: number;
+            matchReasons: string[];
         };
         MergeCandidatesDto: {
             sourceCandidateId: number;
@@ -1831,6 +1893,51 @@ export interface components {
             calendarProvider?: string;
             /** @default false */
             overrideConflicts: boolean;
+        };
+        CandidateHistory: {
+            id: number;
+            candidate: components["schemas"]["Candidate"];
+            /** @enum {string} */
+            previousState: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
+            /** @enum {string} */
+            newState: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
+            comment: string;
+            changedBy: components["schemas"]["User"];
+            /** Format: date-time */
+            changedAt: string;
+        };
+        Candidate: {
+            id: number;
+            firstName: string;
+            lastName: string;
+            email: string;
+            normalizedEmail: string;
+            phone: string;
+            normalizedPhone?: string;
+            tags: string[];
+            skills: string[];
+            source?: string;
+            owner?: components["schemas"]["User"];
+            /** Format: date-time */
+            archivedAt?: string;
+            privacyConsent: boolean;
+            /** Format: date-time */
+            consentAt?: string;
+            /** Format: date-time */
+            retentionUntil?: string;
+            /** Format: date-time */
+            deletionRequestedAt?: string;
+            /** Format: date-time */
+            erasedAt?: string;
+            mergedInto?: components["schemas"]["Candidate"];
+            /** @enum {string} */
+            currentState: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
+            history: components["schemas"]["CandidateHistory"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            version: number;
         };
         PipelineTransition: {
             id: number;
@@ -3410,7 +3517,8 @@ export interface operations {
                 skill?: string;
                 source?: string;
                 ownerId?: number;
-                includeArchived: components["schemas"]["Object"];
+                disposition: "active" | "archived" | "all";
+                state?: "new" | "preselected" | "interview_scheduled" | "in_interview" | "accepted" | "rejected";
                 sortBy: "createdAt" | "updatedAt" | "lastName" | "email";
                 sortOrder: "ASC" | "DESC";
                 page: components["schemas"]["Object"];
@@ -3473,7 +3581,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Candidate"];
+                    "application/json": components["schemas"]["CandidateDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3519,7 +3627,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Candidate"];
+                    "application/json": components["schemas"]["CandidateDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3552,7 +3660,9 @@ export interface operations {
     CandidatesController_update: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -3569,7 +3679,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Candidate"];
+                    "application/json": components["schemas"]["CandidateDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3595,7 +3705,9 @@ export interface operations {
     CandidatesController_archive: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -3603,12 +3715,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Candidate"];
+                    "application/json": components["schemas"]["CandidateDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3634,7 +3746,9 @@ export interface operations {
     CandidatesController_restore: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -3642,12 +3756,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Candidate"];
+                    "application/json": components["schemas"]["CandidateDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3686,7 +3800,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Candidate"][];
+                    "application/json": components["schemas"]["CandidateDuplicateDto"][];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3712,7 +3826,9 @@ export interface operations {
     CandidatesController_merge: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -3724,12 +3840,12 @@ export interface operations {
             };
         };
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Candidate"];
+                    "application/json": components["schemas"]["CandidateDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3776,15 +3892,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        candidate: components["schemas"]["Candidate"];
-                        applications?: components["schemas"]["Application"][];
-                        documents?: {
-                            [key: string]: unknown;
-                        }[];
-                        interviews?: components["schemas"]["Interview"][];
-                        responses?: {
-                            [key: string]: unknown;
-                        }[];
+                        [key: string]: unknown;
                     };
                 };
             };
@@ -3811,7 +3919,9 @@ export interface operations {
     CandidatesController_requestDeletion: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -3819,7 +3929,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3852,7 +3962,9 @@ export interface operations {
     CandidatesController_erase: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -3860,7 +3972,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3893,7 +4005,9 @@ export interface operations {
     CandidatesController_state: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -3910,7 +4024,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Candidate"];
+                    "application/json": components["schemas"]["CandidateDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
