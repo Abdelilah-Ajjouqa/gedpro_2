@@ -1618,7 +1618,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Candidate"
+                  "$ref": "#/components/schemas/CandidateDetailDto"
                 }
               }
             }
@@ -1665,6 +1665,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "maxLength": 200,
               "type": "string"
             }
           },
@@ -1701,11 +1702,33 @@
             }
           },
           {
-            "name": "includeArchived",
+            "name": "disposition",
             "required": true,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/Object"
+              "default": "active",
+              "type": "string",
+              "enum": [
+                "active",
+                "archived",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "new",
+                "preselected",
+                "interview_scheduled",
+                "in_interview",
+                "accepted",
+                "rejected"
+              ]
             }
           },
           {
@@ -1813,7 +1836,7 @@
             "bearer": []
           }
         ],
-        "summary": "Search and filter active candidates",
+        "summary": "Search and filter candidates",
         "tags": [
           "Candidates"
         ]
@@ -1838,7 +1861,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Candidate"
+                  "$ref": "#/components/schemas/CandidateDetailDto"
                 }
               }
             }
@@ -1887,6 +1910,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1905,7 +1936,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Candidate"
+                  "$ref": "#/components/schemas/CandidateDetailDto"
                 }
               }
             }
@@ -1953,15 +1984,23 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Candidate"
+                  "$ref": "#/components/schemas/CandidateDetailDto"
                 }
               }
             }
@@ -2009,15 +2048,23 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Candidate"
+                  "$ref": "#/components/schemas/CandidateDetailDto"
                 }
               }
             }
@@ -2075,7 +2122,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Candidate"
+                    "$ref": "#/components/schemas/CandidateDuplicateDto"
                   }
                 }
               }
@@ -2124,6 +2171,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2137,12 +2192,12 @@
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Candidate"
+                  "$ref": "#/components/schemas/CandidateDetailDto"
                 }
               }
             }
@@ -2183,7 +2238,7 @@
       }
     },
     "/candidates/{id}/privacy/export": {
-      "get": {
+      "post": {
         "operationId": "CandidatesController_export",
         "parameters": [
           {
@@ -2202,40 +2257,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "candidate"
-                  ],
-                  "properties": {
-                    "candidate": {
-                      "$ref": "#/components/schemas/Candidate"
-                    },
-                    "applications": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Application"
-                      }
-                    },
-                    "documents": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    },
-                    "interviews": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Interview"
-                      }
-                    },
-                    "responses": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  }
+                  "additionalProperties": true
                 }
               }
             }
@@ -2283,10 +2305,18 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -2347,10 +2377,18 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -2411,6 +2449,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2429,7 +2475,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Candidate"
+                  "$ref": "#/components/schemas/CandidateDetailDto"
                 }
               }
             }
@@ -7570,10 +7616,13 @@
             }
           },
           "source": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100
           },
           "ownerId": {
-            "type": "number"
+            "type": "number",
+            "nullable": true,
+            "minimum": 1
           },
           "privacyConsent": {
             "type": "boolean"
@@ -7588,59 +7637,120 @@
           "email"
         ]
       },
-      "CandidateHistory": {
+      "CandidateOwnerDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "number"
           },
-          "candidate": {
-            "$ref": "#/components/schemas/Candidate"
-          },
-          "previousState": {
-            "type": "string",
-            "enum": [
-              "new",
-              "preselected",
-              "interview_scheduled",
-              "in_interview",
-              "accepted",
-              "rejected"
-            ]
-          },
-          "newState": {
-            "type": "string",
-            "enum": [
-              "new",
-              "preselected",
-              "interview_scheduled",
-              "in_interview",
-              "accepted",
-              "rejected"
-            ]
-          },
-          "comment": {
+          "firstName": {
             "type": "string"
           },
-          "changedBy": {
-            "$ref": "#/components/schemas/User"
-          },
-          "changedAt": {
-            "format": "date-time",
+          "lastName": {
             "type": "string"
           }
         },
         "required": [
           "id",
-          "candidate",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "CandidateStateHistoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "previousState": {
+            "enum": [
+              "new",
+              "preselected",
+              "interview_scheduled",
+              "in_interview",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "newState": {
+            "enum": [
+              "new",
+              "preselected",
+              "interview_scheduled",
+              "in_interview",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "changedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "changedBy": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CandidateOwnerDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
           "previousState",
           "newState",
-          "comment",
-          "changedBy",
           "changedAt"
         ]
       },
-      "Candidate": {
+      "CandidatePrivacyStatusDto": {
+        "type": "object",
+        "properties": {
+          "consent": {
+            "type": "boolean"
+          },
+          "consentAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "retentionUntil": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "deletionRequestedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "erasedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "erasureBlocked": {
+            "type": "boolean"
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "consent",
+          "erasureBlocked",
+          "allowedActions"
+        ]
+      },
+      "CandidateDetailDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -7655,14 +7765,9 @@
           "email": {
             "type": "string"
           },
-          "normalizedEmail": {
-            "type": "string"
-          },
           "phone": {
-            "type": "string"
-          },
-          "normalizedPhone": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "tags": {
             "type": "array",
@@ -7677,34 +7782,18 @@
             }
           },
           "source": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "owner": {
-            "$ref": "#/components/schemas/User"
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CandidateOwnerDto"
+              }
+            ]
           },
-          "archivedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "privacyConsent": {
-            "type": "boolean"
-          },
-          "consentAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "retentionUntil": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "deletionRequestedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "mergedInto": {
-            "$ref": "#/components/schemas/Candidate"
-          },
-          "currentState": {
+          "state": {
             "enum": [
               "new",
               "preselected",
@@ -7715,11 +7804,144 @@
             ],
             "type": "string"
           },
-          "history": {
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "merged",
+              "erased"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "stateHistory": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CandidateHistory"
+              "$ref": "#/components/schemas/CandidateStateHistoryDto"
             }
+          },
+          "mergedInto": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "displayName"
+            ]
+          },
+          "privacy": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CandidatePrivacyStatusDto"
+              }
+            ]
+          },
+          "applicationCount": {
+            "type": "number"
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "tags",
+          "skills",
+          "state",
+          "disposition",
+          "createdAt",
+          "updatedAt",
+          "version",
+          "stateHistory",
+          "applicationCount",
+          "allowedActions"
+        ]
+      },
+      "CandidateListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CandidateOwnerDto"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "new",
+              "preselected",
+              "interview_scheduled",
+              "in_interview",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "merged",
+              "erased"
+            ]
           },
           "createdAt": {
             "format": "date-time",
@@ -7738,16 +7960,43 @@
           "firstName",
           "lastName",
           "email",
-          "normalizedEmail",
-          "phone",
           "tags",
           "skills",
-          "privacyConsent",
-          "currentState",
-          "history",
+          "state",
+          "disposition",
           "createdAt",
           "updatedAt",
           "version"
+        ]
+      },
+      "CandidateListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CandidateListItemDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
         ]
       },
       "UpdateCandidateDto": {
@@ -7782,10 +8031,14 @@
             }
           },
           "source": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
           },
           "ownerId": {
-            "type": "number"
+            "type": "number",
+            "nullable": true,
+            "minimum": 1
           },
           "privacyConsent": {
             "type": "boolean"
@@ -7795,11 +8048,108 @@
           }
         }
       },
+      "CandidateDuplicateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CandidateOwnerDto"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "new",
+              "preselected",
+              "interview_scheduled",
+              "in_interview",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "merged",
+              "erased"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "matchReasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "tags",
+          "skills",
+          "state",
+          "disposition",
+          "createdAt",
+          "updatedAt",
+          "version",
+          "matchReasons"
+        ]
+      },
       "MergeCandidatesDto": {
         "type": "object",
         "properties": {
           "sourceCandidateId": {
-            "type": "number"
+            "type": "number",
+            "minimum": 1
           }
         },
         "required": [
@@ -8051,6 +8401,172 @@
           "candidateId",
           "applicationId",
           "date"
+        ]
+      },
+      "CandidateHistory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/Candidate"
+          },
+          "previousState": {
+            "type": "string",
+            "enum": [
+              "new",
+              "preselected",
+              "interview_scheduled",
+              "in_interview",
+              "accepted",
+              "rejected"
+            ]
+          },
+          "newState": {
+            "type": "string",
+            "enum": [
+              "new",
+              "preselected",
+              "interview_scheduled",
+              "in_interview",
+              "accepted",
+              "rejected"
+            ]
+          },
+          "comment": {
+            "type": "string"
+          },
+          "changedBy": {
+            "$ref": "#/components/schemas/User"
+          },
+          "changedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "candidate",
+          "previousState",
+          "newState",
+          "comment",
+          "changedBy",
+          "changedAt"
+        ]
+      },
+      "Candidate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "normalizedEmail": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "normalizedPhone": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "type": "string"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/User"
+          },
+          "archivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "privacyConsent": {
+            "type": "boolean"
+          },
+          "consentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "retentionUntil": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deletionRequestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "erasedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "mergedInto": {
+            "$ref": "#/components/schemas/Candidate"
+          },
+          "currentState": {
+            "type": "string",
+            "enum": [
+              "new",
+              "preselected",
+              "interview_scheduled",
+              "in_interview",
+              "accepted",
+              "rejected"
+            ]
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CandidateHistory"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "normalizedEmail",
+          "phone",
+          "tags",
+          "skills",
+          "privacyConsent",
+          "currentState",
+          "history",
+          "createdAt",
+          "updatedAt",
+          "version"
         ]
       },
       "PipelineTransition": {

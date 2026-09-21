@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -32,6 +33,10 @@ import {
 } from '../timeline/entities/timeline-event.entity';
 import { TimelineService } from '../timeline/timeline.service';
 import { Role } from '../users/enums/role.enum';
+import {
+  AuthorizationService,
+  CAPABILITIES,
+} from '../auth/authorization.service';
 @Injectable()
 export class CandidatesService {
   constructor(
@@ -43,7 +48,7 @@ export class CandidatesService {
     private audit: SecurityAuditService,
     private timeline: TimelineService,
   ) {}
-  private async owner(id?: number) {
+  private async owner(id?: number | null) {
     if (!id) return undefined;
     const value = await this.dataSource.getRepository(User).findOneBy({ id });
     if (!value) throw new NotFoundException(`Owner with ID ${id} not found`);
@@ -64,6 +69,100 @@ export class CandidatesService {
     if (dto.privacyConsent !== undefined)
       value.consentAt = dto.privacyConsent ? new Date() : null;
     return value;
+  }
+  private assertVersion(candidate: Candidate, expected: number) {
+    if (candidate.version !== expected)
+      throw new HttpException(
+        {
+          code: 'STALE_CANDIDATE',
+          message: 'Candidate changed since it was loaded',
+          expectedVersion: expected,
+          currentVersion: candidate.version,
+        },
+        412,
+      );
+  }
+  private disposition(candidate: Candidate) {
+    if (candidate.erasedAt) return 'erased';
+    if (candidate.mergedInto) return 'merged';
+    if (candidate.archivedAt) return 'archived';
+    return 'active';
+  }
+  private ownerDto(owner?: User) {
+    return owner
+      ? { id: owner.id, firstName: owner.firstName, lastName: owner.lastName }
+      : null;
+  }
+  private listDto(candidate: Candidate) {
+    return {
+      id: candidate.id,
+      firstName: candidate.erasedAt ? 'Erased' : candidate.firstName,
+      lastName: candidate.erasedAt ? 'candidate' : candidate.lastName,
+      email: candidate.erasedAt ? '' : candidate.email,
+      phone: candidate.erasedAt ? null : (candidate.phone ?? null),
+      tags: candidate.tags ?? [],
+      skills: candidate.skills ?? [],
+      source: candidate.source ?? null,
+      owner: this.ownerDto(candidate.owner),
+      state: candidate.currentState,
+      disposition: this.disposition(candidate),
+      createdAt: candidate.createdAt,
+      updatedAt: candidate.updatedAt,
+      version: candidate.version,
+    };
+  }
+  private async detailDto(candidate: Candidate, actor?: User) {
+    const privacyAllowed = actor
+      ? AuthorizationService.hasEvery(actor.role, [
+          CAPABILITIES.CANDIDATES_PRIVACY_REQUEST_DELETION,
+        ])
+      : false;
+    const applicationCount = await this.dataSource
+      .getRepository(Application)
+      .count({ where: { candidate: { id: candidate.id } } });
+    const disposition = this.disposition(candidate);
+    const allowedActions =
+      actor && disposition === 'active'
+        ? AuthorizationService.capabilitiesFor(actor.role).filter((value) =>
+            value.startsWith('candidates:'),
+          )
+        : actor && disposition === 'archived'
+          ? [CAPABILITIES.CANDIDATES_RESTORE].filter((value) =>
+              AuthorizationService.hasEvery(actor.role, [value]),
+            )
+          : [];
+    return {
+      ...this.listDto(candidate),
+      stateHistory: (candidate.history ?? []).map((item) => ({
+        id: item.id,
+        previousState: item.previousState,
+        newState: item.newState,
+        comment: item.comment ?? null,
+        changedAt: item.changedAt,
+        changedBy: this.ownerDto(item.changedBy),
+      })),
+      mergedInto: candidate.mergedInto
+        ? {
+            id: candidate.mergedInto.id,
+            displayName: `${candidate.mergedInto.firstName} ${candidate.mergedInto.lastName}`,
+          }
+        : null,
+      privacy: privacyAllowed
+        ? {
+            consent: candidate.privacyConsent,
+            consentAt: candidate.consentAt ?? null,
+            retentionUntil: candidate.retentionUntil ?? null,
+            deletionRequestedAt: candidate.deletionRequestedAt ?? null,
+            erasedAt: candidate.erasedAt ?? null,
+            erasureBlocked: Boolean(
+              candidate.retentionUntil && candidate.retentionUntil > new Date(),
+            ),
+            allowedActions,
+          }
+        : null,
+      applicationCount,
+      allowedActions,
+    };
   }
   async create(dto: CreateCandidateDto, actor?: User) {
     const normalizedEmail = normalizeEmail(dto.email);
@@ -91,7 +190,7 @@ export class CandidatesService {
       sourceType: 'candidate',
       sourceId: candidate.id,
     });
-    return candidate;
+    return this.detailDto(candidate, actor);
   }
   async findAll(q: ListCandidatesDto, actor?: User) {
     const b = this.candidates
@@ -110,14 +209,21 @@ export class CandidatesService {
           { managerId: actor.id },
         )
         .distinct(true);
-    if (!q.includeArchived)
+    b.andWhere('candidate.mergedIntoId IS NULL');
+    if (q.disposition === 'active')
       b.andWhere('candidate.archivedAt IS NULL').andWhere(
-        'candidate.mergedIntoId IS NULL',
+        'candidate.erasedAt IS NULL',
       );
+    if (q.disposition === 'archived')
+      b.andWhere('candidate.archivedAt IS NOT NULL').andWhere(
+        'candidate.erasedAt IS NULL',
+      );
+    if (q.state)
+      b.andWhere('candidate.currentState=:state', { state: q.state });
     if (q.search)
       b.andWhere(
         '(candidate.firstName ILIKE :s OR candidate.lastName ILIKE :s OR candidate.email ILIKE :s OR candidate.phone ILIKE :s)',
-        { s: `%${q.search}%` },
+        { s: `%${q.search.replace(/[\\%_]/g, '\\$&')}%` },
       );
     if (q.tag)
       b.andWhere(':tag=ANY(candidate.tags)', { tag: q.tag.toLowerCase() });
@@ -129,12 +235,19 @@ export class CandidatesService {
     if (q.ownerId) b.andWhere('owner.id=:ownerId', { ownerId: q.ownerId });
     const [data, total] = await b
       .orderBy(`candidate.${q.sortBy}`, q.sortOrder)
+      .addOrderBy('candidate.id', q.sortOrder)
       .skip((q.page - 1) * q.limit)
       .take(q.limit)
       .getManyAndCount();
-    return { data, total, page: q.page, limit: q.limit };
+    return {
+      data: data.map((candidate) => this.listDto(candidate)),
+      total,
+      page: q.page,
+      limit: q.limit,
+      totalPages: Math.ceil(total / q.limit),
+    };
   }
-  async findOne(id: number, includeArchived = false, actor?: User) {
+  private async findEntity(id: number, includeDisposed = false, actor?: User) {
     if (
       actor?.role === Role.MANAGER &&
       !(await this.dataSource.getRepository(Application).count({
@@ -145,7 +258,7 @@ export class CandidatesService {
     const candidate = await this.candidates.findOne({
       where: {
         id,
-        ...(!includeArchived
+        ...(!includeDisposed
           ? { archivedAt: IsNull(), mergedInto: IsNull() }
           : {}),
       },
@@ -155,8 +268,20 @@ export class CandidatesService {
       throw new NotFoundException(`Candidate with ID ${id} not found`);
     return candidate;
   }
-  async update(id: number, dto: UpdateCandidateDto, actor: User) {
-    const candidate = await this.findOne(id);
+  async findOne(id: number, includeDisposed = false, actor?: User) {
+    return this.detailDto(
+      await this.findEntity(id, includeDisposed, actor),
+      actor,
+    );
+  }
+  async update(
+    id: number,
+    dto: UpdateCandidateDto,
+    actor: User,
+    version: number,
+  ) {
+    const candidate = await this.findEntity(id);
+    this.assertVersion(candidate, version);
     const normalizedEmail = dto.email ? normalizeEmail(dto.email) : undefined;
     const normalizedPhone =
       dto.phone !== undefined ? normalizePhone(dto.phone) : undefined;
@@ -196,10 +321,14 @@ export class CandidatesService {
       sourceId: id,
       metadata: { fields: Object.keys(dto) },
     });
-    return saved;
+    return this.detailDto(saved, actor);
   }
-  async archive(id: number, actor: User) {
-    const c = await this.findOne(id, true);
+  async archive(id: number, actor: User, version: number) {
+    const c = await this.findEntity(id, true);
+    this.assertVersion(c, version);
+    if (c.mergedInto || c.erasedAt)
+      throw new ConflictException('Candidate cannot be archived');
+    if (c.archivedAt) return this.detailDto(c, actor);
     c.archivedAt = new Date();
     const saved = await this.candidates.save(c);
     await this.audit.record('candidate.archived', actor.id, undefined, {
@@ -214,12 +343,16 @@ export class CandidatesService {
       sourceType: 'candidate',
       sourceId: id,
     });
-    return saved;
+    return this.detailDto(saved, actor);
   }
-  async restore(id: number, actor: User) {
-    const c = await this.findOne(id, true);
+  async restore(id: number, actor: User, version: number) {
+    const c = await this.findEntity(id, true);
+    this.assertVersion(c, version);
     if (c.mergedInto)
       throw new BadRequestException('Merged candidates cannot be restored');
+    if (c.erasedAt)
+      throw new BadRequestException('Erased candidates cannot be restored');
+    if (!c.archivedAt) return this.detailDto(c, actor);
     c.archivedAt = undefined;
     const saved = await this.candidates.save(c);
     await this.audit.record('candidate.restored', actor.id, undefined, {
@@ -234,11 +367,11 @@ export class CandidatesService {
       sourceType: 'candidate',
       sourceId: id,
     });
-    return saved;
+    return this.detailDto(saved, actor);
   }
   async duplicates(id: number) {
-    const c = await this.findOne(id, true);
-    return this.candidates
+    const c = await this.findEntity(id, true);
+    const values = await this.candidates
       .createQueryBuilder('candidate')
       .where('candidate.id!=:id', { id })
       .andWhere('candidate.mergedIntoId IS NULL')
@@ -247,8 +380,23 @@ export class CandidatesService {
         { email: c.normalizedEmail, phone: c.normalizedPhone ?? null },
       )
       .getMany();
+    return values.map((candidate) => ({
+      ...this.listDto(candidate),
+      matchReasons: [
+        ...(candidate.normalizedEmail === c.normalizedEmail ? ['email'] : []),
+        ...(candidate.normalizedPhone &&
+        candidate.normalizedPhone === c.normalizedPhone
+          ? ['phone']
+          : []),
+      ],
+    }));
   }
-  async merge(targetId: number, sourceId: number, actor: User) {
+  async merge(
+    targetId: number,
+    sourceId: number,
+    actor: User,
+    version: number,
+  ) {
     if (targetId === sourceId)
       throw new BadRequestException('Source and target must differ');
     const result = await this.dataSource.transaction(async (m) => {
@@ -261,6 +409,9 @@ export class CandidatesService {
         source = rows.find((c) => c.id === sourceId);
       if (!target || !source || source.mergedInto)
         throw new NotFoundException('Source or target candidate not found');
+      this.assertVersion(target, version);
+      if (target.erasedAt || target.mergedInto || source.erasedAt)
+        throw new ConflictException('Disposed candidates cannot be merged');
       const conflicts = await m.query(
         `SELECT a1."jobId" FROM applications a1 JOIN applications a2 ON a1."jobId"=a2."jobId" WHERE a1."candidateId"=$1 AND a2."candidateId"=$2 LIMIT 1`,
         [sourceId, targetId],
@@ -320,10 +471,10 @@ export class CandidatesService {
       sourceId: sourceId,
       metadata: { sourceCandidateId: sourceId },
     });
-    return result;
+    return this.detailDto(result, actor);
   }
   async exportData(id: number, actor: User) {
-    const candidate = await this.findOne(id, true);
+    const candidate = await this.findEntity(id, true, actor);
     const applications = await this.dataSource
       .getRepository(Application)
       .find({ where: { candidate: { id } }, relations: { history: true } });
@@ -347,14 +498,17 @@ export class CandidatesService {
     });
     return {
       exportedAt: new Date(),
-      candidate,
+      candidate: this.listDto(candidate),
       applications,
       interviews,
       formResponses: responses,
     };
   }
-  async requestDeletion(id: number, actor: User) {
-    const c = await this.findOne(id, true);
+  async requestDeletion(id: number, actor: User, version: number) {
+    const c = await this.findEntity(id, true, actor);
+    this.assertVersion(c, version);
+    if (c.deletionRequestedAt)
+      return { status: 'requested', requestedAt: c.deletionRequestedAt };
     c.deletionRequestedAt = new Date();
     await this.candidates.save(c);
     await this.audit.record(
@@ -371,10 +525,12 @@ export class CandidatesService {
       targetId: id,
       sourceType: 'security_audit_event',
     });
-    return { message: 'Deletion request recorded' };
+    return { status: 'requested', requestedAt: c.deletionRequestedAt };
   }
-  async erase(id: number, actor: User) {
-    const c = await this.findOne(id, true);
+  async erase(id: number, actor: User, version: number) {
+    const c = await this.findEntity(id, true, actor);
+    this.assertVersion(c, version);
+    if (c.erasedAt) return this.detailDto(c, actor);
     if (c.retentionUntil && c.retentionUntil > new Date())
       throw new BadRequestException(
         'Candidate is under an active retention period',
@@ -391,6 +547,7 @@ export class CandidatesService {
     c.privacyConsent = false;
     c.consentAt = null as any;
     c.archivedAt = new Date();
+    c.erasedAt = new Date();
     await this.candidates.save(c);
     await this.audit.record(
       'candidate.personal_data_erased',
@@ -406,18 +563,22 @@ export class CandidatesService {
       targetId: id,
       sourceType: 'security_audit_event',
     });
-    return { message: 'Candidate personal data erased' };
+    return this.detailDto(c, actor);
   }
   async updateState(
     id: number,
     state: CandidateState,
     user: User,
     comment?: string,
+    version?: number,
   ) {
     return this.dataSource.transaction(async (m) => {
       const candidate = await m.findOne(Candidate, { where: { id } });
       if (!candidate)
         throw new NotFoundException(`Candidate with ID ${id} not found`);
+      this.assertVersion(candidate, version as number);
+      if (candidate.archivedAt || candidate.mergedInto || candidate.erasedAt)
+        throw new ConflictException('Candidate state cannot be changed');
       const previousState = candidate.currentState;
       candidate.currentState = state;
       await m.save(candidate);
@@ -443,7 +604,7 @@ export class CandidatesService {
         },
         m,
       );
-      return candidate;
+      return this.detailDto(candidate, user);
     });
   }
 }

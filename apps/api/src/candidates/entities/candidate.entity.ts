@@ -40,6 +40,7 @@ export class Candidate {
   @Column({ type: 'timestamp', nullable: true }) consentAt?: Date;
   @Column({ type: 'timestamp', nullable: true }) retentionUntil?: Date;
   @Column({ type: 'timestamp', nullable: true }) deletionRequestedAt?: Date;
+  @Column({ type: 'timestamp', nullable: true }) erasedAt?: Date;
   @ManyToOne(() => Candidate, { nullable: true, onDelete: 'SET NULL' })
   mergedInto?: Candidate;
 
