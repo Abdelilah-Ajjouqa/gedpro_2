@@ -1,6 +1,14 @@
 'use client';
 
-import { BriefcaseBusiness, CalendarDays, FileText, LayoutDashboard, Settings, Users } from 'lucide-react';
+import {
+  BriefcaseBusiness,
+  CalendarDays,
+  FileText,
+  LayoutDashboard,
+  Settings,
+  UserRoundSearch,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -9,19 +17,77 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 
 const navigation = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard, capability: 'dashboard:view', available: true },
-  { href: '/candidates', label: 'Candidates', icon: Users, capability: 'candidates:read', available: true },
-  { href: '/jobs', label: 'Jobs', icon: BriefcaseBusiness, capability: 'jobs:read', available: true },
-  { href: '/interviews', label: 'Interviews', icon: CalendarDays, capability: 'interviews:read', available: false },
-  { href: '/documents', label: 'Documents', icon: FileText, capability: 'documents:read', available: false },
-  { href: '/settings/pipelines', label: 'Pipelines', icon: Settings, capability: 'pipelines:read', available: true },
+  {
+    href: '/',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    capability: 'dashboard:view',
+    available: true,
+  },
+  {
+    href: '/candidates',
+    label: 'Candidates',
+    icon: Users,
+    capability: 'candidates:read',
+    available: true,
+  },
+  {
+    href: '/jobs',
+    label: 'Jobs',
+    icon: BriefcaseBusiness,
+    capability: 'jobs:read',
+    available: true,
+  },
+  {
+    href: '/applications',
+    label: 'Applications',
+    icon: UserRoundSearch,
+    capability: 'applications:read',
+    available: true,
+  },
+  {
+    href: '/interviews',
+    label: 'Interviews',
+    icon: CalendarDays,
+    capability: 'interviews:read',
+    available: false,
+  },
+  {
+    href: '/documents',
+    label: 'Documents',
+    icon: FileText,
+    capability: 'documents:read',
+    available: false,
+  },
+  {
+    href: '/settings/pipelines',
+    label: 'Pipelines',
+    icon: Settings,
+    capability: 'pipelines:read',
+    available: true,
+  },
 ] as const;
 
-function NavLink({ href, label, icon: Icon, mobile = false }: (typeof navigation)[number] & { mobile?: boolean }) {
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  mobile = false,
+}: (typeof navigation)[number] & { mobile?: boolean }) {
   const pathname = usePathname();
   const active = href === '/' ? pathname === href : pathname.startsWith(href);
   const link = (
-    <Link href={href} aria-current={active ? 'page' : undefined} className={cn('flex items-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring', mobile ? 'px-3 py-3' : 'px-3 py-2', active ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
+    <Link
+      href={href}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        'flex items-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+        mobile ? 'px-3 py-3' : 'px-3 py-2',
+        active
+          ? 'bg-foreground text-background shadow-sm'
+          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+      )}
+    >
       <Icon className="size-4" aria-hidden="true" />
       {label}
     </Link>
@@ -32,12 +98,31 @@ function NavLink({ href, label, icon: Icon, mobile = false }: (typeof navigation
 
 function PrimaryNav() {
   const { hasCapability } = useAuth();
-  return <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary navigation">{navigation.filter((item) => item.available && hasCapability(item.capability)).map((item) => <NavLink key={item.href} {...item} />)}</nav>;
+  return (
+    <nav
+      className="hidden items-center gap-1 xl:flex"
+      aria-label="Primary navigation"
+    >
+      {navigation
+        .filter((item) => item.available && hasCapability(item.capability))
+        .map((item) => (
+          <NavLink key={item.href} {...item} />
+        ))}
+    </nav>
+  );
 }
 
 function MobileNav() {
   const { hasCapability } = useAuth();
-  return <nav className="mt-8 grid gap-1" aria-label="Mobile navigation">{navigation.filter((item) => item.available && hasCapability(item.capability)).map((item) => <NavLink key={item.href} {...item} mobile />)}</nav>;
+  return (
+    <nav className="mt-8 grid gap-1" aria-label="Mobile navigation">
+      {navigation
+        .filter((item) => item.available && hasCapability(item.capability))
+        .map((item) => (
+          <NavLink key={item.href} {...item} mobile />
+        ))}
+    </nav>
+  );
 }
 
 export { MobileNav, PrimaryNav };

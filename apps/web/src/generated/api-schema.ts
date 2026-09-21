@@ -1999,6 +1999,8 @@ export interface components {
             previousStage?: components["schemas"]["PipelineStage"];
             newStage: components["schemas"]["PipelineStage"];
             comment?: string;
+            kind: Record<string, never>;
+            rejectionReason?: string;
             changedBy: components["schemas"]["User"];
             /** Format: date-time */
             changedAt: string;
@@ -2329,19 +2331,117 @@ export interface components {
             source?: string;
             ownerId?: number;
         };
+        ApplicationCandidateRefDto: {
+            id: number;
+            firstName: string;
+            lastName: string;
+            email?: string | null;
+        };
+        ApplicationJobRefDto: {
+            id: number;
+            title: string;
+        };
+        ApplicationPersonRefDto: {
+            id: number;
+            firstName: string;
+            lastName: string;
+        };
+        ApplicationStageDto: {
+            id: number;
+            name: string;
+            /** @enum {string} */
+            category: "applied" | "screening" | "interview" | "offer" | "hired" | "rejected" | "withdrawn";
+            position: number;
+            archived: boolean;
+            terminal: boolean;
+        };
+        AllowedApplicationTransitionDto: {
+            stage: components["schemas"]["ApplicationStageDto"];
+            requiresRejectionReason: boolean;
+        };
+        ApplicationHistoryEntryDto: {
+            id: number;
+            /** @enum {string} */
+            kind: "created" | "transitioned" | "reopened";
+            previousStage?: components["schemas"]["ApplicationStageDto"] | null;
+            newStage: components["schemas"]["ApplicationStageDto"];
+            comment?: string | null;
+            rejectionReason?: string | null;
+            actor?: components["schemas"]["ApplicationPersonRefDto"] | null;
+            /** Format: date-time */
+            changedAt: string;
+        };
+        ApplicationDetailDto: {
+            id: number;
+            version: number;
+            candidate: components["schemas"]["ApplicationCandidateRefDto"];
+            job: components["schemas"]["ApplicationJobRefDto"];
+            owner?: components["schemas"]["ApplicationPersonRefDto"] | null;
+            currentStage: components["schemas"]["ApplicationStageDto"];
+            source?: string | null;
+            terminal: boolean;
+            reopenEligible: boolean;
+            allowedActions: string[];
+            allowedTransitions: components["schemas"]["AllowedApplicationTransitionDto"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            history: components["schemas"]["ApplicationHistoryEntryDto"][];
+            rejectionReason?: string | null;
+        };
+        ApplicationSummaryDto: {
+            id: number;
+            version: number;
+            candidate: components["schemas"]["ApplicationCandidateRefDto"];
+            job: components["schemas"]["ApplicationJobRefDto"];
+            owner?: components["schemas"]["ApplicationPersonRefDto"] | null;
+            currentStage: components["schemas"]["ApplicationStageDto"];
+            source?: string | null;
+            terminal: boolean;
+            reopenEligible: boolean;
+            allowedActions: string[];
+            allowedTransitions: components["schemas"]["AllowedApplicationTransitionDto"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ApplicationListResponseDto: {
+            data: components["schemas"]["ApplicationSummaryDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
         TransitionApplicationDto: {
             stageId: number;
             comment?: string;
             rejectionReason?: string;
         };
+        ReopenApplicationDto: {
+            comment?: string;
+        };
         BulkMoveItemDto: {
             applicationId: number;
+            version: number;
+        };
+        BulkMoveApplicationsDto: {
+            items: components["schemas"]["BulkMoveItemDto"][];
             stageId: number;
             comment?: string;
             rejectionReason?: string;
         };
-        BulkMoveApplicationsDto: {
-            items: components["schemas"]["BulkMoveItemDto"][];
+        BulkMoveResultDto: {
+            applicationId: number;
+            success: boolean;
+            application?: components["schemas"]["ApplicationSummaryDto"];
+            code?: string;
+            message?: string;
+            currentVersion?: number;
+        };
+        BulkMoveResponseDto: {
+            results: components["schemas"]["BulkMoveResultDto"][];
         };
         CreateReportExportDto: {
             /** @description Inclusive UTC boundary */
@@ -6193,6 +6293,12 @@ export interface operations {
                 jobId?: number;
                 candidateId?: number;
                 stageId?: number;
+                ownerId?: number;
+                search?: string;
+                stageCategory?: string;
+                terminal: "active" | "terminal" | "all";
+                sort: "createdAt" | "updatedAt" | "candidate" | "job" | "stage";
+                direction: "asc" | "desc";
                 page: components["schemas"]["Object"];
                 limit: components["schemas"]["Object"];
             };
@@ -6253,7 +6359,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Application"];
+                    "application/json": components["schemas"]["ApplicationDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -6301,7 +6407,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Application"];
+                    "application/json": components["schemas"]["ApplicationDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -6327,7 +6433,9 @@ export interface operations {
     ApplicationsController_transition: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -6344,7 +6452,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Application"];
+                    "application/json": components["schemas"]["ApplicationDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -6370,7 +6478,9 @@ export interface operations {
     ApplicationsController_reopen: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: string;
             };
@@ -6378,16 +6488,16 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TransitionApplicationDto"];
+                "application/json": components["schemas"]["ReopenApplicationDto"];
             };
         };
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Application"];
+                    "application/json": components["schemas"]["ApplicationDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -6423,7 +6533,7 @@ export interface operations {
             };
         };
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
