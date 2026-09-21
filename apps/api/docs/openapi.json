@@ -5814,7 +5814,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Application"
+                  "$ref": "#/components/schemas/ApplicationDetailDto"
                 }
               }
             }
@@ -5868,6 +5868,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "minimum": 1,
               "type": "number"
             }
           },
@@ -5876,6 +5877,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "minimum": 1,
               "type": "number"
             }
           },
@@ -5884,7 +5886,77 @@
             "required": false,
             "in": "query",
             "schema": {
+              "minimum": 1,
               "type": "number"
+            }
+          },
+          {
+            "name": "ownerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "stageCategory",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "terminal",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "active",
+                "terminal",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "candidate",
+                "job",
+                "stage"
+              ]
+            }
+          },
+          {
+            "name": "direction",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           },
           {
@@ -5989,7 +6061,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Application"
+                  "$ref": "#/components/schemas/ApplicationDetailDto"
                 }
               }
             }
@@ -6037,6 +6109,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -6055,7 +6135,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Application"
+                  "$ref": "#/components/schemas/ApplicationDetailDto"
                 }
               }
             }
@@ -6103,6 +6183,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -6110,18 +6198,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TransitionApplicationDto"
+                "$ref": "#/components/schemas/ReopenApplicationDto"
               }
             }
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Application"
+                  "$ref": "#/components/schemas/ApplicationDetailDto"
                 }
               }
             }
@@ -6173,7 +6261,7 @@
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -8791,6 +8879,12 @@
           "comment": {
             "type": "string"
           },
+          "kind": {
+            "type": "object"
+          },
+          "rejectionReason": {
+            "type": "string"
+          },
           "changedBy": {
             "$ref": "#/components/schemas/User"
           },
@@ -8803,6 +8897,7 @@
           "id",
           "application",
           "newStage",
+          "kind",
           "changedBy",
           "changedAt"
         ]
@@ -10119,16 +10214,20 @@
         "type": "object",
         "properties": {
           "candidateId": {
-            "type": "number"
+            "type": "number",
+            "minimum": 1
           },
           "jobId": {
-            "type": "number"
+            "type": "number",
+            "minimum": 1
           },
           "source": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 120
           },
           "ownerId": {
-            "type": "number"
+            "type": "number",
+            "minimum": 1
           }
         },
         "required": [
@@ -10136,42 +10235,398 @@
           "jobId"
         ]
       },
+      "ApplicationCandidateRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "ApplicationJobRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
+      "ApplicationPersonRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "ApplicationStageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "applied",
+              "screening",
+              "interview",
+              "offer",
+              "hired",
+              "rejected",
+              "withdrawn"
+            ],
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "terminal": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "position",
+          "archived",
+          "terminal"
+        ]
+      },
+      "AllowedApplicationTransitionDto": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "$ref": "#/components/schemas/ApplicationStageDto"
+          },
+          "requiresRejectionReason": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "stage",
+          "requiresRejectionReason"
+        ]
+      },
+      "ApplicationHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "created",
+              "transitioned",
+              "reopened"
+            ]
+          },
+          "previousStage": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationStageDto"
+              }
+            ]
+          },
+          "newStage": {
+            "$ref": "#/components/schemas/ApplicationStageDto"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "actor": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationPersonRefDto"
+              }
+            ]
+          },
+          "changedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "newStage",
+          "changedAt"
+        ]
+      },
+      "ApplicationDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "version": {
+            "type": "number"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/ApplicationCandidateRefDto"
+          },
+          "job": {
+            "$ref": "#/components/schemas/ApplicationJobRefDto"
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationPersonRefDto"
+              }
+            ]
+          },
+          "currentStage": {
+            "$ref": "#/components/schemas/ApplicationStageDto"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "terminal": {
+            "type": "boolean"
+          },
+          "reopenEligible": {
+            "type": "boolean"
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedTransitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllowedApplicationTransitionDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationHistoryEntryDto"
+            }
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "candidate",
+          "job",
+          "currentStage",
+          "terminal",
+          "reopenEligible",
+          "allowedActions",
+          "allowedTransitions",
+          "createdAt",
+          "updatedAt",
+          "history"
+        ]
+      },
+      "ApplicationSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "version": {
+            "type": "number"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/ApplicationCandidateRefDto"
+          },
+          "job": {
+            "$ref": "#/components/schemas/ApplicationJobRefDto"
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationPersonRefDto"
+              }
+            ]
+          },
+          "currentStage": {
+            "$ref": "#/components/schemas/ApplicationStageDto"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "terminal": {
+            "type": "boolean"
+          },
+          "reopenEligible": {
+            "type": "boolean"
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedTransitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllowedApplicationTransitionDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "candidate",
+          "job",
+          "currentStage",
+          "terminal",
+          "reopenEligible",
+          "allowedActions",
+          "allowedTransitions",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ApplicationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationSummaryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
       "TransitionApplicationDto": {
         "type": "object",
         "properties": {
           "stageId": {
-            "type": "number"
+            "type": "number",
+            "minimum": 1
           },
           "comment": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 1000
           },
           "rejectionReason": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 500
           }
         },
         "required": [
           "stageId"
         ]
       },
+      "ReopenApplicationDto": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      },
       "BulkMoveItemDto": {
         "type": "object",
         "properties": {
           "applicationId": {
-            "type": "number"
+            "type": "number",
+            "minimum": 1
           },
-          "stageId": {
-            "type": "number"
-          },
-          "comment": {
-            "type": "string"
-          },
-          "rejectionReason": {
-            "type": "string"
+          "version": {
+            "type": "number",
+            "minimum": 1
           }
         },
         "required": [
           "applicationId",
-          "stageId"
+          "version"
         ]
       },
       "BulkMoveApplicationsDto": {
@@ -10179,14 +10634,69 @@
         "properties": {
           "items": {
             "minItems": 1,
+            "maxItems": 50,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BulkMoveItemDto"
             }
+          },
+          "stageId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "comment": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "rejectionReason": {
+            "type": "string",
+            "maxLength": 500
           }
         },
         "required": [
-          "items"
+          "items",
+          "stageId"
+        ]
+      },
+      "BulkMoveResultDto": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "number"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "application": {
+            "$ref": "#/components/schemas/ApplicationSummaryDto"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "currentVersion": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "applicationId",
+          "success"
+        ]
+      },
+      "BulkMoveResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BulkMoveResultDto"
+            }
+          }
+        },
+        "required": [
+          "results"
         ]
       },
       "CreateReportExportDto": {

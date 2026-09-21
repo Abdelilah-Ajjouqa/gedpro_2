@@ -47,15 +47,19 @@ export class RolesGuard implements CanActivate {
         'users:update': 'users:manage',
         'users:delete': 'users:manage',
       };
-      if (
-        !AuthorizationService.hasEvery(
-          userEntity.role,
-          requiredPermissions.map(
-            (permission) => aliases[permission] ?? permission,
-          ),
-        )
-      )
-        return false;
+      const granted = new Set(
+        AuthorizationService.capabilitiesFor(userEntity.role),
+      );
+      const allowed = requiredPermissions.every((permission) => {
+        const canonical = aliases[permission] ?? permission;
+        if (granted.has(canonical as never)) return true;
+        return (
+          canonical.startsWith('applications:') &&
+          canonical !== 'applications:read' &&
+          granted.has('applications:write')
+        );
+      });
+      if (!allowed) return false;
     }
     return true;
   }

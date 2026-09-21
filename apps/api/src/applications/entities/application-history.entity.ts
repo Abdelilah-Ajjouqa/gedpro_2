@@ -30,6 +30,11 @@ export class ApplicationHistory {
   })
   newStage: PipelineStage;
   @Column({ nullable: true }) comment?: string;
+  @Column({ default: 'transitioned' }) kind:
+    | 'created'
+    | 'transitioned'
+    | 'reopened';
+  @Column({ nullable: true }) rejectionReason?: string;
   @ManyToOne(() => User, { eager: true, nullable: false }) changedBy: User;
   @CreateDateColumn() changedAt: Date;
 }
