@@ -21,7 +21,12 @@ import { RolesGuard } from '../auth/guard/auth.guard';
 import { ApiProtected } from '../common/swagger/api-protected.decorator';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../users/enums/role.enum';
-import { CreateTimelineNoteDto, TimelineQueryDto } from './dto/timeline.dto';
+import {
+  CreateTimelineNoteDto,
+  TimelineEventDto,
+  TimelinePageDto,
+  TimelineQueryDto,
+} from './dto/timeline.dto';
 import { TimelineService } from './timeline.service';
 
 @ApiTags('Timeline')
@@ -33,7 +38,10 @@ export class TimelineController {
   constructor(private readonly timeline: TimelineService) {}
   @Get('candidates/:id/timeline')
   @ApiOperation({ summary: 'Get the stable chronological candidate journey' })
-  @ApiOkResponse({ description: 'Timeline page with an opaque nextCursor' })
+  @ApiOkResponse({
+    type: TimelinePageDto,
+    description: 'Timeline page with an opaque nextCursor',
+  })
   @ApiBadRequestResponse({ description: 'Malformed cursor' })
   candidate(
     @Param('id') id: string,
@@ -44,7 +52,10 @@ export class TimelineController {
   }
   @Get('applications/:id/timeline')
   @ApiOperation({ summary: 'Get the stable chronological application journey' })
-  @ApiOkResponse({ description: 'Timeline page with an opaque nextCursor' })
+  @ApiOkResponse({
+    type: TimelinePageDto,
+    description: 'Timeline page with an opaque nextCursor',
+  })
   application(
     @Param('id') id: string,
     @Query() query: TimelineQueryDto,
@@ -55,7 +66,10 @@ export class TimelineController {
   @Post('candidates/:id/timeline/notes')
   @Roles(Role.ADMIN, Role.RH, Role.MANAGER)
   @ApiOperation({ summary: 'Add a candidate timeline note' })
-  @ApiCreatedResponse({ description: 'Note event created' })
+  @ApiCreatedResponse({
+    type: TimelineEventDto,
+    description: 'Note event created',
+  })
   candidateNote(
     @Param('id') id: string,
     @Body() dto: CreateTimelineNoteDto,
@@ -66,7 +80,10 @@ export class TimelineController {
   @Post('applications/:id/timeline/notes')
   @Roles(Role.ADMIN, Role.RH, Role.MANAGER)
   @ApiOperation({ summary: 'Add an application timeline note' })
-  @ApiCreatedResponse({ description: 'Note event created' })
+  @ApiCreatedResponse({
+    type: TimelineEventDto,
+    description: 'Note event created',
+  })
   applicationNote(
     @Param('id') id: string,
     @Body() dto: CreateTimelineNoteDto,

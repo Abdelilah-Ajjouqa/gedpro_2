@@ -1,18 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
-  IsEnum,
   IsInt,
-  IsObject,
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
-import { TimelineEventVisibility } from '../entities/timeline-event.entity';
+import {
+  TimelineEventVisibility,
+  TimelineTargetType,
+} from '../entities/timeline-event.entity';
+
+export const TIMELINE_NOTE_MAX_LENGTH = 2000;
 
 export class TimelineQueryDto {
-  @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 100 })
+  @ApiPropertyOptional({ type: Number, default: 20, minimum: 1, maximum: 100 })
   @Transform(({ value }) => Number(value))
   @IsInt()
   @Min(1)
@@ -21,6 +26,7 @@ export class TimelineQueryDto {
   limit = 20;
 
   @ApiPropertyOptional({
+    type: String,
     description: 'Opaque cursor returned by the preceding page',
   })
   @IsString()
@@ -29,22 +35,65 @@ export class TimelineQueryDto {
 }
 
 export class CreateTimelineNoteDto {
-  @ApiProperty({ example: 'Candidate prefers afternoon interviews.' })
+  @ApiProperty({
+    minLength: 1,
+    maxLength: TIMELINE_NOTE_MAX_LENGTH,
+    example: 'Candidate prefers afternoon interviews.',
+  })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
+  @MinLength(1)
+  @MaxLength(TIMELINE_NOTE_MAX_LENGTH)
   text: string;
+}
 
-  @ApiPropertyOptional({
-    enum: TimelineEventVisibility,
-    default: TimelineEventVisibility.INTERNAL,
+export class TimelineActorDto {
+  @ApiProperty({ enum: ['user', 'candidate', 'system', 'former', 'unknown'] })
+  kind: 'user' | 'candidate' | 'system' | 'former' | 'unknown';
+  @ApiPropertyOptional({ nullable: true }) name: string | null;
+}
+export class TimelinePayloadDto {
+  @ApiPropertyOptional({ nullable: true }) text: string | null;
+  @ApiPropertyOptional({ nullable: true }) jobId: number | null;
+  @ApiPropertyOptional({ nullable: true }) jobTitle: string | null;
+  @ApiPropertyOptional({ nullable: true }) previousStageName: string | null;
+  @ApiPropertyOptional({ nullable: true }) newStageName: string | null;
+  @ApiPropertyOptional({ nullable: true }) comment: string | null;
+  @ApiPropertyOptional({ nullable: true }) rejectionReason: string | null;
+  @ApiPropertyOptional({ nullable: true }) summary: string | null;
+}
+export class TimelineEventDto {
+  @ApiProperty({ format: 'uuid' }) id: string;
+  @ApiProperty() type: string;
+  @ApiProperty({
+    enum: [
+      'system',
+      'candidate',
+      'application',
+      'stage',
+      'interview',
+      'document',
+      'form',
+      'communication',
+      'note',
+    ],
   })
-  @IsEnum(TimelineEventVisibility)
-  @IsOptional()
-  visibility = TimelineEventVisibility.INTERNAL;
-
-  @ApiPropertyOptional({
-    description: 'Small structured attributes such as mention user IDs',
+  category: string;
+  @ApiProperty({
+    format: 'date-time',
+    description: 'Time the event was recorded',
   })
-  @IsObject()
-  @IsOptional()
-  metadata?: Record<string, unknown>;
+  occurredAt: string;
+  @ApiProperty({ enum: TimelineEventVisibility })
+  visibility: TimelineEventVisibility;
+  @ApiProperty({ type: TimelineActorDto }) actor: TimelineActorDto;
+  @ApiProperty() candidateId: number;
+  @ApiPropertyOptional({ nullable: true }) applicationId: number | null;
+  @ApiProperty({ enum: TimelineTargetType }) targetType: TimelineTargetType;
+  @ApiProperty() targetId: number;
+  @ApiProperty({ type: TimelinePayloadDto }) payload: TimelinePayloadDto;
+}
+export class TimelinePageDto {
+  @ApiProperty({ type: [TimelineEventDto] }) data: TimelineEventDto[];
+  @ApiProperty({ type: String, nullable: true }) nextCursor: string | null;
 }

@@ -498,6 +498,11 @@ export class ApplicationsService {
             previousStageName: previous.name,
             newStageId: target.id,
             newStageName: target.name,
+            comment: dto.comment?.trim() || undefined,
+            rejectionReason:
+              target.category === StageCategory.REJECTED
+                ? dto.rejectionReason!.trim()
+                : undefined,
           },
         },
         manager,

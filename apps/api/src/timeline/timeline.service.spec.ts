@@ -73,7 +73,12 @@ describe('TimelineService', () => {
       email: 'staff@example.com',
       role: Role.RH,
     } as any);
-    expect(page.data).toEqual([first]);
+    expect(page.data).toEqual([
+      expect.objectContaining({
+        id: first.id,
+        occurredAt: first.createdAt.toISOString(),
+      }),
+    ]);
     expect(Buffer.from(page.nextCursor!, 'base64url').toString()).toBe(
       '2026-01-02T00:00:00.000Z|00000000-0000-0000-0000-000000000002',
     );

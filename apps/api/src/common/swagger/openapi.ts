@@ -38,14 +38,6 @@ const pageOf = (items: OpenApiSchema): SchemaObject => ({
     limit: { type: 'integer' },
   },
 });
-const timelinePage: SchemaObject = {
-  type: 'object',
-  required: ['data', 'nextCursor'],
-  properties: {
-    data: entityArray,
-    nextCursor: { type: 'string', nullable: true },
-  },
-};
 
 /** Successful composite responses which TypeScript reflection cannot describe. */
 const responseSchemas = new Map<string, OpenApiSchema>([
@@ -99,10 +91,10 @@ const responseSchemas = new Map<string, OpenApiSchema>([
   ['POST /auth/password-reset/confirm', message],
   ['POST /auth/email-verification/request', message],
   ['POST /auth/email-verification/confirm', message],
-  ['GET /candidates/{id}/timeline', timelinePage],
-  ['GET /applications/{id}/timeline', timelinePage],
-  ['POST /candidates/{id}/timeline/notes', entity],
-  ['POST /applications/{id}/timeline/notes', entity],
+  ['GET /candidates/{id}/timeline', ref('TimelinePageDto')],
+  ['GET /applications/{id}/timeline', ref('TimelinePageDto')],
+  ['POST /candidates/{id}/timeline/notes', ref('TimelineEventDto')],
+  ['POST /applications/{id}/timeline/notes', ref('TimelineEventDto')],
   ['GET /candidates', pageOf(ref('Candidate'))],
   [
     'GET /candidates/{id}/privacy/export',
