@@ -1,8 +1,8 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { ApiError, getApiScope } from '@/lib/api-client';
@@ -18,9 +18,12 @@ import {
   updateCandidateState,
 } from './api';
 import { stateLabels, type CandidateState } from './types';
+import { TimelinePanel } from '@/features/timeline/timeline-panel';
+import { timelineKeys } from '@/features/timeline/api';
 export function CandidateWorkspace() {
   const id = Number(useParams<{ candidateId: string }>().candidateId),
     router = useRouter(),
+    searchParams = useSearchParams(),
     client = useQueryClient();
   const { user, hasCapability } = useAuth();
   const scope = getApiScope(user?.id);
@@ -32,9 +35,16 @@ export function CandidateWorkspace() {
     staleTime: 30_000,
     retry: false,
   });
+  useEffect(() => {
+    if (searchParams.get('section') === 'activity')
+      document.getElementById('activity')?.scrollIntoView();
+  }, [searchParams, query.data]);
   const refresh = (c: NonNullable<typeof query.data>, message: string) => {
     client.setQueryData(candidateKeys.detail(scope, id), c);
     void client.invalidateQueries({ queryKey: candidateKeys.lists(scope) });
+    void client.invalidateQueries({
+      queryKey: timelineKeys.candidate(scope, id),
+    });
     setNotice(message);
   };
   const lifecycle = useMutation({
@@ -237,12 +247,16 @@ export function CandidateWorkspace() {
             </p>
           </section>
           <section className="rounded-xl border bg-card p-5">
-            <h2 className="text-lg font-semibold">Documents and activity</h2>
+            <h2 className="text-lg font-semibold">Documents</h2>
             <p className="mt-3 text-sm text-muted-foreground">
-              Document operations and the complete activity feed will be
-              available in later phases.
+              Document operations will be available in a later phase.
             </p>
           </section>
+          <TimelinePanel
+            target="candidate"
+            id={id}
+            readOnly={c.disposition !== 'active'}
+          />
         </div>
         <aside className="space-y-5">
           <section className="rounded-xl border bg-card p-5">

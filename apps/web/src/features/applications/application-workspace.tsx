@@ -13,6 +13,8 @@ import {
   reopenApplication,
   transitionApplication,
 } from './api';
+import { TimelinePanel } from '@/features/timeline/timeline-panel';
+import { timelineKeys } from '@/features/timeline/api';
 export function ApplicationWorkspace({ id }: { id: number }) {
   const { user } = useAuth();
   const scope = getApiScope(user?.id);
@@ -33,6 +35,12 @@ export function ApplicationWorkspace({ id }: { id: number }) {
   ) => {
     client.setQueryData(applicationKeys.detail(scope, id), value);
     await client.invalidateQueries({ queryKey: applicationKeys.all(scope) });
+    await client.invalidateQueries({
+      queryKey: timelineKeys.application(scope, id),
+    });
+    await client.invalidateQueries({
+      queryKey: timelineKeys.candidate(scope, value.candidate.id),
+    });
   };
   const move = useMutation({
     mutationFn: () =>
@@ -233,37 +241,13 @@ export function ApplicationWorkspace({ id }: { id: number }) {
           </p>
         </aside>
       </div>
-      <section className="mt-6 rounded-xl border bg-card p-5">
-        <h2 className="text-lg font-semibold">Stage history</h2>
-        <ol className="mt-4 space-y-4">
-          {a.history.map((h) => (
-            <li key={h.id} className="border-l-2 pl-4">
-              <p className="font-medium">
-                {h.kind === 'created'
-                  ? `Opened in ${h.newStage.name}`
-                  : h.kind === 'reopened'
-                    ? `Reopened to ${h.newStage.name}`
-                    : `${h.previousStage?.name ?? 'Previous stage'} to ${h.newStage.name}`}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                <time dateTime={h.changedAt}>
-                  {new Intl.DateTimeFormat(undefined, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  }).format(new Date(h.changedAt))}
-                </time>
-                {h.actor
-                  ? ` · ${h.actor.firstName} ${h.actor.lastName}`
-                  : ' · Former user'}
-              </p>
-              {h.comment ? <p className="mt-1 text-sm">{h.comment}</p> : null}
-              {h.rejectionReason ? (
-                <p className="mt-1 text-sm">Reason: {h.rejectionReason}</p>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      </section>
+      <div className="mt-6">
+        <TimelinePanel
+          target="application"
+          id={id}
+          candidateId={a.candidate.id}
+        />
+      </div>
     </PageShell>
   );
 }
