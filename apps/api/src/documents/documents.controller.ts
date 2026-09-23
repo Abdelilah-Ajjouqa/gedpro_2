@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  Headers,
   Get,
   Param,
   ParseBoolPipe,
@@ -37,6 +38,7 @@ import {
   ReplaceDocumentDto,
   UploadDocumentDto,
 } from './dto/upload-document.dto';
+import { ListDocumentsDto } from './dto/list-documents.dto';
 import { DocumentsService } from './documents.service';
 const upload = FileInterceptor('file', {
   storage: memoryStorage(),
@@ -51,19 +53,8 @@ export class DocumentsController {
   @Get()
   @Roles(Role.CANDIDATE, Role.RH, Role.MANAGER, Role.ADMIN)
   @ApiOperation({ summary: 'List authorized active documents' })
-  findAll(
-    @Req() req: { user: User },
-    @Query('candidateId') candidateId?: string,
-    @Query('applicationId') applicationId?: string,
-    @Query('includeArchived', new ParseBoolPipe({ optional: true }))
-    includeArchived = false,
-  ) {
-    return this.service.findAll(
-      req.user,
-      candidateId ? +candidateId : undefined,
-      applicationId ? +applicationId : undefined,
-      includeArchived,
-    );
+  findAll(@Req() req: { user: User }, @Query() query: ListDocumentsDto) {
+    return this.service.findAll(req.user, query);
   }
   @Post('upload')
   @Roles(Role.CANDIDATE, Role.RH, Role.MANAGER, Role.ADMIN)
@@ -105,15 +96,20 @@ export class DocumentsController {
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: ReplaceDocumentDto,
     @Req() req: { user: User },
+    @Headers('if-match') ifMatch?: string,
   ) {
     if (!file) throw new BadRequestException('File is required');
-    return this.service.replace(id, file, dto, req.user);
+    return this.service.replace(id, file, dto, req.user, ifMatch);
   }
   @Patch(':id/archive')
   @Roles(Role.CANDIDATE, Role.RH, Role.MANAGER, Role.ADMIN)
   @ApiOperation({ summary: 'Archive a document idempotently' })
-  archive(@Param('id', ParseIntPipe) id: number, @Req() req: { user: User }) {
-    return this.service.archive(id, req.user);
+  archive(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: { user: User },
+    @Headers('if-match') ifMatch?: string,
+  ) {
+    return this.service.archive(id, req.user, ifMatch);
   }
   @Delete(':id')
   @Roles(Role.CANDIDATE, Role.RH, Role.MANAGER, Role.ADMIN)
@@ -121,9 +117,10 @@ export class DocumentsController {
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: { user: User },
+    @Headers('if-match') ifMatch: string | undefined,
     @Res() res: Response,
   ) {
-    await this.service.remove(id, req.user);
+    await this.service.remove(id, req.user, ifMatch);
     res.status(204).send();
   }
   @Get(':id/download')

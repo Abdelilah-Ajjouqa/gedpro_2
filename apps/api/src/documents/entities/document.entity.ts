@@ -8,6 +8,7 @@ import {
   Index,
   ManyToOne,
   PrimaryGeneratedColumn,
+  VersionColumn,
 } from 'typeorm';
 
 export enum DocumentCategory {
@@ -49,6 +50,7 @@ export class Document {
   })
   status: DocumentStatus;
   @Column({ default: 1 }) version: number;
+  @VersionColumn() revision: number;
   @ManyToOne(() => Document, { nullable: true, onDelete: 'SET NULL' })
   replaces?: Document | null;
   @ManyToOne(() => User, { nullable: false, onDelete: 'RESTRICT' }) user: User;

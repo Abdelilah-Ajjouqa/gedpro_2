@@ -1632,6 +1632,40 @@ export interface components {
             /** @enum {string} */
             role?: "admin" | "rh" | "manager" | "candidate";
         };
+        Object: Record<string, never>;
+        DocumentContextRefDto: {
+            id: number;
+            label?: string;
+        };
+        DocumentSummaryDto: {
+            id: number;
+            originalName: string;
+            mimeType: string;
+            size: number;
+            /** @enum {string} */
+            category: "resume" | "cover_letter" | "portfolio" | "offer" | "other";
+            /** @enum {string} */
+            status: "active" | "archived" | "deleted";
+            version: number;
+            etag: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            archivedAt?: string | null;
+            /** Format: date-time */
+            retentionUntil?: string | null;
+            candidate?: components["schemas"]["DocumentContextRefDto"];
+            application?: components["schemas"]["DocumentContextRefDto"];
+            replacesId?: number;
+            allowedActions: Record<string, never>[];
+        };
+        DocumentListResponseDto: {
+            data: components["schemas"]["DocumentSummaryDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
         ReplaceDocumentDto: {
             /** Format: date-time */
             retentionUntil?: string;
@@ -1798,7 +1832,6 @@ export interface components {
             applicationCount: number;
             allowedActions: string[];
         };
-        Object: Record<string, never>;
         CandidateListItemDto: {
             id: number;
             firstName: string;
@@ -2948,8 +2981,15 @@ export interface operations {
     DocumentsController_findAll: {
         parameters: {
             query: {
-                candidateId: string;
-                applicationId: string;
+                q?: string;
+                candidateId?: number;
+                applicationId?: number;
+                category?: "resume" | "cover_letter" | "portfolio" | "offer" | "other";
+                status: "active" | "archived" | "deleted";
+                sort: "createdAt" | "name" | "category" | "status";
+                direction: "asc" | "desc";
+                page: components["schemas"]["Object"];
+                limit: components["schemas"]["Object"];
             };
             header?: never;
             path?: never;
@@ -2962,7 +3002,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>[];
+                    "application/json": components["schemas"]["DocumentListResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3011,7 +3051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["DocumentSummaryDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3037,7 +3077,9 @@ export interface operations {
     DocumentsController_replace: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: number;
             };
@@ -3054,7 +3096,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["DocumentSummaryDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3080,7 +3122,9 @@ export interface operations {
     DocumentsController_archive: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "if-match": string;
+            };
             path: {
                 id: number;
             };
@@ -3093,7 +3137,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["DocumentSummaryDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */

@@ -338,19 +338,102 @@
         "operationId": "DocumentsController_findAll",
         "parameters": [
           {
-            "name": "candidateId",
-            "required": true,
+            "name": "q",
+            "required": false,
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
+            "name": "candidateId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
             "name": "applicationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "resume",
+                "cover_letter",
+                "portfolio",
+                "offer",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "status",
             "required": true,
             "in": "query",
             "schema": {
-              "type": "string"
+              "default": "active",
+              "type": "string",
+              "enum": [
+                "active",
+                "archived",
+                "deleted"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "name",
+                "category",
+                "status"
+              ]
+            }
+          },
+          {
+            "name": "direction",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
             }
           }
         ],
@@ -360,10 +443,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object"
-                  }
+                  "$ref": "#/components/schemas/DocumentListResponseDto"
                 }
               }
             }
@@ -442,7 +522,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/DocumentSummaryDto"
                 }
               }
             }
@@ -490,6 +570,14 @@
             "schema": {
               "type": "number"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -508,7 +596,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/DocumentSummaryDto"
                 }
               }
             }
@@ -556,6 +644,14 @@
             "schema": {
               "type": "number"
             }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -564,7 +660,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/DocumentSummaryDto"
                 }
               }
             }
@@ -7589,6 +7685,136 @@
           }
         }
       },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "DocumentContextRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "DocumentSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "category": {
+            "enum": [
+              "resume",
+              "cover_letter",
+              "portfolio",
+              "offer",
+              "other"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "archived",
+              "deleted"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "etag": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "archivedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "retentionUntil": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/DocumentContextRefDto"
+          },
+          "application": {
+            "$ref": "#/components/schemas/DocumentContextRefDto"
+          },
+          "replacesId": {
+            "type": "number"
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "originalName",
+          "mimeType",
+          "size",
+          "category",
+          "status",
+          "version",
+          "etag",
+          "createdAt",
+          "allowedActions"
+        ]
+      },
+      "DocumentListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentSummaryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
       "ReplaceDocumentDto": {
         "type": "object",
         "properties": {
@@ -8231,10 +8457,6 @@
           "applicationCount",
           "allowedActions"
         ]
-      },
-      "Object": {
-        "type": "object",
-        "properties": {}
       },
       "CandidateListItemDto": {
         "type": "object",

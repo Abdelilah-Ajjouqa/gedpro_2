@@ -4,12 +4,21 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  HttpException,
+  HttpStatus,
   Logger,
   NotFoundException,
+  PreconditionFailedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
-import { DataSource, LessThanOrEqual, Not, Repository } from 'typeorm';
+import {
+  DataSource,
+  LessThanOrEqual,
+  Not,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { Application } from '../applications/entities/application.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 import {
@@ -24,6 +33,12 @@ import {
   UploadDocumentDto,
 } from './dto/upload-document.dto';
 import { Document, DocumentStatus } from './entities/document.entity';
+import {
+  DocumentAction,
+  DocumentListResponseDto,
+  DocumentSummaryDto,
+} from './dto/document-response.dto';
+import { DocumentSort, ListDocumentsDto } from './dto/list-documents.dto';
 import { DocumentSecurityService } from './security/document-security';
 import { DOCUMENT_STORAGE } from './storage/document-storage';
 import type { DocumentStorage } from './storage/document-storage';
@@ -39,25 +54,27 @@ export class DocumentsService {
     private readonly security: DocumentSecurityService,
     @Inject(DOCUMENT_STORAGE) private readonly storage: DocumentStorage,
   ) {}
-  private isStaff(user: User) {
-    return [Role.ADMIN, Role.RH, Role.MANAGER].includes(user.role);
-  }
   private candidateFor(user: User) {
     return this.dataSource
       .getRepository(Candidate)
       .findOneBy({ normalizedEmail: user.email.trim().toLowerCase() });
   }
   private async assertAccess(doc: Document, user: User) {
-    if (this.isStaff(user) || doc.user?.id === user.id) return;
+    if ([Role.ADMIN, Role.RH].includes(user.role)) return;
+    if (
+      user.role === Role.MANAGER &&
+      doc.application?.job?.owner?.id === user.id
+    )
+      return;
     const own = await this.candidateFor(user);
     if (!own || doc.candidate?.id !== own.id)
-      throw new ForbiddenException('Document access denied');
+      throw new NotFoundException(`Document with ID ${doc.id} not found`);
   }
   private relations() {
     return {
       user: true,
       candidate: true,
-      application: { candidate: true },
+      application: { candidate: true, job: { owner: true } },
       replaces: true,
     } as const;
   }
@@ -70,35 +87,120 @@ export class DocumentsService {
       throw new NotFoundException(`Document with ID ${id} not found`);
     return doc;
   }
-  private publicDoc(doc: Document) {
-    const safe: Partial<Document> = { ...doc };
-    delete safe.path;
-    return safe;
+  private assertEtag(doc: Document, ifMatch?: string) {
+    if (!ifMatch)
+      throw new HttpException(
+        {
+          code: 'IF_MATCH_REQUIRED',
+          message: 'This document must be refreshed before changing it',
+        },
+        HttpStatus.PRECONDITION_REQUIRED,
+      );
+    if (ifMatch !== `"${doc.revision}"`)
+      throw new PreconditionFailedException({
+        code: 'STALE_DOCUMENT',
+        message: 'The document changed after it was loaded',
+      });
+  }
+  private actions(doc: Document, actor: User): DocumentAction[] {
+    const ownUpload = doc.user.id === actor.id;
+    const managesJob = doc.application?.job?.owner?.id === actor.id;
+    const mayMutate =
+      [Role.ADMIN, Role.RH].includes(actor.role) ||
+      (actor.role === Role.MANAGER && managesJob && ownUpload);
+    return [
+      'download',
+      'preview',
+      ...(doc.status === DocumentStatus.ACTIVE && mayMutate
+        ? (['replace', 'archive'] as DocumentAction[])
+        : []),
+    ];
+  }
+  private publicDoc(doc: Document, actor: User): DocumentSummaryDto {
+    return {
+      id: doc.id,
+      originalName: doc.originalName,
+      mimeType: doc.mimeType,
+      size: Number(doc.size),
+      category: doc.category,
+      status: doc.status,
+      version: doc.version,
+      etag: `"${doc.revision}"`,
+      createdAt: doc.createdAt,
+      archivedAt: doc.archivedAt,
+      retentionUntil: doc.retentionUntil,
+      candidate: doc.candidate ? { id: doc.candidate.id } : undefined,
+      application: doc.application ? { id: doc.application.id } : undefined,
+      replacesId: doc.replaces?.id,
+      allowedActions: this.actions(doc, actor),
+    };
   }
   async findAll(
     user: User,
-    candidateId?: number,
-    applicationId?: number,
-    includeArchived = false,
-  ) {
-    const where: any = {};
-    if (!this.isStaff(user)) {
+    query: ListDocumentsDto,
+  ): Promise<DocumentListResponseDto> {
+    const builder = this.documents
+      .createQueryBuilder('document')
+      .leftJoinAndSelect('document.user', 'uploader')
+      .leftJoinAndSelect('document.candidate', 'candidate')
+      .leftJoinAndSelect('document.application', 'application')
+      .leftJoinAndSelect('application.job', 'job')
+      .leftJoinAndSelect('job.owner', 'jobOwner')
+      .leftJoinAndSelect('document.replaces', 'replaces');
+    await this.scope(builder, user);
+    builder
+      .andWhere('document.status != :deleted', {
+        deleted: DocumentStatus.DELETED,
+      })
+      .andWhere('document.status = :status', { status: query.status });
+    if (query.candidateId)
+      builder.andWhere('candidate.id = :candidateId', {
+        candidateId: query.candidateId,
+      });
+    if (query.applicationId)
+      builder.andWhere('application.id = :applicationId', {
+        applicationId: query.applicationId,
+      });
+    if (query.category)
+      builder.andWhere('document.category = :category', {
+        category: query.category,
+      });
+    if (query.q)
+      builder.andWhere('document.originalName ILIKE :q', {
+        q: `%${query.q.replace(/[\\%_]/g, '\\$&')}%`,
+      });
+    const sort = {
+      [DocumentSort.CREATED_AT]: 'document.createdAt',
+      [DocumentSort.NAME]: 'document.originalName',
+      [DocumentSort.CATEGORY]: 'document.category',
+      [DocumentSort.STATUS]: 'document.status',
+    }[query.sort];
+    const direction = query.direction.toUpperCase() as 'ASC' | 'DESC';
+    const [docs, total] = await builder
+      .orderBy(sort, direction)
+      .addOrderBy('document.id', direction)
+      .skip((query.page - 1) * query.limit)
+      .take(query.limit)
+      .getManyAndCount();
+    return {
+      data: docs.map((doc) => this.publicDoc(doc, user)),
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
+    };
+  }
+  private async scope(builder: SelectQueryBuilder<Document>, user: User) {
+    if (user.role === Role.MANAGER)
+      builder.andWhere('jobOwner.id = :actorId', { actorId: user.id });
+    if (user.role === Role.CANDIDATE) {
       const candidate = await this.candidateFor(user);
-      if (candidate) where.candidate = { id: candidate.id };
-      else where.user = { id: user.id };
+      if (candidate)
+        builder.andWhere('candidate.id = :candidateOwnerId', {
+          candidateOwnerId: candidate.id,
+        });
+      else builder.andWhere('1 = 0');
     }
-    if (candidateId) where.candidate = { id: candidateId };
-    if (applicationId) where.application = { id: applicationId };
-    where.status = includeArchived
-      ? Not(DocumentStatus.DELETED)
-      : DocumentStatus.ACTIVE;
-    const docs = await this.documents.find({
-      where,
-      relations: this.relations(),
-      order: { createdAt: 'DESC' },
-    });
-    for (const doc of docs) await this.assertAccess(doc, user);
-    return docs.map((doc) => this.publicDoc(doc));
   }
   private async targets(dto: UploadDocumentDto, user: User) {
     let application: Application | null = null;
@@ -106,7 +208,7 @@ export class DocumentsService {
     if (dto.applicationId) {
       application = await this.dataSource.getRepository(Application).findOne({
         where: { id: dto.applicationId },
-        relations: { candidate: true },
+        relations: { candidate: true, job: { owner: true } },
       });
       if (!application)
         throw new NotFoundException(
@@ -125,6 +227,10 @@ export class DocumentsService {
       candidate = await this.candidateFor(user);
     if (!candidate)
       throw new BadRequestException('candidateId or applicationId is required');
+    if (user.role === Role.MANAGER) {
+      if (!application || application.job.owner.id !== user.id)
+        throw new NotFoundException('Application not found');
+    }
     if (
       user.role === Role.CANDIDATE &&
       candidate.normalizedEmail !== user.email.trim().toLowerCase()
@@ -193,7 +299,7 @@ export class DocumentsService {
         user,
         replaces ? 'document.replaced' : 'document.uploaded',
       );
-      return this.publicDoc(saved);
+      return this.publicDoc(saved, user);
     } catch (error) {
       await this.storage
         .delete(key)
@@ -231,9 +337,11 @@ export class DocumentsService {
     file: Express.Multer.File,
     dto: ReplaceDocumentDto,
     user: User,
+    ifMatch?: string,
   ) {
     const doc = await this.get(id);
     await this.assertAccess(doc, user);
+    this.assertEtag(doc, ifMatch);
     if (doc.status !== DocumentStatus.ACTIVE)
       throw new ConflictException('Only an active document can be replaced');
     return this.create(
@@ -243,20 +351,24 @@ export class DocumentsService {
       doc,
     );
   }
-  async archive(id: number, user: User) {
+  async archive(id: number, user: User, ifMatch?: string) {
     const doc = await this.get(id);
     await this.assertAccess(doc, user);
+    this.assertEtag(doc, ifMatch);
     if (doc.status !== DocumentStatus.ARCHIVED) {
       doc.status = DocumentStatus.ARCHIVED;
       doc.archivedAt = new Date();
       await this.documents.save(doc);
       await this.record(doc, user, 'document.archived');
     }
-    return this.publicDoc(doc);
+    return this.publicDoc(doc, user);
   }
-  async remove(id: number, user: User) {
+  async remove(id: number, user: User, ifMatch?: string) {
     const doc = await this.get(id);
     await this.assertAccess(doc, user);
+    this.assertEtag(doc, ifMatch);
+    if (user.role !== Role.ADMIN)
+      throw new NotFoundException(`Document with ID ${id} not found`);
     await this.storage.delete(doc.path);
     doc.status = DocumentStatus.DELETED;
     doc.deletedAt = new Date();
