@@ -1,1 +1,9 @@
-import { DecisionPage } from '@/features/interviews/decision-page';export default async function Page({params}:{params:Promise<{applicationId:string}>}){const {applicationId}=await params;return <DecisionPage applicationId={Number(applicationId)}/>}
+import { DecisionPage } from '@/features/interviews/decision-page';
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ applicationId: string }>;
+}) {
+  const { applicationId } = await params;
+  return <DecisionPage applicationId={Number(applicationId)} />;
+}

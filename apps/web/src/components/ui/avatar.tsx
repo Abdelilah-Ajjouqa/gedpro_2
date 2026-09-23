@@ -14,7 +14,14 @@ type AvatarProps = {
   priority?: boolean;
 };
 
-function Avatar({ src, firstName, lastName, size, className, priority = false }: AvatarProps) {
+function Avatar({
+  src,
+  firstName,
+  lastName,
+  size,
+  className,
+  priority = false,
+}: AvatarProps) {
   const [hasError, setHasError] = useState(false);
   const fullName = `${firstName} ${lastName}`;
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -28,7 +35,9 @@ function Avatar({ src, firstName, lastName, size, className, priority = false }:
       )}
       style={{ width: size, height: size }}
       role="img"
-      aria-label={showImage ? `${fullName} profile photo` : `${fullName} initials`}
+      aria-label={
+        showImage ? `${fullName} profile photo` : `${fullName} initials`
+      }
     >
       {showImage ? (
         <Image

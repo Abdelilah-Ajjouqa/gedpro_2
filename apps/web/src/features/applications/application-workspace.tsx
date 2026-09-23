@@ -240,9 +240,24 @@ export function ApplicationWorkspace({ id }: { id: number }) {
             {feedback}
           </p>
           <div className="mt-5 grid gap-2 border-t pt-5">
-            <Link className="text-sm font-medium hover:underline" href={`/interviews?applicationId=${a.id}`}>View interviews</Link>
-            <Link className="text-sm font-medium hover:underline" href={`/interviews/new?applicationId=${a.id}&candidateId=${a.candidate.id}`}>Schedule interview</Link>
-            <Link className="text-sm font-medium hover:underline" href={`/applications/${a.id}/decision`}>Decision summary</Link>
+            <Link
+              className="text-sm font-medium hover:underline"
+              href={`/interviews?applicationId=${a.id}`}
+            >
+              View interviews
+            </Link>
+            <Link
+              className="text-sm font-medium hover:underline"
+              href={`/interviews/new?applicationId=${a.id}&candidateId=${a.candidate.id}`}
+            >
+              Schedule interview
+            </Link>
+            <Link
+              className="text-sm font-medium hover:underline"
+              href={`/applications/${a.id}/decision`}
+            >
+              Decision summary
+            </Link>
           </div>
         </aside>
       </div>

@@ -14,8 +14,15 @@ function StatusBadge({ status }: { status: CandidateStatus }) {
   const Icon = definition.icon;
 
   return (
-    <span className={cn('inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-[10px] font-semibold', toneStyles[definition.tone])}>
-      {Icon ? <Icon className="size-3" strokeWidth={2.2} aria-hidden="true" /> : null}
+    <span
+      className={cn(
+        'inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-[10px] font-semibold',
+        toneStyles[definition.tone],
+      )}
+    >
+      {Icon ? (
+        <Icon className="size-3" strokeWidth={2.2} aria-hidden="true" />
+      ) : null}
       {definition.label}
     </span>
   );

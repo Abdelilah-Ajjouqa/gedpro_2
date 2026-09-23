@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { decodeInterviewList, encodeInterviewList, formatInterviewTime } from './url-state';
+import {
+  decodeInterviewList,
+  encodeInterviewList,
+  formatInterviewTime,
+} from './url-state';
 
 describe('interview URL state', () => {
   it('canonicalizes invalid pagination and view values', () => {
@@ -25,6 +29,8 @@ describe('interview URL state', () => {
   });
 
   it('falls back to UTC for an invalid display zone', () => {
-    expect(() => formatInterviewTime('2026-01-01T12:00:00Z', 'Bad/Zone')).not.toThrow();
+    expect(() =>
+      formatInterviewTime('2026-01-01T12:00:00Z', 'Bad/Zone'),
+    ).not.toThrow();
   });
 });

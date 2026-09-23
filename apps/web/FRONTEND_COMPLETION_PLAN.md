@@ -677,7 +677,7 @@ Record unresolved product decisions explicitly instead of guessing them.
 | 3 | Applications and recruiter pipeline workflow | Planned | `plans/PHASE_3_PLAN.md` | Core ATS release |
 | 4 | Unified timeline and collaboration notes | Planned | `plans/PHASE_4_PLAN.md` | Core ATS release |
 | 5 | Interviews, scorecards, and hiring decisions | Planned | `plans/PHASE_5_PLAN.md` | Core ATS release |
-| 6 | Recruitment document management | Not started | — | Recruitment operations release |
+| 6 | Recruitment document management | Planned | `plans/PHASE_6_PLAN.md` | Recruitment operations release |
 | 7 | Forms and evaluations | Not started | — | Recruitment operations release |
 | 8 | Candidate communications | Not started | — | Recruitment operations release |
 | 9 | Reporting and exports | Not started | — | Governance and insight release |

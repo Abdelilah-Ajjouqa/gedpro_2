@@ -13,12 +13,25 @@ export const metadata: Metadata = {
   description: 'A focused workspace for modern recruitment teams.',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <QueryProvider><AuthProvider><NotificationProvider><TooltipProvider>{children}</TooltipProvider></NotificationProvider></AuthProvider></QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <TooltipProvider>{children}</TooltipProvider>
+              </NotificationProvider>
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

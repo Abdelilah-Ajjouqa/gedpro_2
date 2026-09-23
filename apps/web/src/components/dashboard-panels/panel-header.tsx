@@ -8,7 +8,12 @@ type PanelHeaderProps = {
   action?: ReactNode;
 };
 
-function PanelHeader({ title, description, icon: Icon, action }: PanelHeaderProps) {
+function PanelHeader({
+  title,
+  description,
+  icon: Icon,
+  action,
+}: PanelHeaderProps) {
   return (
     <header className="flex items-start justify-between gap-4 border-b border-border px-4 py-4 sm:px-5">
       <div className="flex min-w-0 items-center gap-3">

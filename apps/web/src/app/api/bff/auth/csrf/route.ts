@@ -6,6 +6,11 @@ export const runtime = 'nodejs';
 export function GET() {
   const token = csrfToken();
   const response = NextResponse.json({ token });
-  response.cookies.set(CSRF_COOKIE, token, { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+  response.cookies.set(CSRF_COOKIE, token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
   return response;
 }

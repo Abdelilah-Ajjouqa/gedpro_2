@@ -7,6 +7,8 @@ describe('capability checks', () => {
     expect(hasCapability([], 'unknown')).toBe(false);
   });
   it('allows an explicitly granted capability', () => {
-    expect(hasAnyCapability(['jobs:read'], ['users:read', 'jobs:read'])).toBe(true);
+    expect(hasAnyCapability(['jobs:read'], ['users:read', 'jobs:read'])).toBe(
+      true,
+    );
   });
 });

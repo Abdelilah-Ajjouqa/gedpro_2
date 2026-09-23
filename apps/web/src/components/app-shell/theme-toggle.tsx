@@ -4,8 +4,17 @@ import { Laptop, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 function ThemeToggle() {
   const { setTheme } = useTheme();
@@ -24,9 +33,18 @@ function ThemeToggle() {
         <TooltipContent>Theme</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => setTheme('light')}><Sun className="size-4" />Light</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setTheme('dark')}><Moon className="size-4" />Dark</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setTheme('system')}><Laptop className="size-4" />System</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setTheme('light')}>
+          <Sun className="size-4" />
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setTheme('dark')}>
+          <Moon className="size-4" />
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setTheme('system')}>
+          <Laptop className="size-4" />
+          System
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

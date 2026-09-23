@@ -1,1 +1,14 @@
-import { ScorecardPage } from '@/features/interviews/scorecard-page';export default async function Page({params}:{params:Promise<{interviewId:string;scorecardId:string}>}){const p=await params;return <ScorecardPage interviewId={Number(p.interviewId)} scorecardId={Number(p.scorecardId)}/>}
+import { ScorecardPage } from '@/features/interviews/scorecard-page';
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ interviewId: string; scorecardId: string }>;
+}) {
+  const p = await params;
+  return (
+    <ScorecardPage
+      interviewId={Number(p.interviewId)}
+      scorecardId={Number(p.scorecardId)}
+    />
+  );
+}

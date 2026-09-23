@@ -1,9 +1,72 @@
 import { apiRequest } from '@/lib/api-client';
-export type StageCategory = 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn';
-export type StageModel = { id: number; name: string; category: StageCategory; position: number; archived: boolean; version: number };
-export type PipelineModel = { id: number; name: string; description?: string | null; isTemplate: boolean; archived: boolean; stages: StageModel[]; updatedAt: string; version: number; jobCount?: number; inUse?: boolean; canArchive?: boolean; readiness?: { ready: boolean; issues: { code: string; message: string }[] } };
-export type PipelineList = { data: PipelineModel[]; total: number; page: number; limit: number; totalPages: number };
-export const pipelineKeys = { all: (scope: string) => ['pipelines', scope] as const, lists: (scope: string) => [...pipelineKeys.all(scope), 'list'] as const, list: (scope: string, params: object) => [...pipelineKeys.lists(scope), params] as const, detail: (scope: string, id: number) => [...pipelineKeys.all(scope), 'detail', id] as const };
-export function listPipelines(params: { page: number; limit: number; search: string }, signal?: AbortSignal) { const query = new URLSearchParams({ page: String(params.page), limit: String(params.limit), search: params.search, archived: 'false', isTemplate: 'true', latestRevisionOnly: 'true' }); return apiRequest<PipelineList>(`/pipelines?${query}`, { signal }); }
-export const getPipeline = (id: number, signal?: AbortSignal) => apiRequest<PipelineModel>(`/pipelines/${id}`, { signal });
-export const createPipeline = (value: { name: string; description?: string; isTemplate: boolean; stages: { name: string; category: StageCategory; position: number }[] }) => apiRequest<PipelineModel>('/pipelines', { method: 'POST', body: JSON.stringify(value) });
+export type StageCategory =
+  | 'applied'
+  | 'screening'
+  | 'interview'
+  | 'offer'
+  | 'hired'
+  | 'rejected'
+  | 'withdrawn';
+export type StageModel = {
+  id: number;
+  name: string;
+  category: StageCategory;
+  position: number;
+  archived: boolean;
+  version: number;
+};
+export type PipelineModel = {
+  id: number;
+  name: string;
+  description?: string | null;
+  isTemplate: boolean;
+  archived: boolean;
+  stages: StageModel[];
+  updatedAt: string;
+  version: number;
+  jobCount?: number;
+  inUse?: boolean;
+  canArchive?: boolean;
+  readiness?: { ready: boolean; issues: { code: string; message: string }[] };
+};
+export type PipelineList = {
+  data: PipelineModel[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+export const pipelineKeys = {
+  all: (scope: string) => ['pipelines', scope] as const,
+  lists: (scope: string) => [...pipelineKeys.all(scope), 'list'] as const,
+  list: (scope: string, params: object) =>
+    [...pipelineKeys.lists(scope), params] as const,
+  detail: (scope: string, id: number) =>
+    [...pipelineKeys.all(scope), 'detail', id] as const,
+};
+export function listPipelines(
+  params: { page: number; limit: number; search: string },
+  signal?: AbortSignal,
+) {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+    search: params.search,
+    archived: 'false',
+    isTemplate: 'true',
+    latestRevisionOnly: 'true',
+  });
+  return apiRequest<PipelineList>(`/pipelines?${query}`, { signal });
+}
+export const getPipeline = (id: number, signal?: AbortSignal) =>
+  apiRequest<PipelineModel>(`/pipelines/${id}`, { signal });
+export const createPipeline = (value: {
+  name: string;
+  description?: string;
+  isTemplate: boolean;
+  stages: { name: string; category: StageCategory; position: number }[];
+}) =>
+  apiRequest<PipelineModel>('/pipelines', {
+    method: 'POST',
+    body: JSON.stringify(value),
+  });
