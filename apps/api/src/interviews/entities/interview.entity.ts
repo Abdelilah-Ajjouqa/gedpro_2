@@ -8,6 +8,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from 'typeorm';
 import { Application } from '../../applications/entities/application.entity';
 import { Candidate } from '../../candidates/entities/candidate.entity';
@@ -19,6 +20,7 @@ import { Scorecard } from './scorecard.entity';
 @Entity('interviews')
 export class Interview {
   @PrimaryGeneratedColumn() id: number;
+  @VersionColumn() version: number;
   @Column({ type: 'timestamptz' }) date: Date;
   @Column({ default: 60 }) duration: number;
   @Column({
@@ -33,6 +35,8 @@ export class Interview {
   @Column({ type: 'varchar', nullable: true }) title: string | null;
   @Column({ type: 'varchar', nullable: true }) location: string | null;
   @Column({ type: 'text', nullable: true }) notes: string | null;
+  @Column({ type: 'varchar', default: 'UTC' }) timezone: string;
+  @Column({ type: 'text', nullable: true }) outcomeReason: string | null;
   @Column({ type: 'timestamptz', nullable: true })
   feedbackDeadline: Date | null;
   @Column({ default: false }) hideFeedbackUntilComplete: boolean;

@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  HttpException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -27,6 +28,7 @@ import {
   CreateInterviewDto,
   CreateScorecardTemplateDto,
   InterviewOutcomeDto,
+  ListInterviewsDto,
   RescheduleInterviewDto,
   SubmitScorecardDto,
 } from './dto/interview.dto';
@@ -58,6 +60,79 @@ export class InterviewsService {
     private readonly timeline: TimelineService,
     private readonly communications: CommunicationsService,
   ) {}
+
+  private person(user: { id: number; firstName: string; lastName: string }) {
+    return { id: user.id, firstName: user.firstName, lastName: user.lastName };
+  }
+
+  private canManage(interview: Interview, actor: User) {
+    return (
+      actor.role === Role.ADMIN ||
+      actor.role === Role.RH ||
+      (actor.role === Role.MANAGER &&
+        interview.application?.job.owner?.id === actor.id)
+    );
+  }
+
+  private allowedActions(interview: Interview, actor: User) {
+    const active = [
+      InterviewStatus.SCHEDULED,
+      InterviewStatus.RESCHEDULED,
+    ].includes(interview.status);
+    const actions: string[] = [];
+    if (active && this.canManage(interview, actor))
+      actions.push('reschedule', 'cancel', 'recordOutcome');
+    if (
+      interview.scorecards?.some(
+        (row) => row.reviewer.id === actor.id && !row.submittedAt,
+      )
+    )
+      actions.push('submitScorecard');
+    if (
+      actor.role === Role.ADMIN ||
+      actor.role === Role.RH ||
+      interview.application?.job.owner?.id === actor.id
+    )
+      actions.push('viewDecisionSummary');
+    if (actor.role === Role.ADMIN) actions.push('overrideConflict');
+    return actions;
+  }
+
+  private summary(interview: Interview, actor: User) {
+    const cards = interview.scorecards ?? [];
+    return {
+      id: interview.id,
+      version: interview.version,
+      date: interview.date,
+      duration: interview.duration,
+      timezone: interview.timezone,
+      status: interview.status,
+      type: interview.type,
+      round: interview.round,
+      title: interview.title,
+      location: interview.location,
+      candidate: this.person(interview.candidate),
+      application: interview.application
+        ? { id: interview.application.id }
+        : null,
+      job: interview.application
+        ? {
+            id: interview.application.job.id,
+            title: interview.application.job.title,
+          }
+        : null,
+      leadInterviewer: this.person(interview.interviewer),
+      participantCount: 1 + interview.attendees.length,
+      feedback: {
+        total: cards.length,
+        submitted: cards.filter((row) => !!row.submittedAt).length,
+      },
+      syncStatus: interview.calendarSyncStatus,
+      allowedActions: this.allowedActions(interview, actor),
+      createdAt: interview.createdAt,
+      updatedAt: interview.updatedAt,
+    };
+  }
 
   private record(
     interview: Interview,
@@ -165,6 +240,17 @@ export class InterviewsService {
     return this.interviews.save(interview);
   }
 
+  private assertVersion(actual: number, expected?: number) {
+    if (expected !== undefined && actual !== expected)
+      throw new HttpException(
+        {
+          code: 'STALE_VERSION',
+          message: 'Interview changed; reload before retrying',
+        },
+        412,
+      );
+  }
+
   async create(dto: CreateInterviewDto, actor: User) {
     const [candidate, application] = await Promise.all([
       this.candidates.findOneBy({ id: dto.candidateId }),
@@ -240,6 +326,7 @@ export class InterviewsService {
           : null,
         hideFeedbackUntilComplete: dto.hideFeedbackUntilComplete ?? false,
         calendarProvider: dto.calendarProvider ?? null,
+        timezone: dto.timezone ?? 'UTC',
       }),
     );
     if (template)
@@ -271,14 +358,67 @@ export class InterviewsService {
       .catch(() => undefined);
     return this.getOne(saved.id, actor);
   }
-  findAll(actor: User) {
-    return this.interviews.find({
-      where:
-        actor.role === Role.MANAGER
-          ? { application: { job: { owner: { id: actor.id } } } }
-          : {},
-      order: { date: 'ASC' },
-    });
+  async findAll(query: ListInterviewsDto, actor: User) {
+    const page = query.page ?? 1,
+      limit = query.limit ?? 20;
+    const qb = this.interviews
+      .createQueryBuilder('i')
+      .leftJoinAndSelect('i.candidate', 'candidate')
+      .leftJoinAndSelect('i.application', 'application')
+      .leftJoinAndSelect('application.job', 'job')
+      .leftJoinAndSelect('job.owner', 'owner')
+      .leftJoinAndSelect('i.interviewer', 'lead')
+      .leftJoinAndSelect('i.attendees', 'attendee')
+      .leftJoinAndSelect('i.scorecards', 'scorecard')
+      .leftJoinAndSelect('scorecard.reviewer', 'reviewer');
+    if (actor.role === Role.MANAGER)
+      qb.andWhere(
+        '(owner.id = :actorId OR lead.id = :actorId OR attendee.id = :actorId OR reviewer.id = :actorId)',
+        { actorId: actor.id },
+      );
+    if (query.from)
+      qb.andWhere('i.date >= :from', { from: new Date(query.from) });
+    if (query.to) qb.andWhere('i.date <= :to', { to: new Date(query.to) });
+    if (query.status)
+      qb.andWhere('i.status = :status', { status: query.status });
+    if (query.type) qb.andWhere('i.type = :type', { type: query.type });
+    if (query.jobId) qb.andWhere('job.id = :jobId', { jobId: query.jobId });
+    if (query.applicationId)
+      qb.andWhere('application.id = :applicationId', {
+        applicationId: query.applicationId,
+      });
+    if (query.interviewerId === 'me')
+      qb.andWhere('(lead.id = :mine OR reviewer.id = :mine)', {
+        mine: actor.id,
+      });
+    else if (query.interviewerId && /^\d+$/.test(query.interviewerId))
+      qb.andWhere('(lead.id = :person OR reviewer.id = :person)', {
+        person: +query.interviewerId,
+      });
+    if (query.feedback === 'pending')
+      qb.andWhere('scorecard.submittedAt IS NULL');
+    if (query.feedback === 'submitted')
+      qb.andWhere('scorecard.submittedAt IS NOT NULL');
+    if (query.feedback === 'overdue')
+      qb.andWhere(
+        'scorecard.submittedAt IS NULL AND i.feedbackDeadline < :now',
+        { now: new Date() },
+      );
+    qb.orderBy(
+      `i.${query.sort ?? 'date'}`,
+      (query.direction ?? 'asc').toUpperCase() as 'ASC' | 'DESC',
+    ).addOrderBy('i.id', 'ASC');
+    const [rows, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+    return {
+      data: rows.map((row) => this.summary(row, actor)),
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
   }
   private async load(id: number) {
     const result = await this.interviews.findOne({
@@ -306,7 +446,12 @@ export class InterviewsService {
       throw new ForbiddenException('Interview is outside the manager scope');
     const allSubmitted = interview.scorecards.every((row) => !!row.submittedAt);
     return {
-      ...interview,
+      ...this.summary(interview, actor),
+      notes: interview.notes,
+      outcomeReason: interview.outcomeReason,
+      feedbackDeadline: interview.feedbackDeadline,
+      hideFeedbackUntilComplete: interview.hideFeedbackUntilComplete,
+      attendees: interview.attendees.map((row) => this.person(row)),
       scorecards: interview.scorecards.map((row) => {
         const visible =
           !!row.submittedAt &&
@@ -314,7 +459,22 @@ export class InterviewsService {
             allSubmitted ||
             row.reviewer.id === actor.id);
         return {
-          ...row,
+          id: row.id,
+          version: row.updatedAt.getTime(),
+          reviewer: this.person(row.reviewer),
+          template: {
+            id: row.template.id,
+            name: row.template.name,
+            criteria: row.template.criteria,
+          },
+          submittedAt: row.submittedAt,
+          state: row.submittedAt
+            ? visible
+              ? 'submittedVisible'
+              : 'submittedWithheld'
+            : 'notSubmitted',
+          allowedActions:
+            row.reviewer.id === actor.id && !row.submittedAt ? ['submit'] : [],
           ratings: visible ? row.ratings : null,
           recommendation: visible ? row.recommendation : null,
           privateNotes:
@@ -323,13 +483,16 @@ export class InterviewsService {
       }),
     };
   }
-  async reschedule(id: number, dto: RescheduleInterviewDto, actor: User) {
+  async reschedule(
+    id: number,
+    dto: RescheduleInterviewDto,
+    actor: User,
+    version?: number,
+  ) {
     const interview = await this.load(id);
-    if (
-      actor.role === Role.MANAGER &&
-      interview.application?.job.owner.id !== actor.id
-    )
-      throw new ForbiddenException('Job is outside the manager scope');
+    if (!this.canManage(interview, actor))
+      throw new NotFoundException('Interview not found');
+    this.assertVersion(interview.version, version);
     if (
       ![InterviewStatus.SCHEDULED, InterviewStatus.RESCHEDULED].includes(
         interview.status,
@@ -337,6 +500,8 @@ export class InterviewsService {
     )
       throw new ConflictException('Only active interviews can be rescheduled');
     const date = new Date(dto.date);
+    if (date <= new Date())
+      throw new BadRequestException('Interview date must be in the future');
     const duration = dto.duration ?? interview.duration;
     const conflicts = await this.conflicts(
       [interview.interviewer.id, ...interview.attendees.map((u) => u.id)],
@@ -348,6 +513,7 @@ export class InterviewsService {
     const previousDate = interview.date;
     interview.date = date;
     interview.duration = duration;
+    interview.timezone = dto.timezone ?? interview.timezone;
     interview.status = InterviewStatus.RESCHEDULED;
     let saved = await this.interviews.save(interview);
     await this.record(saved, 'interview.rescheduled', actor, {
@@ -370,9 +536,14 @@ export class InterviewsService {
         actor,
       )
       .catch(() => undefined);
-    return saved;
+    return this.getOne(saved.id, actor);
   }
-  async outcome(id: number, dto: InterviewOutcomeDto, actor: User) {
+  async outcome(
+    id: number,
+    dto: InterviewOutcomeDto,
+    actor: User,
+    version?: number,
+  ) {
     if (
       ![
         InterviewStatus.COMPLETED,
@@ -384,6 +555,9 @@ export class InterviewsService {
         'Outcome must be completed, cancelled, or no-show',
       );
     const interview = await this.load(id);
+    if (!this.canManage(interview, actor))
+      throw new NotFoundException('Interview not found');
+    this.assertVersion(interview.version, version);
     if (
       ![InterviewStatus.SCHEDULED, InterviewStatus.RESCHEDULED].includes(
         interview.status,
@@ -391,16 +565,22 @@ export class InterviewsService {
     )
       throw new ConflictException('Interview already has a terminal outcome');
     interview.status = dto.status;
+    interview.outcomeReason = dto.reason?.trim() || null;
     let saved = await this.interviews.save(interview);
     await this.record(saved, `interview.${dto.status.toLowerCase()}`, actor, {
       reason: dto.reason,
     });
     if (dto.status === InterviewStatus.CANCELLED)
       saved = await this.sync(saved, 'cancelEvent');
-    return saved;
+    return this.getOne(saved.id, actor);
   }
-  cancel(id: number, actor: User) {
-    return this.outcome(id, { status: InterviewStatus.CANCELLED }, actor);
+  cancel(id: number, actor: User, version?: number) {
+    return this.outcome(
+      id,
+      { status: InterviewStatus.CANCELLED },
+      actor,
+      version,
+    );
   }
 
   async createTemplate(dto: CreateScorecardTemplateDto) {
@@ -408,11 +588,20 @@ export class InterviewsService {
       throw new BadRequestException('At least one criterion is required');
     const keys = new Set<string>();
     for (const c of dto.criteria) {
-      if (keys.has(c.key))
-        throw new BadRequestException(`Duplicate criterion key: ${c.key}`);
-      keys.add(c.key);
+      const key = c.key.trim().toLowerCase();
+      if (!key || keys.has(key))
+        throw new BadRequestException(
+          `Duplicate or empty criterion key: ${c.key}`,
+        );
+      keys.add(key);
       if (c.minRating >= c.maxRating)
         throw new BadRequestException(`Invalid rating range for ${c.key}`);
+      if (
+        c.minRating < -10 ||
+        c.maxRating > 10 ||
+        c.maxRating - c.minRating > 10
+      )
+        throw new BadRequestException(`Rating range for ${c.key} is too wide`);
     }
     const [job, stage] = await Promise.all([
       dto.jobId ? this.jobs.findOneBy({ id: dto.jobId }) : null,
@@ -435,10 +624,12 @@ export class InterviewsService {
       );
     return this.templates.save(
       this.templates.create({
-        name: dto.name,
-        description: dto.description ?? null,
+        name: dto.name.trim(),
+        description: dto.description?.trim() || null,
         criteria: dto.criteria.map((c) => ({
           ...c,
+          key: c.key.trim().toLowerCase(),
+          label: c.label.trim(),
           required: c.required ?? true,
         })),
         job,
@@ -465,7 +656,7 @@ export class InterviewsService {
       },
     });
     if (!row) throw new NotFoundException(`Scorecard with ID ${id} not found`);
-    if (row.reviewer.id !== actor.id && actor.role !== Role.ADMIN)
+    if (row.reviewer.id !== actor.id)
       throw new ForbiddenException(
         'Only the assigned reviewer may submit this scorecard',
       );
@@ -496,19 +687,45 @@ export class InterviewsService {
       scorecardId: id,
       reviewerId: row.reviewer.id,
     });
-    return saved;
+    return {
+      id: saved.id,
+      interviewId: row.interview.id,
+      reviewer: this.person(row.reviewer),
+      template: {
+        id: row.template.id,
+        name: row.template.name,
+        criteria: row.template.criteria,
+      },
+      ratings: saved.ratings,
+      recommendation: saved.recommendation,
+      privateNotes: saved.privateNotes,
+      submittedAt: saved.submittedAt,
+      state: 'submittedVisible',
+      allowedActions: [],
+    };
   }
   async decisionSummary(applicationId: number, actor: User) {
-    if (!(await this.applications.findOneBy({ id: applicationId })))
-      throw new NotFoundException(
-        `Application with ID ${applicationId} not found`,
-      );
+    const application = await this.applications.findOneBy({
+      id: applicationId,
+    });
+    if (
+      !application ||
+      (actor.role === Role.MANAGER && application.job.owner.id !== actor.id)
+    )
+      throw new NotFoundException('Application not found');
     const rows = await this.scorecards.find({
       where: { interview: { application: { id: applicationId } } },
       relations: { interview: true, reviewer: true, template: true },
       order: { createdAt: 'ASC' },
     });
-    const allSubmitted = rows.every((r) => !!r.submittedAt);
+    const submittedByInterview = new Map<number, boolean>();
+    for (const row of rows)
+      submittedByInterview.set(
+        row.interview.id,
+        rows
+          .filter((item) => item.interview.id === row.interview.id)
+          .every((item) => !!item.submittedAt),
+      );
     return {
       applicationId,
       complete: rows.filter((r) => r.submittedAt).length,
@@ -527,7 +744,7 @@ export class InterviewsService {
         const visible =
           !!r.submittedAt &&
           (!r.interview.hideFeedbackUntilComplete ||
-            allSubmitted ||
+            submittedByInterview.get(r.interview.id) ||
             r.reviewer.id === actor.id);
         return {
           id: r.id,

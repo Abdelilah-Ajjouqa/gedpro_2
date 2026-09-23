@@ -1298,7 +1298,10 @@
             "required": false,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/Object"
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
             }
           },
           {
@@ -1317,24 +1320,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "data",
-                    "nextCursor"
-                  ],
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    },
-                    "nextCursor": {
-                      "type": "string",
-                      "nullable": true
-                    }
-                  }
+                  "$ref": "#/components/schemas/TimelinePageDto"
                 }
               }
             }
@@ -1391,7 +1377,10 @@
             "required": false,
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/Object"
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
             }
           },
           {
@@ -1410,24 +1399,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "data",
-                    "nextCursor"
-                  ],
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    },
-                    "nextCursor": {
-                      "type": "string",
-                      "nullable": true
-                    }
-                  }
+                  "$ref": "#/components/schemas/TimelinePageDto"
                 }
               }
             }
@@ -1493,8 +1465,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/TimelineEventDto"
                 }
               }
             }
@@ -1560,8 +1531,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/TimelineEventDto"
                 }
               }
             }
@@ -3460,17 +3430,150 @@
       },
       "get": {
         "operationId": "InterviewsController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SCHEDULED",
+                "COMPLETED",
+                "CANCELLED",
+                "RESCHEDULED",
+                "NO_SHOW"
+              ]
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "HR",
+                "TECHNICAL",
+                "FINAL"
+              ]
+            }
+          },
+          {
+            "name": "jobId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "applicationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "interviewerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedback",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "submitted",
+                "overdue",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "date",
+              "type": "string",
+              "enum": [
+                "date",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "direction",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number",
+              "enum": [
+                5,
+                10,
+                20,
+                50
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Interview"
-                  }
+                  "$ref": "#/components/schemas/InterviewListResponseDto"
                 }
               }
             }
@@ -3507,250 +3610,6 @@
         ]
       }
     },
-    "/interviews/{id}": {
-      "get": {
-        "operationId": "InterviewsController_findOne",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Interview"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get interview with panel and scorecards",
-        "tags": [
-          "Interviews"
-        ]
-      }
-    },
-    "/interviews/{id}/reschedule": {
-      "patch": {
-        "operationId": "InterviewsController_reschedule",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RescheduleInterviewDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Interview"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Reschedule an interview with conflict detection",
-        "tags": [
-          "Interviews"
-        ]
-      }
-    },
-    "/interviews/{id}/outcome": {
-      "patch": {
-        "operationId": "InterviewsController_outcome",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InterviewOutcomeDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Interview"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Mark an interview completed, cancelled, or no-show",
-        "tags": [
-          "Interviews"
-        ]
-      }
-    },
-    "/interviews/{id}/cancel": {
-      "patch": {
-        "operationId": "InterviewsController_cancel",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Interview"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid, or expired access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Cancel an interview",
-        "tags": [
-          "Interviews"
-        ]
-      }
-    },
     "/interviews/scorecard-templates": {
       "post": {
         "operationId": "InterviewsController_createTemplate",
@@ -3771,7 +3630,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ScorecardTemplate"
+                  "$ref": "#/components/schemas/ScorecardTemplateResponseDto"
                 }
               }
             }
@@ -3837,7 +3696,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ScorecardTemplate"
+                    "$ref": "#/components/schemas/ScorecardTemplateResponseDto"
                   }
                 }
               }
@@ -3904,7 +3763,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Scorecard"
+                  "$ref": "#/components/schemas/ScorecardAssignmentResponseDto"
                 }
               }
             }
@@ -4013,6 +3872,274 @@
           }
         ],
         "summary": "Show completed and missing scorecards for a hiring decision",
+        "tags": [
+          "Interviews"
+        ]
+      }
+    },
+    "/interviews/{id}": {
+      "get": {
+        "operationId": "InterviewsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Interview"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get interview with panel and scorecards",
+        "tags": [
+          "Interviews"
+        ]
+      }
+    },
+    "/interviews/{id}/reschedule": {
+      "patch": {
+        "operationId": "InterviewsController_reschedule",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleInterviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reschedule an interview with conflict detection",
+        "tags": [
+          "Interviews"
+        ]
+      }
+    },
+    "/interviews/{id}/outcome": {
+      "patch": {
+        "operationId": "InterviewsController_outcome",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewOutcomeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark an interview completed, cancelled, or no-show",
+        "tags": [
+          "Interviews"
+        ]
+      }
+    },
+    "/interviews/{id}/cancel": {
+      "patch": {
+        "operationId": "InterviewsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "if-match",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an interview",
         "tags": [
           "Interviews"
         ]
@@ -7644,28 +7771,165 @@
           "token"
         ]
       },
-      "Object": {
+      "TimelineActorDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "user",
+              "candidate",
+              "system",
+              "former",
+              "unknown"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "TimelinePayloadDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "jobId": {
+            "type": "number",
+            "nullable": true
+          },
+          "jobTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "previousStageName": {
+            "type": "string",
+            "nullable": true
+          },
+          "newStageName": {
+            "type": "string",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TimelineEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "system",
+              "candidate",
+              "application",
+              "stage",
+              "interview",
+              "document",
+              "form",
+              "communication",
+              "note"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time the event was recorded"
+          },
+          "visibility": {
+            "enum": [
+              "internal",
+              "candidate"
+            ],
+            "type": "string"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/TimelineActorDto"
+          },
+          "candidateId": {
+            "type": "number"
+          },
+          "applicationId": {
+            "type": "number",
+            "nullable": true
+          },
+          "targetType": {
+            "enum": [
+              "candidate",
+              "application"
+            ],
+            "type": "string"
+          },
+          "targetId": {
+            "type": "number"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/TimelinePayloadDto"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "category",
+          "occurredAt",
+          "visibility",
+          "actor",
+          "candidateId",
+          "targetType",
+          "targetId",
+          "payload"
+        ]
+      },
+      "TimelinePageDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimelineEventDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ]
       },
       "CreateTimelineNoteDto": {
         "type": "object",
         "properties": {
           "text": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
             "example": "Candidate prefers afternoon interviews."
-          },
-          "visibility": {
-            "type": "string",
-            "default": "internal",
-            "enum": [
-              "internal",
-              "candidate"
-            ]
-          },
-          "metadata": {
-            "type": "object",
-            "description": "Small structured attributes such as mention user IDs"
           }
         },
         "required": [
@@ -7967,6 +8231,10 @@
           "applicationCount",
           "allowedActions"
         ]
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
       },
       "CandidateListItemDto": {
         "type": "object",
@@ -8483,12 +8751,787 @@
           "overrideConflicts": {
             "type": "boolean",
             "default": false
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 100,
+            "default": "UTC"
           }
         },
         "required": [
           "candidateId",
           "applicationId",
           "date"
+        ]
+      },
+      "InterviewPersonDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "InterviewApplicationRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "InterviewJobRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
+      "InterviewFeedbackCountDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "submitted": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "submitted"
+        ]
+      },
+      "ScorecardCriterionResponseDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "minRating": {
+            "type": "number"
+          },
+          "maxRating": {
+            "type": "number"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "minRating",
+          "maxRating",
+          "required"
+        ]
+      },
+      "ScorecardTemplateResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScorecardCriterionResponseDto"
+            }
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "criteria",
+          "archived"
+        ]
+      },
+      "ScorecardAssignmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "version": {
+            "type": "number"
+          },
+          "reviewer": {
+            "$ref": "#/components/schemas/InterviewPersonDto"
+          },
+          "template": {
+            "$ref": "#/components/schemas/ScorecardTemplateResponseDto"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string"
+          },
+          "ratings": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "recommendation": {
+            "type": "string",
+            "nullable": true
+          },
+          "privateNotes": {
+            "type": "string",
+            "nullable": true
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "reviewer",
+          "template",
+          "state",
+          "allowedActions"
+        ]
+      },
+      "InterviewDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "version": {
+            "type": "number"
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "CANCELLED",
+              "RESCHEDULED",
+              "NO_SHOW"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "HR",
+              "TECHNICAL",
+              "FINAL"
+            ],
+            "type": "string"
+          },
+          "round": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/InterviewPersonDto"
+          },
+          "application": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InterviewApplicationRefDto"
+              }
+            ]
+          },
+          "job": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InterviewJobRefDto"
+              }
+            ]
+          },
+          "leadInterviewer": {
+            "$ref": "#/components/schemas/InterviewPersonDto"
+          },
+          "participantCount": {
+            "type": "number"
+          },
+          "feedback": {
+            "$ref": "#/components/schemas/InterviewFeedbackCountDto"
+          },
+          "syncStatus": {
+            "type": "string"
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "outcomeReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "feedbackDeadline": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "hideFeedbackUntilComplete": {
+            "type": "boolean"
+          },
+          "attendees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewPersonDto"
+            }
+          },
+          "scorecards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScorecardAssignmentResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "date",
+          "duration",
+          "timezone",
+          "status",
+          "type",
+          "round",
+          "candidate",
+          "leadInterviewer",
+          "participantCount",
+          "feedback",
+          "syncStatus",
+          "allowedActions",
+          "createdAt",
+          "updatedAt",
+          "hideFeedbackUntilComplete",
+          "attendees",
+          "scorecards"
+        ]
+      },
+      "InterviewListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "version": {
+            "type": "number"
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "CANCELLED",
+              "RESCHEDULED",
+              "NO_SHOW"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "HR",
+              "TECHNICAL",
+              "FINAL"
+            ],
+            "type": "string"
+          },
+          "round": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/InterviewPersonDto"
+          },
+          "application": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InterviewApplicationRefDto"
+              }
+            ]
+          },
+          "job": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InterviewJobRefDto"
+              }
+            ]
+          },
+          "leadInterviewer": {
+            "$ref": "#/components/schemas/InterviewPersonDto"
+          },
+          "participantCount": {
+            "type": "number"
+          },
+          "feedback": {
+            "$ref": "#/components/schemas/InterviewFeedbackCountDto"
+          },
+          "syncStatus": {
+            "type": "string"
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "date",
+          "duration",
+          "timezone",
+          "status",
+          "type",
+          "round",
+          "candidate",
+          "leadInterviewer",
+          "participantCount",
+          "feedback",
+          "syncStatus",
+          "allowedActions",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "InterviewListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewListItemDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "ScorecardCriterionDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "minRating": {
+            "type": "number"
+          },
+          "maxRating": {
+            "type": "number"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "minRating",
+          "maxRating"
+        ]
+      },
+      "CreateScorecardTemplateDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScorecardCriterionDto"
+            }
+          },
+          "jobId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "stageId": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "name",
+          "criteria"
+        ]
+      },
+      "SubmitScorecardDto": {
+        "type": "object",
+        "properties": {
+          "ratings": {
+            "type": "object"
+          },
+          "recommendation": {
+            "enum": [
+              "strong_no",
+              "no",
+              "yes",
+              "strong_yes"
+            ],
+            "type": "string"
+          },
+          "privateNotes": {
+            "type": "string",
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "ratings",
+          "recommendation"
+        ]
+      },
+      "MissingFeedbackResponseDto": {
+        "type": "object",
+        "properties": {
+          "scorecardId": {
+            "type": "number"
+          },
+          "interviewId": {
+            "type": "number"
+          },
+          "reviewer": {
+            "$ref": "#/components/schemas/InterviewPersonDto"
+          },
+          "deadline": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "overdue": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "scorecardId",
+          "interviewId",
+          "reviewer",
+          "overdue"
+        ]
+      },
+      "DecisionSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "number"
+          },
+          "complete": {
+            "type": "number"
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingFeedbackResponseDto"
+            }
+          },
+          "scorecards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScorecardAssignmentResponseDto"
+            }
+          }
+        },
+        "required": [
+          "applicationId",
+          "complete",
+          "missing",
+          "scorecards"
+        ]
+      },
+      "RescheduleInterviewDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "number",
+            "minimum": 5,
+            "maximum": 1440
+          },
+          "overrideConflicts": {
+            "type": "boolean",
+            "default": false
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "date"
+        ]
+      },
+      "InterviewOutcomeDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "COMPLETED",
+              "CANCELLED",
+              "NO_SHOW"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreateTemplateDto": {
+        "type": "object",
+        "properties": {
+          "htmlBody": {
+            "type": "string",
+            "minLength": 1
+          },
+          "key": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          }
+        },
+        "required": [
+          "htmlBody",
+          "key",
+          "name",
+          "subject"
+        ]
+      },
+      "EmailTemplate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "htmlBody": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "subject",
+          "htmlBody",
+          "version",
+          "active",
+          "createdAt"
+        ]
+      },
+      "QueueCommunicationDto": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200,
+            "description": "Stable caller-generated deduplication key"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "application_acknowledgement",
+              "interview_invitation",
+              "interview_reminder",
+              "rejection",
+              "offer",
+              "password_reset",
+              "email_verification",
+              "custom"
+            ]
+          },
+          "recipient": {
+            "type": "string",
+            "format": "email"
+          },
+          "templateKey": {
+            "type": "string"
+          },
+          "candidateId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "applicationId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "interviewId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "variables": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "idempotencyKey",
+          "type"
         ]
       },
       "CandidateHistory": {
@@ -8955,135 +9998,6 @@
           "version"
         ]
       },
-      "Interview": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number"
-          },
-          "date": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "duration": {
-            "type": "number"
-          },
-          "status": {
-            "enum": [
-              "SCHEDULED",
-              "COMPLETED",
-              "CANCELLED",
-              "RESCHEDULED",
-              "NO_SHOW"
-            ],
-            "type": "string"
-          },
-          "type": {
-            "enum": [
-              "HR",
-              "TECHNICAL",
-              "FINAL"
-            ],
-            "type": "string"
-          },
-          "round": {
-            "type": "number"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "location": {
-            "type": "string",
-            "nullable": true
-          },
-          "notes": {
-            "type": "string",
-            "nullable": true
-          },
-          "feedbackDeadline": {
-            "format": "date-time",
-            "type": "string",
-            "nullable": true
-          },
-          "hideFeedbackUntilComplete": {
-            "type": "boolean"
-          },
-          "calendarProvider": {
-            "type": "string",
-            "nullable": true
-          },
-          "calendarEventId": {
-            "type": "string",
-            "nullable": true
-          },
-          "calendarSyncStatus": {
-            "type": "string"
-          },
-          "calendarSyncError": {
-            "type": "string",
-            "nullable": true
-          },
-          "candidate": {
-            "$ref": "#/components/schemas/Candidate"
-          },
-          "application": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Application"
-              }
-            ]
-          },
-          "interviewer": {
-            "$ref": "#/components/schemas/User"
-          },
-          "attendees": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/User"
-            }
-          },
-          "scorecards": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Scorecard"
-            }
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "date",
-          "duration",
-          "status",
-          "type",
-          "round",
-          "title",
-          "location",
-          "notes",
-          "feedbackDeadline",
-          "hideFeedbackUntilComplete",
-          "calendarProvider",
-          "calendarEventId",
-          "calendarSyncStatus",
-          "calendarSyncError",
-          "candidate",
-          "application",
-          "interviewer",
-          "attendees",
-          "scorecards",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
       "ScorecardTemplate": {
         "type": "object",
         "properties": {
@@ -9163,14 +10077,14 @@
             "nullable": true
           },
           "recommendation": {
+            "type": "string",
             "nullable": true,
             "enum": [
               "strong_no",
               "no",
               "yes",
               "strong_yes"
-            ],
-            "type": "string"
+            ]
           },
           "privateNotes": {
             "type": "string",
@@ -9203,252 +10117,146 @@
           "updatedAt"
         ]
       },
-      "RescheduleInterviewDto": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string"
-          },
-          "duration": {
-            "type": "number",
-            "minimum": 5,
-            "maximum": 1440
-          },
-          "overrideConflicts": {
-            "type": "boolean",
-            "default": false
-          }
-        },
-        "required": [
-          "date"
-        ]
-      },
-      "InterviewOutcomeDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "enum": [
-              "COMPLETED",
-              "CANCELLED",
-              "NO_SHOW"
-            ],
-            "type": "string"
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 1000
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
-      "ScorecardCriterionDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "label": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 1000
-          },
-          "minRating": {
-            "type": "number"
-          },
-          "maxRating": {
-            "type": "number"
-          },
-          "required": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "key",
-          "label",
-          "minRating",
-          "maxRating"
-        ]
-      },
-      "CreateScorecardTemplateDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 2000
-          },
-          "criteria": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ScorecardCriterionDto"
-            }
-          },
-          "jobId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "stageId": {
-            "type": "number",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "name",
-          "criteria"
-        ]
-      },
-      "SubmitScorecardDto": {
-        "type": "object",
-        "properties": {
-          "ratings": {
-            "type": "object"
-          },
-          "recommendation": {
-            "enum": [
-              "strong_no",
-              "no",
-              "yes",
-              "strong_yes"
-            ],
-            "type": "string"
-          },
-          "privateNotes": {
-            "type": "string",
-            "maxLength": 10000
-          }
-        },
-        "required": [
-          "ratings",
-          "recommendation"
-        ]
-      },
-      "CreateTemplateDto": {
-        "type": "object",
-        "properties": {
-          "htmlBody": {
-            "type": "string",
-            "minLength": 1
-          },
-          "key": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 80
-          },
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 120
-          },
-          "subject": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 240
-          }
-        },
-        "required": [
-          "htmlBody",
-          "key",
-          "name",
-          "subject"
-        ]
-      },
-      "EmailTemplate": {
+      "Interview": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
-          },
-          "key": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "subject": {
-            "type": "string"
-          },
-          "htmlBody": {
-            "type": "string"
+            "type": "number"
           },
           "version": {
             "type": "number"
           },
-          "active": {
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "CANCELLED",
+              "RESCHEDULED",
+              "NO_SHOW"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "HR",
+              "TECHNICAL",
+              "FINAL"
+            ]
+          },
+          "round": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "outcomeReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "feedbackDeadline": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "hideFeedbackUntilComplete": {
             "type": "boolean"
           },
+          "calendarProvider": {
+            "type": "string",
+            "nullable": true
+          },
+          "calendarEventId": {
+            "type": "string",
+            "nullable": true
+          },
+          "calendarSyncStatus": {
+            "type": "string"
+          },
+          "calendarSyncError": {
+            "type": "string",
+            "nullable": true
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/Candidate"
+          },
+          "application": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Application"
+              }
+            ]
+          },
+          "interviewer": {
+            "$ref": "#/components/schemas/User"
+          },
+          "attendees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "scorecards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Scorecard"
+            }
+          },
           "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
             "format": "date-time",
             "type": "string"
           }
         },
         "required": [
           "id",
-          "key",
-          "name",
-          "subject",
-          "htmlBody",
           "version",
-          "active",
-          "createdAt"
-        ]
-      },
-      "QueueCommunicationDto": {
-        "type": "object",
-        "properties": {
-          "idempotencyKey": {
-            "type": "string",
-            "minLength": 8,
-            "maxLength": 200,
-            "description": "Stable caller-generated deduplication key"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "application_acknowledgement",
-              "interview_invitation",
-              "interview_reminder",
-              "rejection",
-              "offer",
-              "password_reset",
-              "email_verification",
-              "custom"
-            ]
-          },
-          "recipient": {
-            "type": "string",
-            "format": "email"
-          },
-          "templateKey": {
-            "type": "string"
-          },
-          "candidateId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "applicationId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "interviewId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "variables": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "idempotencyKey",
-          "type"
+          "date",
+          "duration",
+          "status",
+          "type",
+          "round",
+          "title",
+          "location",
+          "notes",
+          "timezone",
+          "outcomeReason",
+          "feedbackDeadline",
+          "hideFeedbackUntilComplete",
+          "calendarProvider",
+          "calendarEventId",
+          "calendarSyncStatus",
+          "calendarSyncError",
+          "candidate",
+          "application",
+          "interviewer",
+          "attendees",
+          "scorecards",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "Communication": {

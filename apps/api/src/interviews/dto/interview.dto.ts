@@ -13,6 +13,7 @@ import {
   MaxLength,
   Min,
   ValidateNested,
+  IsIn,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { InterviewType } from '../enums/interview-type.enum';
@@ -86,6 +87,11 @@ export class CreateInterviewDto {
   @IsBoolean()
   @IsOptional()
   overrideConflicts?: boolean;
+  @ApiPropertyOptional({ default: 'UTC' })
+  @IsString()
+  @MaxLength(100)
+  @IsOptional()
+  timezone?: string;
 }
 export class RescheduleInterviewDto {
   @ApiProperty() @IsDateString() date: string;
@@ -100,6 +106,61 @@ export class RescheduleInterviewDto {
   @IsBoolean()
   @IsOptional()
   overrideConflicts?: boolean;
+  @ApiPropertyOptional()
+  @IsString()
+  @MaxLength(100)
+  @IsOptional()
+  timezone?: string;
+}
+
+export class ListInterviewsDto {
+  @ApiPropertyOptional() @IsDateString() @IsOptional() from?: string;
+  @ApiPropertyOptional() @IsDateString() @IsOptional() to?: string;
+  @ApiPropertyOptional({ enum: InterviewStatus })
+  @IsEnum(InterviewStatus)
+  @IsOptional()
+  status?: InterviewStatus;
+  @ApiPropertyOptional({ enum: InterviewType })
+  @IsEnum(InterviewType)
+  @IsOptional()
+  type?: InterviewType;
+  @ApiPropertyOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  jobId?: number;
+  @ApiPropertyOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  applicationId?: number;
+  @ApiPropertyOptional() @IsString() @IsOptional() interviewerId?: string;
+  @ApiPropertyOptional({ enum: ['pending', 'submitted', 'overdue', 'all'] })
+  @IsIn(['pending', 'submitted', 'overdue', 'all'])
+  @IsOptional()
+  feedback?: string;
+  @ApiPropertyOptional({ enum: ['date', 'updatedAt'], default: 'date' })
+  @IsIn(['date', 'updatedAt'])
+  @IsOptional()
+  sort?: 'date' | 'updatedAt';
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'asc' })
+  @IsIn(['asc', 'desc'])
+  @IsOptional()
+  direction?: 'asc' | 'desc';
+  @ApiPropertyOptional({ default: 1 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  page?: number;
+  @ApiPropertyOptional({ enum: [5, 10, 20, 50], default: 20 })
+  @Type(() => Number)
+  @IsInt()
+  @IsIn([5, 10, 20, 50])
+  @IsOptional()
+  limit?: number;
 }
 export class InterviewOutcomeDto {
   @ApiProperty({
