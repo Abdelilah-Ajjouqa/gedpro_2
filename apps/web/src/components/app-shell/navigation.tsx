@@ -56,8 +56,8 @@ const navigation = [
     href: '/documents',
     label: 'Documents',
     icon: FileText,
-    capability: 'documents:read',
-    available: false,
+    capability: 'documents:list',
+    available: true,
   },
   {
     href: '/settings/pipelines',
