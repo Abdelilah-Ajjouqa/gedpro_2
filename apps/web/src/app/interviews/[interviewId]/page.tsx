@@ -1,0 +1,1 @@
+import { InterviewWorkspace } from '@/features/interviews/interview-workspace';export default async function Page({params}:{params:Promise<{interviewId:string}>}){const {interviewId}=await params;return <InterviewWorkspace id={Number(interviewId)}/>}

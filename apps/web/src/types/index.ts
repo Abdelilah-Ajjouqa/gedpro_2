@@ -56,7 +56,6 @@ type Interview = {
   candidate: Person;
   scheduledFor: string;
   timeLabel: string;
-  meetingType: 'video' | 'phone' | 'onsite';
 };
 
 type ActivityTone = 'neutral' | 'warning' | 'success' | 'danger';

@@ -1,4 +1,5 @@
 import { CalendarDays } from 'lucide-react';
+import Link from 'next/link';
 
 import { InterviewRow } from '@/components/dashboard-panels/interview-row';
 import { PanelHeader } from '@/components/dashboard-panels/panel-header';
@@ -12,7 +13,7 @@ function UpcomingInterviews({ interviews }: { interviews: Interview[] }) {
         title="Upcoming interviews"
         description={`${interviews.length} scheduled next`}
         icon={CalendarDays}
-        action={<Button variant="ghost" size="sm">View all</Button>}
+        action={<Button asChild variant="ghost" size="sm"><Link href="/interviews">View all</Link></Button>}
       />
       <h2 id="upcoming-interviews-heading" className="sr-only">Upcoming interviews</h2>
       <ul className="divide-y divide-border">

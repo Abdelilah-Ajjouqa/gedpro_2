@@ -8,7 +8,8 @@ type ApiPerson = { id: number; firstName: string; lastName: string; role?: strin
 type ApiStage = { id: number; name: string; category: string; position: number; archived: boolean };
 type ApiPipeline = { id: number; stages: ApiStage[] };
 type ApiApplication = { id: number; candidate: ApiPerson; job: { id: number; title: string }; currentStage: ApiStage; createdAt: string };
-type ApiInterview = { id: number; candidate: ApiPerson; application?: { job?: { title?: string } }; date: string; location?: string | null; calendarProvider?: string | null };
+type ApiInterview = { id: number; candidate: ApiPerson; job?: { title?: string } | null; date: string; type: string; status: string };
+type ApiInterviewPage = Page<ApiInterview>;
 type ApiReport = { totals?: { applications?: number }; };
 type CurrentUserResponse = { user: ApiPerson; capabilities: string[] };
 
@@ -38,7 +39,7 @@ export async function getDashboardMetrics(filters: DashboardFilters, signal?: Ab
     apiRequest<ApiReport>(`/reports/summary${query ? `?${query}` : ''}`, { signal }),
     apiRequest<Page<ApiPerson>>('/candidates?limit=1', { signal }),
     apiRequest<Page<unknown>>('/jobs?status=published&limit=1', { signal }),
-    apiRequest<ApiInterview[]>('/interviews', { signal }),
+    apiRequest<ApiInterviewPage>(`/interviews?${params({ from: todayStart(), page: 1, limit: 5 })}`, { signal }),
   ]);
   const today = new Date();
   const newToday = report.totals?.applications ?? 0;
@@ -49,7 +50,7 @@ export async function getDashboardMetrics(filters: DashboardFilters, signal?: Ab
     metrics: [
       { id: 'candidates', label: 'Total candidates', value: candidates.total, icon: UsersRound, helperText: 'Across all active roles', tone: 'neutral' },
       { id: 'jobs', label: 'Open jobs', value: jobs.total, icon: BriefcaseBusiness, helperText: 'Published positions', tone: 'primary' },
-      { id: 'interviews', label: 'Interviews', value: interviews.filter((item) => new Date(item.date) >= today).length, icon: CalendarDays, helperText: 'Upcoming schedule', tone: 'warning' },
+      { id: 'interviews', label: 'Interviews', value: interviews.total, icon: CalendarDays, helperText: 'Upcoming schedule', tone: 'warning' },
       { id: 'new-today', label: 'Applications', value: newToday, icon: Sparkles, helperText: 'In the selected period', tone: 'success' },
     ],
   };
@@ -79,14 +80,15 @@ export async function getCandidates(filters: DashboardFilters, signal?: AbortSig
 }
 
 export async function getUpcomingInterviews(_filters: DashboardFilters, signal?: AbortSignal): Promise<Interview[]> {
-  const now = new Date();
-  const rows = await apiRequest<ApiInterview[]>('/interviews', { signal });
-  return rows.filter((row) => new Date(row.date) >= now).slice(0, 5).map((row) => {
+  const rows = await apiRequest<ApiInterviewPage>(`/interviews?${params({ from: todayStart(), page: 1, limit: 5 })}`, { signal });
+  return rows.data.map((row) => {
     const date = new Date(row.date);
-    const candidate: Person = { id: String(row.candidate.id), firstName: row.candidate.firstName, lastName: row.candidate.lastName, role: row.application?.job?.title ?? 'Candidate' };
-    return { id: String(row.id), candidate, scheduledFor: new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date), timeLabel: new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(date), meetingType: row.location ? 'onsite' : row.calendarProvider ? 'video' : 'phone' };
+    const candidate: Person = { id: String(row.candidate.id), firstName: row.candidate.firstName, lastName: row.candidate.lastName, role: row.job?.title ?? 'Candidate' };
+    return { id: String(row.id), candidate, scheduledFor: new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date), timeLabel: new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(date) };
   });
 }
+
+function todayStart() { const value = new Date(); value.setHours(0, 0, 0, 0); return value.toISOString(); }
 
 export async function getRecentActivity(filters: DashboardFilters, signal?: AbortSignal): Promise<ActivityEvent[]> {
   const rows = await apiRequest<Page<ApiApplication>>(`/applications?${params({ jobId: filters.jobId, page: 1, limit: 5 })}`, { signal });

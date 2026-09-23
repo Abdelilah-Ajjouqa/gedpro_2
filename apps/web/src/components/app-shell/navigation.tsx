@@ -50,7 +50,7 @@ const navigation = [
     label: 'Interviews',
     icon: CalendarDays,
     capability: 'interviews:read',
-    available: false,
+    available: true,
   },
   {
     href: '/documents',

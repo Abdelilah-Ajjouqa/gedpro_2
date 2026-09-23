@@ -800,74 +800,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/interviews/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get interview with panel and scorecards */
-        get: operations["InterviewsController_findOne"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/interviews/{id}/reschedule": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Reschedule an interview with conflict detection */
-        patch: operations["InterviewsController_reschedule"];
-        trace?: never;
-    };
-    "/interviews/{id}/outcome": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Mark an interview completed, cancelled, or no-show */
-        patch: operations["InterviewsController_outcome"];
-        trace?: never;
-    };
-    "/interviews/{id}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Cancel an interview */
-        patch: operations["InterviewsController_cancel"];
-        trace?: never;
-    };
     "/interviews/scorecard-templates": {
         parameters: {
             query?: never;
@@ -934,6 +866,74 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/interviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get interview with panel and scorecards */
+        get: operations["InterviewsController_findOne"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/interviews/{id}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Reschedule an interview with conflict detection */
+        patch: operations["InterviewsController_reschedule"];
+        trace?: never;
+    };
+    "/interviews/{id}/outcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark an interview completed, cancelled, or no-show */
+        patch: operations["InterviewsController_outcome"];
+        trace?: never;
+    };
+    "/interviews/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Cancel an interview */
+        patch: operations["InterviewsController_cancel"];
         trace?: never;
     };
     "/communications/templates": {
@@ -1684,17 +1684,49 @@ export interface components {
         VerifyEmailDto: {
             token: string;
         };
-        Object: Record<string, never>;
+        TimelineActorDto: {
+            /** @enum {string} */
+            kind: "user" | "candidate" | "system" | "former" | "unknown";
+            name?: string | null;
+        };
+        TimelinePayloadDto: {
+            text?: string | null;
+            jobId?: number | null;
+            jobTitle?: string | null;
+            previousStageName?: string | null;
+            newStageName?: string | null;
+            comment?: string | null;
+            rejectionReason?: string | null;
+            summary?: string | null;
+        };
+        TimelineEventDto: {
+            /** Format: uuid */
+            id: string;
+            type: string;
+            /** @enum {string} */
+            category: "system" | "candidate" | "application" | "stage" | "interview" | "document" | "form" | "communication" | "note";
+            /**
+             * Format: date-time
+             * @description Time the event was recorded
+             */
+            occurredAt: string;
+            /** @enum {string} */
+            visibility: "internal" | "candidate";
+            actor: components["schemas"]["TimelineActorDto"];
+            candidateId: number;
+            applicationId?: number | null;
+            /** @enum {string} */
+            targetType: "candidate" | "application";
+            targetId: number;
+            payload: components["schemas"]["TimelinePayloadDto"];
+        };
+        TimelinePageDto: {
+            data: components["schemas"]["TimelineEventDto"][];
+            nextCursor: string | null;
+        };
         CreateTimelineNoteDto: {
             /** @example Candidate prefers afternoon interviews. */
             text: string;
-            /**
-             * @default internal
-             * @enum {string}
-             */
-            visibility: "internal" | "candidate";
-            /** @description Small structured attributes such as mention user IDs */
-            metadata?: Record<string, never>;
         };
         CreateCandidateDto: {
             firstName: string;
@@ -1766,6 +1798,7 @@ export interface components {
             applicationCount: number;
             allowedActions: string[];
         };
+        Object: Record<string, never>;
         CandidateListItemDto: {
             id: number;
             firstName: string;
@@ -1893,6 +1926,199 @@ export interface components {
             calendarProvider?: string;
             /** @default false */
             overrideConflicts: boolean;
+            /** @default UTC */
+            timezone: string;
+        };
+        InterviewPersonDto: {
+            id: number;
+            firstName: string;
+            lastName: string;
+        };
+        InterviewApplicationRefDto: {
+            id: number;
+        };
+        InterviewJobRefDto: {
+            id: number;
+            title: string;
+        };
+        InterviewFeedbackCountDto: {
+            total: number;
+            submitted: number;
+        };
+        ScorecardCriterionResponseDto: {
+            key: string;
+            label: string;
+            description?: string;
+            minRating: number;
+            maxRating: number;
+            required: boolean;
+        };
+        ScorecardTemplateResponseDto: {
+            id: number;
+            name: string;
+            description?: string | null;
+            criteria: components["schemas"]["ScorecardCriterionResponseDto"][];
+            archived: boolean;
+        };
+        ScorecardAssignmentResponseDto: {
+            id: number;
+            version: number;
+            reviewer: components["schemas"]["InterviewPersonDto"];
+            template: components["schemas"]["ScorecardTemplateResponseDto"];
+            /** Format: date-time */
+            submittedAt?: string | null;
+            state: string;
+            ratings?: {
+                [key: string]: number;
+            } | null;
+            recommendation?: string | null;
+            privateNotes?: string | null;
+            allowedActions: string[];
+        };
+        InterviewDetailDto: {
+            id: number;
+            version: number;
+            /** Format: date-time */
+            date: string;
+            duration: number;
+            timezone: string;
+            /** @enum {string} */
+            status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED" | "NO_SHOW";
+            /** @enum {string} */
+            type: "HR" | "TECHNICAL" | "FINAL";
+            round: number;
+            title?: string | null;
+            location?: string | null;
+            candidate: components["schemas"]["InterviewPersonDto"];
+            application?: components["schemas"]["InterviewApplicationRefDto"] | null;
+            job?: components["schemas"]["InterviewJobRefDto"] | null;
+            leadInterviewer: components["schemas"]["InterviewPersonDto"];
+            participantCount: number;
+            feedback: components["schemas"]["InterviewFeedbackCountDto"];
+            syncStatus: string;
+            allowedActions: string[];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            notes?: string | null;
+            outcomeReason?: string | null;
+            /** Format: date-time */
+            feedbackDeadline?: string | null;
+            hideFeedbackUntilComplete: boolean;
+            attendees: components["schemas"]["InterviewPersonDto"][];
+            scorecards: components["schemas"]["ScorecardAssignmentResponseDto"][];
+        };
+        InterviewListItemDto: {
+            id: number;
+            version: number;
+            /** Format: date-time */
+            date: string;
+            duration: number;
+            timezone: string;
+            /** @enum {string} */
+            status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED" | "NO_SHOW";
+            /** @enum {string} */
+            type: "HR" | "TECHNICAL" | "FINAL";
+            round: number;
+            title?: string | null;
+            location?: string | null;
+            candidate: components["schemas"]["InterviewPersonDto"];
+            application?: components["schemas"]["InterviewApplicationRefDto"] | null;
+            job?: components["schemas"]["InterviewJobRefDto"] | null;
+            leadInterviewer: components["schemas"]["InterviewPersonDto"];
+            participantCount: number;
+            feedback: components["schemas"]["InterviewFeedbackCountDto"];
+            syncStatus: string;
+            allowedActions: string[];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        InterviewListResponseDto: {
+            data: components["schemas"]["InterviewListItemDto"][];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+        ScorecardCriterionDto: {
+            key: string;
+            label: string;
+            description?: string;
+            minRating: number;
+            maxRating: number;
+            required?: boolean;
+        };
+        CreateScorecardTemplateDto: {
+            name: string;
+            description?: string;
+            criteria: components["schemas"]["ScorecardCriterionDto"][];
+            jobId?: number;
+            stageId?: number;
+        };
+        SubmitScorecardDto: {
+            ratings: Record<string, never>;
+            /** @enum {string} */
+            recommendation: "strong_no" | "no" | "yes" | "strong_yes";
+            privateNotes?: string;
+        };
+        MissingFeedbackResponseDto: {
+            scorecardId: number;
+            interviewId: number;
+            reviewer: components["schemas"]["InterviewPersonDto"];
+            /** Format: date-time */
+            deadline?: string | null;
+            overdue: boolean;
+        };
+        DecisionSummaryResponseDto: {
+            applicationId: number;
+            complete: number;
+            missing: components["schemas"]["MissingFeedbackResponseDto"][];
+            scorecards: components["schemas"]["ScorecardAssignmentResponseDto"][];
+        };
+        RescheduleInterviewDto: {
+            date: string;
+            duration?: number;
+            /** @default false */
+            overrideConflicts: boolean;
+            timezone?: string;
+        };
+        InterviewOutcomeDto: {
+            /** @enum {string} */
+            status: "COMPLETED" | "CANCELLED" | "NO_SHOW";
+            reason?: string;
+        };
+        CreateTemplateDto: {
+            htmlBody: string;
+            key: string;
+            name: string;
+            subject: string;
+        };
+        EmailTemplate: {
+            id: string;
+            key: string;
+            name: string;
+            subject: string;
+            htmlBody: string;
+            version: number;
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        QueueCommunicationDto: {
+            /** @description Stable caller-generated deduplication key */
+            idempotencyKey: string;
+            /** @enum {string} */
+            type: "application_acknowledgement" | "interview_invitation" | "interview_reminder" | "rejection" | "offer" | "password_reset" | "email_verification" | "custom";
+            /** Format: email */
+            recipient?: string;
+            templateKey?: string;
+            candidateId?: number;
+            applicationId?: number;
+            interviewId?: number;
+            variables?: Record<string, never>;
         };
         CandidateHistory: {
             id: number;
@@ -2020,36 +2246,6 @@ export interface components {
             updatedAt: string;
             version: number;
         };
-        Interview: {
-            id: number;
-            /** Format: date-time */
-            date: string;
-            duration: number;
-            /** @enum {string} */
-            status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED" | "NO_SHOW";
-            /** @enum {string} */
-            type: "HR" | "TECHNICAL" | "FINAL";
-            round: number;
-            title: string | null;
-            location: string | null;
-            notes: string | null;
-            /** Format: date-time */
-            feedbackDeadline: string | null;
-            hideFeedbackUntilComplete: boolean;
-            calendarProvider: string | null;
-            calendarEventId: string | null;
-            calendarSyncStatus: string;
-            calendarSyncError: string | null;
-            candidate: components["schemas"]["Candidate"];
-            application: components["schemas"]["Application"] | null;
-            interviewer: components["schemas"]["User"];
-            attendees: components["schemas"]["User"][];
-            scorecards: components["schemas"]["Scorecard"][];
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
         ScorecardTemplate: {
             id: number;
             name: string;
@@ -2079,67 +2275,38 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        RescheduleInterviewDto: {
-            date: string;
-            duration?: number;
-            /** @default false */
-            overrideConflicts: boolean;
-        };
-        InterviewOutcomeDto: {
-            /** @enum {string} */
-            status: "COMPLETED" | "CANCELLED" | "NO_SHOW";
-            reason?: string;
-        };
-        ScorecardCriterionDto: {
-            key: string;
-            label: string;
-            description?: string;
-            minRating: number;
-            maxRating: number;
-            required?: boolean;
-        };
-        CreateScorecardTemplateDto: {
-            name: string;
-            description?: string;
-            criteria: components["schemas"]["ScorecardCriterionDto"][];
-            jobId?: number;
-            stageId?: number;
-        };
-        SubmitScorecardDto: {
-            ratings: Record<string, never>;
-            /** @enum {string} */
-            recommendation: "strong_no" | "no" | "yes" | "strong_yes";
-            privateNotes?: string;
-        };
-        CreateTemplateDto: {
-            htmlBody: string;
-            key: string;
-            name: string;
-            subject: string;
-        };
-        EmailTemplate: {
-            id: string;
-            key: string;
-            name: string;
-            subject: string;
-            htmlBody: string;
+        Interview: {
+            id: number;
             version: number;
-            active: boolean;
+            /** Format: date-time */
+            date: string;
+            duration: number;
+            /** @enum {string} */
+            status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED" | "NO_SHOW";
+            /** @enum {string} */
+            type: "HR" | "TECHNICAL" | "FINAL";
+            round: number;
+            title: string | null;
+            location: string | null;
+            notes: string | null;
+            timezone: string;
+            outcomeReason: string | null;
+            /** Format: date-time */
+            feedbackDeadline: string | null;
+            hideFeedbackUntilComplete: boolean;
+            calendarProvider: string | null;
+            calendarEventId: string | null;
+            calendarSyncStatus: string;
+            calendarSyncError: string | null;
+            candidate: components["schemas"]["Candidate"];
+            application: components["schemas"]["Application"] | null;
+            interviewer: components["schemas"]["User"];
+            attendees: components["schemas"]["User"][];
+            scorecards: components["schemas"]["Scorecard"][];
             /** Format: date-time */
             createdAt: string;
-        };
-        QueueCommunicationDto: {
-            /** @description Stable caller-generated deduplication key */
-            idempotencyKey: string;
-            /** @enum {string} */
-            type: "application_acknowledgement" | "interview_invitation" | "interview_reminder" | "rejection" | "offer" | "password_reset" | "email_verification" | "custom";
-            /** Format: email */
-            recipient?: string;
-            templateKey?: string;
-            candidateId?: number;
-            applicationId?: number;
-            interviewId?: number;
-            variables?: Record<string, never>;
+            /** Format: date-time */
+            updatedAt: string;
         };
         Communication: {
             id: string;
@@ -3415,7 +3582,7 @@ export interface operations {
     TimelineController_candidate: {
         parameters: {
             query?: {
-                limit?: components["schemas"]["Object"];
+                limit?: number;
                 /** @description Opaque cursor returned by the preceding page */
                 cursor?: string;
             };
@@ -3433,12 +3600,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: {
-                            [key: string]: unknown;
-                        }[];
-                        nextCursor: string | null;
-                    };
+                    "application/json": components["schemas"]["TimelinePageDto"];
                 };
             };
             /** @description Malformed cursor */
@@ -3471,7 +3633,7 @@ export interface operations {
     TimelineController_application: {
         parameters: {
             query?: {
-                limit?: components["schemas"]["Object"];
+                limit?: number;
                 /** @description Opaque cursor returned by the preceding page */
                 cursor?: string;
             };
@@ -3489,12 +3651,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: {
-                            [key: string]: unknown;
-                        }[];
-                        nextCursor: string | null;
-                    };
+                    "application/json": components["schemas"]["TimelinePageDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3538,9 +3695,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["TimelineEventDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -3584,9 +3739,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["TimelineEventDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -4733,7 +4886,20 @@ export interface operations {
     };
     InterviewsController_findAll: {
         parameters: {
-            query?: never;
+            query?: {
+                from?: string;
+                to?: string;
+                status?: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "RESCHEDULED" | "NO_SHOW";
+                type?: "HR" | "TECHNICAL" | "FINAL";
+                jobId?: number;
+                applicationId?: number;
+                interviewerId?: string;
+                feedback?: "pending" | "submitted" | "overdue" | "all";
+                sort?: "date" | "updatedAt";
+                direction?: "asc" | "desc";
+                page?: number;
+                limit?: 5 | 10 | 20 | 50;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -4745,7 +4911,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Interview"][];
+                    "application/json": components["schemas"]["InterviewListResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -4823,170 +4989,6 @@ export interface operations {
             };
         };
     };
-    InterviewsController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Interview"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    InterviewsController_reschedule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RescheduleInterviewDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Interview"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    InterviewsController_outcome: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["InterviewOutcomeDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Interview"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    InterviewsController_cancel: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Interview"];
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
     InterviewsController_createTemplate: {
         parameters: {
             query?: never;
@@ -5005,7 +5007,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ScorecardTemplate"];
+                    "application/json": components["schemas"]["ScorecardTemplateResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5045,7 +5047,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ScorecardTemplate"][];
+                    "application/json": components["schemas"]["ScorecardTemplateResponseDto"][];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5088,7 +5090,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Scorecard"];
+                    "application/json": components["schemas"]["ScorecardAssignmentResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -5135,6 +5137,176 @@ export interface operations {
                             [key: string]: unknown;
                         }[];
                     };
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    InterviewsController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    InterviewsController_reschedule: {
+        parameters: {
+            query?: never;
+            header: {
+                "if-match": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RescheduleInterviewDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewDetailDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    InterviewsController_outcome: {
+        parameters: {
+            query?: never;
+            header: {
+                "if-match": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewOutcomeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewDetailDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    InterviewsController_cancel: {
+        parameters: {
+            query?: never;
+            header: {
+                "if-match": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewDetailDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
