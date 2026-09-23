@@ -672,11 +672,11 @@ Record unresolved product decisions explicitly instead of guessing them.
 | Phase | Area | Status | Phase-specific plan | Notes |
 |---:|---|---|---|---|
 | 0 | Frontend platform and contract foundation | In progress | `plans/PHASE_0_PLAN.md` | BFF, contracts, session, capabilities, shared UI, and tests implemented; manager-scope audit remains |
-| 1 | Jobs and hiring-pipeline administration | Not started | — | Core ATS release |
-| 2 | Candidate directory and candidate profile | Not started | — | Core ATS release |
-| 3 | Applications and recruiter pipeline workflow | Not started | — | Core ATS release |
-| 4 | Unified timeline and collaboration notes | Not started | — | Core ATS release |
-| 5 | Interviews, scorecards, and hiring decisions | Not started | — | Core ATS release |
+| 1 | Jobs and hiring-pipeline administration | Planned | `plans/PHASE_1_PLAN.md` | Core ATS release |
+| 2 | Candidate directory and candidate profile | Planned | `plans/PHASE_2_PLAN.md` | Core ATS release |
+| 3 | Applications and recruiter pipeline workflow | Planned | `plans/PHASE_3_PLAN.md` | Core ATS release |
+| 4 | Unified timeline and collaboration notes | Planned | `plans/PHASE_4_PLAN.md` | Core ATS release |
+| 5 | Interviews, scorecards, and hiring decisions | Planned | `plans/PHASE_5_PLAN.md` | Core ATS release |
 | 6 | Recruitment document management | Not started | — | Recruitment operations release |
 | 7 | Forms and evaluations | Not started | — | Recruitment operations release |
 | 8 | Candidate communications | Not started | — | Recruitment operations release |

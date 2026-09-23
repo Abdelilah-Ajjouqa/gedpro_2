@@ -78,7 +78,7 @@ Set `ADMIN_EMAIL` and an `ADMIN_PASSWORD` of at least 12 characters, then run:
 npm run admin:bootstrap
 ```
 
-The command is idempotent: it will not replace an existing account or its password.
+The command is idempotent: it will not replace an existing account or its password. Bootstrap administrators are activated and marked email-verified because they are provisioned through this trusted server-side command rather than public registration.
 
 ### Health checks
 

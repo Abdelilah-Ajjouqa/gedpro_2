@@ -22,7 +22,17 @@ async function bootstrapAdmin() {
     const repository = dataSource.getRepository(User);
     const existing = await repository.findOne({ where: { email } });
     if (existing) {
-      console.log(`Admin already exists: ${email}`);
+      const updates: Partial<User> = {};
+      if (existing.role !== Role.ADMIN) updates.role = Role.ADMIN;
+      if (!existing.isActive) updates.isActive = true;
+      if (!existing.emailVerified) updates.emailVerified = true;
+
+      if (Object.keys(updates).length > 0) {
+        await repository.update(existing.id, updates);
+        console.log(`Admin access restored: ${email}`);
+      } else {
+        console.log(`Admin already exists: ${email}`);
+      }
       return;
     }
 
@@ -33,6 +43,7 @@ async function bootstrapAdmin() {
       lastName,
       role: Role.ADMIN,
       isActive: true,
+      emailVerified: true,
     });
     await repository.save(admin);
     console.log(`Admin created: ${email}`);

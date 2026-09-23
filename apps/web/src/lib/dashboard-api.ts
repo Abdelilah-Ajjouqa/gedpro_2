@@ -57,13 +57,13 @@ export async function getDashboardMetrics(filters: DashboardFilters, signal?: Ab
 }
 
 export async function getPipeline(filters: DashboardFilters, signal?: AbortSignal): Promise<PipelineStage[]> {
-  const [pipelines, applications, candidatePage] = await Promise.all([
-    apiRequest<ApiPipeline[]>('/pipelines', { signal }),
+  const [pipelinePage, applications, candidatePage] = await Promise.all([
+    apiRequest<Page<ApiPipeline>>('/pipelines', { signal }),
     apiRequest<Page<ApiApplication>>(`/applications?${params({ jobId: filters.jobId, page: filters.page, limit: filters.limit })}`, { signal }),
     filters.search ? getCandidates(filters, signal) : Promise.resolve(undefined),
   ]);
   const visibleCandidateIds = candidatePage ? new Set(candidatePage.data.map((candidate) => candidate.id)) : undefined;
-  const stages = pipelines.flatMap((pipeline) => pipeline.stages).filter((stage) => !stage.archived).sort((a, b) => a.position - b.position);
+  const stages = pipelinePage.data.flatMap((pipeline) => pipeline.stages).filter((stage) => !stage.archived).sort((a, b) => a.position - b.position);
   return stages.map((stage) => ({
     id: String(stage.id), stageId: stage.id, label: stage.name, status: statusByCategory[stage.category] ?? 'reviewing',
     candidates: applications.data.filter((application) => application.currentStage.id === stage.id && (!visibleCandidateIds || visibleCandidateIds.has(application.candidate.id))).map((application): Candidate => ({
