@@ -4,6 +4,7 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   FileText,
+  ClipboardList,
   LayoutDashboard,
   Settings,
   UserRoundSearch,
@@ -17,6 +18,13 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 
 const navigation = [
+  {
+    href: '/forms',
+    label: 'Forms',
+    icon: ClipboardList,
+    capability: 'forms:read',
+    available: true,
+  },
   {
     href: '/',
     label: 'Dashboard',

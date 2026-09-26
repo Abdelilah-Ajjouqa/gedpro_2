@@ -15,6 +15,7 @@ import {
 } from './api';
 import { TimelinePanel } from '@/features/timeline/timeline-panel';
 import { timelineKeys } from '@/features/timeline/api';
+import { ApplicationFormsPanel } from '@/features/forms/application-forms-panel';
 export function ApplicationWorkspace({ id }: { id: number }) {
   const { user } = useAuth();
   const scope = getApiScope(user?.id);
@@ -260,6 +261,9 @@ export function ApplicationWorkspace({ id }: { id: number }) {
             </Link>
           </div>
         </aside>
+      </div>
+      <div className="mt-6">
+        <ApplicationFormsPanel applicationId={id} />
       </div>
       <div className="mt-6">
         <TimelinePanel
