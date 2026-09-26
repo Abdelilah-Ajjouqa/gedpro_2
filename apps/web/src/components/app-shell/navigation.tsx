@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Mail,
   FileText,
+  BarChart3,
   ClipboardList,
   LayoutDashboard,
   Settings,
@@ -19,6 +20,13 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 
 const navigation = [
+  {
+    href: '/reports',
+    label: 'Reports',
+    icon: BarChart3,
+    capability: 'reports:read',
+    available: true,
+  },
   {
     href: '/communications',
     label: 'Communications',
