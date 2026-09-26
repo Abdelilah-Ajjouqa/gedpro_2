@@ -3,6 +3,7 @@
 import {
   BriefcaseBusiness,
   CalendarDays,
+  Mail,
   FileText,
   ClipboardList,
   LayoutDashboard,
@@ -18,6 +19,13 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 
 const navigation = [
+  {
+    href: '/communications',
+    label: 'Communications',
+    icon: Mail,
+    capability: 'communications:read',
+    available: true,
+  },
   {
     href: '/forms',
     label: 'Forms',
