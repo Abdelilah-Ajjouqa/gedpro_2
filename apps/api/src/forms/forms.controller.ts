@@ -123,11 +123,12 @@ export class FormsController {
   @Patch(':id/responses/:responseId/review')
   @Roles(Role.RH, Role.ADMIN, Role.MANAGER)
   review(
+    @Param('id') formId: string,
     @Param('responseId') responseId: string,
     @Body() dto: ReviewResponseDto,
     @Req() req: { user: User },
   ) {
-    return this.service.review(responseId, dto, req.user);
+    return this.service.review(formId, responseId, dto, req.user);
   }
   @Get(':id/responses/export')
   @Roles(Role.RH, Role.ADMIN, Role.MANAGER)

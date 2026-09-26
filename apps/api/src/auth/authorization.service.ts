@@ -52,6 +52,7 @@ export const CAPABILITIES = {
   TIMELINE_APPLICATION_NOTE_CREATE: 'timeline:application:note:create',
   USERS_READ: 'users:read',
   USERS_MANAGE: 'users:manage',
+  FORMS_READ: 'forms:read',
 } as const;
 
 export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
@@ -59,6 +60,7 @@ export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
 const capabilitiesByRole: Record<Role, readonly Capability[]> = {
   [Role.ADMIN]: Object.values(CAPABILITIES),
   [Role.RH]: [
+    CAPABILITIES.FORMS_READ,
     CAPABILITIES.DASHBOARD_VIEW,
     CAPABILITIES.CANDIDATES_READ,
     CAPABILITIES.CANDIDATES_WRITE,
@@ -106,6 +108,7 @@ const capabilitiesByRole: Record<Role, readonly Capability[]> = {
     CAPABILITIES.USERS_READ,
   ],
   [Role.MANAGER]: [
+    CAPABILITIES.FORMS_READ,
     CAPABILITIES.DASHBOARD_VIEW,
     CAPABILITIES.CANDIDATES_READ,
     CAPABILITIES.JOBS_READ,
@@ -126,6 +129,7 @@ const capabilitiesByRole: Record<Role, readonly Capability[]> = {
     CAPABILITIES.TIMELINE_APPLICATION_NOTE_CREATE,
   ],
   [Role.CANDIDATE]: [
+    CAPABILITIES.FORMS_READ,
     CAPABILITIES.DOCUMENTS_READ,
     CAPABILITIES.TIMELINE_CANDIDATE_READ,
     CAPABILITIES.TIMELINE_APPLICATION_READ,

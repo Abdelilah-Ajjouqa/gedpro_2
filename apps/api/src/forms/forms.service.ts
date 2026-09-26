@@ -183,16 +183,23 @@ export class FormsService {
     const current = source.versions.find(
       (v) => v.version === source.currentVersion,
     )!;
+    const ids = new Map(current.fields.map((field) => [field.id, randomUUID()]));
     return this.createForm(
       {
         title: `${current.title} (copy)`,
         description: current.description,
         fields: current.fields.map((f) => ({
+          id: ids.get(f.id),
           label: f.label,
           type: f.type as never,
           required: f.required,
           options: f.options,
-          condition: f.condition as never,
+          condition: f.condition
+            ? {
+                ...f.condition,
+                fieldId: ids.get(f.condition.fieldId) ?? f.condition.fieldId,
+              }
+            : undefined,
         })),
       },
       user,
@@ -438,9 +445,14 @@ export class FormsService {
     ]);
     return { data, total, page: query.page, limit: query.limit };
   }
-  async review(responseId: string, dto: ReviewResponseDto, user: User) {
+  async review(
+    formId: string,
+    responseId: string,
+    dto: ReviewResponseDto,
+    user: User,
+  ) {
     const response = await this.responses.findByIdAndUpdate(
-      responseId,
+      { _id: responseId, formId },
       {
         reviewStatus: dto.status,
         reviewNotes: dto.notes,
