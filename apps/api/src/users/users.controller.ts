@@ -1,82 +1,100 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
-  Delete,
-  UseGuards,
+  Patch,
+  Post,
+  Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from './dto/createUser.dto';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guard/auth.guard';
 import { Permissions, Roles } from '../auth/decorator/auth.decorator';
 import { Role } from './enums/role.enum';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiProtected } from '../common/swagger/api-protected.decorator';
 import { AuthorizationService } from '../auth/authorization.service';
 import { CurrentUserDto } from '../auth/dto/session.dto';
-import { ApiOkResponse } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
+import {
+  AccountStateDto,
+  CreateUserDto,
+  ListUsersDto,
+  UpdateUserDto,
+  UserDto,
+  UserListResponseDto,
+} from './dto/createUser.dto';
+import { UsersService } from './users.service';
 
 @ApiTags('Users')
 @ApiProtected()
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
-
+  constructor(private readonly users: UsersService) {}
   @Post()
-  @ApiOperation({ summary: 'Create a user with an assigned role' })
   @Roles(Role.ADMIN)
   @Permissions('users:create')
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @ApiOkResponse({ type: UserDto })
+  create(@Body() dto: CreateUserDto, @Req() req: { user: User }) {
+    return this.users.createManaged(dto, req.user.id);
   }
-
   @Get()
-  @ApiOperation({ summary: 'List users' })
-  @Roles(Role.ADMIN, Role.RH)
+  @Roles(Role.ADMIN)
   @Permissions('users:read')
-  findAll() {
-    return this.usersService.findAll();
+  @ApiOkResponse({ type: UserListResponseDto })
+  findAll(@Query() query: ListUsersDto) {
+    return this.users.findAllSafe(query);
   }
-
   @Get('profile')
-  @ApiOperation({ summary: 'Get the authenticated user profile' })
+  @Roles(Role.ADMIN, Role.RH, Role.MANAGER, Role.CANDIDATE)
   @ApiOkResponse({ type: CurrentUserDto })
-  @Roles(Role.ADMIN, Role.RH, Role.MANAGER, Role.CANDIDATE) // All roles
   getProfile(@Req() req: { user: User }) {
     return {
-      user: req.user,
+      user: this.users.toDto(req.user),
       capabilities: AuthorizationService.capabilitiesFor(req.user.role),
     };
   }
-
   @Get(':id')
-  @ApiOperation({ summary: 'Get a user by ID' })
-  @Roles(Role.ADMIN, Role.RH)
+  @Roles(Role.ADMIN)
   @Permissions('users:read')
+  @ApiOkResponse({ type: UserDto })
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+    return this.users.findOneSafe(+id);
   }
-
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a user' })
   @Roles(Role.ADMIN)
   @Permissions('users:update')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  @ApiOkResponse({ type: UserDto })
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+    @Req() req: { user: User },
+  ) {
+    return this.users.updateManaged(+id, dto, req.user.id);
   }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete a user' })
+  @Post(':id/deactivate')
   @Roles(Role.ADMIN)
-  @Permissions('users:delete')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @Permissions('users:update')
+  @ApiOkResponse({ type: UserDto })
+  deactivate(
+    @Param('id') id: string,
+    @Body() dto: AccountStateDto,
+    @Req() req: { user: User },
+  ) {
+    return this.users.setActive(+id, false, dto.reason, req.user.id);
+  }
+  @Post(':id/activate')
+  @Roles(Role.ADMIN)
+  @Permissions('users:update')
+  @ApiOkResponse({ type: UserDto })
+  activate(
+    @Param('id') id: string,
+    @Body() dto: AccountStateDto,
+    @Req() req: { user: User },
+  ) {
+    return this.users.setActive(+id, true, dto.reason, req.user.id);
   }
 }

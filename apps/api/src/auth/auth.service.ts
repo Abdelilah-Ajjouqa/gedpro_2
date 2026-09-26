@@ -77,11 +77,7 @@ export class AuthService {
     };
   }
   publicUser(user: User) {
-    const safe: Partial<User> = { ...user };
-    delete safe.password;
-    delete safe.failedLoginAttempts;
-    delete safe.lockedUntil;
-    return safe;
+    return this.users.toDto(user);
   }
 
   async register(dto: RegisterDto, ip?: string) {
