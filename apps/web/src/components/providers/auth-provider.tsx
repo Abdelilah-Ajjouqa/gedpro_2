@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearLegacySession();
   }, []);
   useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return;
     const channel = new BroadcastChannel('gedpro.session');
     channel.onmessage = (event) => {
       if (event.data === 'logout') {
@@ -65,9 +66,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       () => undefined,
     );
     queryClient.clear();
-    const channel = new BroadcastChannel('gedpro.session');
-    channel.postMessage('logout');
-    channel.close();
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel('gedpro.session');
+      channel.postMessage('logout');
+      channel.close();
+    }
     router.replace('/login');
     router.refresh();
   }, [queryClient, router]);

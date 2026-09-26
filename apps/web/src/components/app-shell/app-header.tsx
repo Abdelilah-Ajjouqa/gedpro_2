@@ -102,13 +102,17 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <UserRound className="size-4" />
-          Profile
+        <DropdownMenuItem asChild>
+          <Link href="/profile">
+            <UserRound className="size-4" />
+            Profile
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="size-4" />
-          Settings
+        <DropdownMenuItem asChild>
+          <Link href="/settings/pipelines">
+            <Settings className="size-4" />
+            Settings
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut()}>

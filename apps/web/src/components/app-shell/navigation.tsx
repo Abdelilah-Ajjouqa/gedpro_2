@@ -11,6 +11,7 @@ import {
   Settings,
   UserRoundSearch,
   Users,
+  ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -20,6 +21,13 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 
 const navigation = [
+  {
+    href: '/settings/users',
+    label: 'Administration',
+    icon: ShieldCheck,
+    capability: 'users:manage',
+    available: true,
+  },
   {
     href: '/reports',
     label: 'Reports',
