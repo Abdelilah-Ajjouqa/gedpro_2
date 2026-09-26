@@ -12,7 +12,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { Roles } from '../auth/decorator/auth.decorator';
+import { Permissions, Roles } from '../auth/decorator/auth.decorator';
+import { CAPABILITIES } from '../auth/authorization.service';
 import { RolesGuard } from '../auth/guard/auth.guard';
 import { ApiProtected } from '../common/swagger/api-protected.decorator';
 import { User } from '../users/entities/user.entity';
@@ -26,6 +27,7 @@ import { ReportingService } from './reporting.service';
 @Controller('reports')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles(Role.ADMIN, Role.RH, Role.MANAGER)
+@Permissions(CAPABILITIES.REPORTS_READ)
 export class ReportingController {
   constructor(private reports: ReportingService) {}
   @Get('summary')
@@ -37,19 +39,25 @@ export class ReportingController {
     return this.reports.summary(q, req.user);
   }
   @Post('exports')
+  @Permissions(CAPABILITIES.REPORTS_EXPORT_CREATE)
   @ApiOperation({
     summary: 'Queue an asynchronous role-scoped CSV or Excel export',
   })
   create(@Body() dto: CreateReportExportDto, @Req() req: { user: User }) {
     return this.reports.createExport(dto, req.user);
   }
-  @Get('exports') list(@Req() req: { user: User }) {
+  @Get('exports')
+  @Permissions(CAPABILITIES.REPORTS_EXPORTS_READ_OWN)
+  list(@Req() req: { user: User }) {
     return this.reports.listExports(req.user);
   }
-  @Get('exports/:id') get(@Param('id') id: string, @Req() req: { user: User }) {
+  @Get('exports/:id')
+  @Permissions(CAPABILITIES.REPORTS_EXPORTS_READ_OWN)
+  get(@Param('id') id: string, @Req() req: { user: User }) {
     return this.reports.getExport(id, req.user);
   }
   @Get('exports/:id/download')
+  @Permissions(CAPABILITIES.REPORTS_EXPORTS_READ_OWN)
   @ApiOperation({ summary: 'Download a completed export before expiry' })
   async download(
     @Param('id') id: string,
@@ -62,6 +70,8 @@ export class ReportingController {
         ? 'text/csv'
         : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.attachment(`gedpro-report-${row.id}.${row.format}`);
     res.send(data);
   }

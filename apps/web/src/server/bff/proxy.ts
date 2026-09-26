@@ -72,7 +72,13 @@ async function rotate(refreshToken: string) {
 }
 function copyResponse(response: Response) {
   const headers = new Headers();
-  for (const name of ['content-type', 'content-disposition', 'retry-after']) {
+  for (const name of [
+    'content-type',
+    'content-disposition',
+    'content-length',
+    'retry-after',
+    'x-content-type-options',
+  ]) {
     const value = response.headers.get(name);
     if (value) headers.set(name, value);
   }
