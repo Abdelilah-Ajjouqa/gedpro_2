@@ -1,113 +1,25 @@
 'use client';
 
-import {
-  BriefcaseBusiness,
-  CalendarDays,
-  Mail,
-  FileText,
-  BarChart3,
-  ClipboardList,
-  LayoutDashboard,
-  Settings,
-  UserRoundSearch,
-  Users,
-  ShieldCheck,
-} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
-
-const navigation = [
-  {
-    href: '/settings/users',
-    label: 'Administration',
-    icon: ShieldCheck,
-    capability: 'users:manage',
-    available: true,
-  },
-  {
-    href: '/reports',
-    label: 'Reports',
-    icon: BarChart3,
-    capability: 'reports:read',
-    available: true,
-  },
-  {
-    href: '/communications',
-    label: 'Communications',
-    icon: Mail,
-    capability: 'communications:read',
-    available: true,
-  },
-  {
-    href: '/forms',
-    label: 'Forms',
-    icon: ClipboardList,
-    capability: 'forms:read',
-    available: true,
-  },
-  {
-    href: '/',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    capability: 'dashboard:view',
-    available: true,
-  },
-  {
-    href: '/candidates',
-    label: 'Candidates',
-    icon: Users,
-    capability: 'candidates:read',
-    available: true,
-  },
-  {
-    href: '/jobs',
-    label: 'Jobs',
-    icon: BriefcaseBusiness,
-    capability: 'jobs:read',
-    available: true,
-  },
-  {
-    href: '/applications',
-    label: 'Applications',
-    icon: UserRoundSearch,
-    capability: 'applications:read',
-    available: true,
-  },
-  {
-    href: '/interviews',
-    label: 'Interviews',
-    icon: CalendarDays,
-    capability: 'interviews:read',
-    available: true,
-  },
-  {
-    href: '/documents',
-    label: 'Documents',
-    icon: FileText,
-    capability: 'documents:list',
-    available: true,
-  },
-  {
-    href: '/settings/pipelines',
-    label: 'Pipelines',
-    icon: Settings,
-    capability: 'pipelines:read',
-    available: true,
-  },
-] as const;
+import {
+  isRouteActive,
+  releasedRoutesFor,
+  type NavigationRoute,
+} from '@/shared/navigation/routes';
 
 function NavLink({
   href,
   label,
   icon: Icon,
   mobile = false,
-}: (typeof navigation)[number] & { mobile?: boolean }) {
+}: NavigationRoute & { mobile?: boolean }) {
   const pathname = usePathname();
-  const active = href === '/' ? pathname === href : pathname.startsWith(href);
+  const active = isRouteActive(pathname, href);
   const link = (
     <Link
       href={href}
@@ -129,30 +41,26 @@ function NavLink({
 }
 
 function PrimaryNav() {
-  const { hasCapability } = useAuth();
+  const { capabilities } = useAuth();
   return (
     <nav
       className="hidden items-center gap-1 xl:flex"
       aria-label="Primary navigation"
     >
-      {navigation
-        .filter((item) => item.available && hasCapability(item.capability))
-        .map((item) => (
-          <NavLink key={item.href} {...item} />
-        ))}
+      {releasedRoutesFor(capabilities).map((item) => (
+        <NavLink key={item.href} {...item} />
+      ))}
     </nav>
   );
 }
 
 function MobileNav() {
-  const { hasCapability } = useAuth();
+  const { capabilities } = useAuth();
   return (
     <nav className="mt-8 grid gap-1" aria-label="Mobile navigation">
-      {navigation
-        .filter((item) => item.available && hasCapability(item.capability))
-        .map((item) => (
-          <NavLink key={item.href} {...item} mobile />
-        ))}
+      {releasedRoutesFor(capabilities).map((item) => (
+        <NavLink key={item.href} {...item} mobile />
+      ))}
     </nav>
   );
 }

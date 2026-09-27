@@ -7,12 +7,6 @@ export default function Home() {
   return (
     <ProtectedRoute>
       <AppShell>
-        <a
-          className="sr-only fixed left-4 top-4 z-[100] rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground shadow-md focus:not-sr-only"
-          href="#main-content"
-        >
-          Skip to main content
-        </a>
         <main
           id="main-content"
           className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8"

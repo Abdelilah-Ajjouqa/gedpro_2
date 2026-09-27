@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Menu, Search, Settings, UserRound } from 'lucide-react';
+import { LogOut, Menu, Settings, UserRound } from 'lucide-react';
 import Link from 'next/link';
 
 import { MobileNav, PrimaryNav } from '@/components/app-shell/navigation';
@@ -23,11 +23,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 function Brand() {
   return (
@@ -51,26 +46,8 @@ function Brand() {
   );
 }
 
-function SearchAction() {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Search candidates"
-          onClick={() => document.getElementById('candidate-search')?.focus()}
-        >
-          <Search className="size-4" aria-hidden="true" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>Search candidates</TooltipContent>
-    </Tooltip>
-  );
-}
-
 function UserMenu() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, hasCapability } = useAuth();
   if (!user) return null;
   const role =
     user.role === 'rh'
@@ -108,12 +85,14 @@ function UserMenu() {
             Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/settings/pipelines">
-            <Settings className="size-4" />
-            Settings
-          </Link>
-        </DropdownMenuItem>
+        {hasCapability('pipelines:read') ? (
+          <DropdownMenuItem asChild>
+            <Link href="/settings/pipelines">
+              <Settings className="size-4" />
+              Settings
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut()}>
           <LogOut className="size-4" />
@@ -130,7 +109,6 @@ function AppHeader() {
       <Brand />
       <PrimaryNav />
       <div className="flex items-center gap-0.5">
-        <SearchAction />
         <ThemeToggle />
         <UserMenu />
         <Sheet>

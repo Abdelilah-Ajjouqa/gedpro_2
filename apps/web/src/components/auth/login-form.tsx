@@ -32,7 +32,7 @@ export function safeNextPath(value: string | null, fallback = '/') {
 }
 
 export function LoginForm() {
-  const { signIn } = useAuth();
+  const { signIn, signOut } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string>();
@@ -47,12 +47,12 @@ export function LoginForm() {
     setError(undefined);
     try {
       const user = await signIn(values.email, values.password);
-      router.replace(
-        safeNextPath(
-          searchParams.get('next'),
-          user.role === 'candidate' ? '/candidate' : '/',
-        ),
-      );
+      if (user.role === 'candidate') {
+        await signOut();
+        setError('Candidate self-service is not available in this release.');
+        return;
+      }
+      router.replace(safeNextPath(searchParams.get('next')));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to sign in.');
     }
@@ -116,15 +116,6 @@ export function LoginForm() {
           {pending ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Need a candidate account?{' '}
-        <Link
-          className="font-medium text-foreground hover:underline"
-          href="/register"
-        >
-          Create one
-        </Link>
-      </p>
     </>
   );
 }
