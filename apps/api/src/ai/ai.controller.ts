@@ -17,11 +17,9 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Roles } from '../auth/decorator/auth.decorator';
 import { RolesGuard } from '../auth/guard/auth.guard';
 import { ApiProtected } from '../common/swagger/api-protected.decorator';
 import { User } from '../users/entities/user.entity';
-import { Role } from '../users/enums/role.enum';
 import { AiService } from './ai.service';
 import {
   AiSearchDto,
@@ -37,7 +35,6 @@ import {
 @ApiProtected()
 @Controller('ai')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles(Role.ADMIN, Role.RH, Role.MANAGER)
 export class AiController {
   constructor(private ai: AiService) {}
   @Post('cv-extractions')
@@ -95,11 +92,10 @@ export class AiController {
     return this.ai.addFeedback(id, dto, req.user);
   }
   @Get('monitoring')
-  @Roles(Role.ADMIN)
   @ApiOperation({
     summary: 'Quality, usage, cost, override, and protected-input monitoring',
   })
-  monitoring(@Query() query: MonitoringQueryDto) {
-    return this.ai.monitoring(query);
+  monitoring(@Query() query: MonitoringQueryDto, @Req() req: { user: User }) {
+    return this.ai.monitoring(query, req.user);
   }
 }

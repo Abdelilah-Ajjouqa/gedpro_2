@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -17,6 +18,11 @@ import { Document } from '../documents/entities/document.entity';
 import { Job } from '../jobs/entities/job.entity';
 import { TimelineEvent } from '../timeline/entities/timeline-event.entity';
 import { User } from '../users/entities/user.entity';
+import { Role } from '../users/enums/role.enum';
+import {
+  AuthorizationService,
+  CAPABILITIES,
+} from '../auth/authorization.service';
 import { LocalAdvisoryAiProvider } from './ai-provider';
 import {
   AiSearchDto,
@@ -26,6 +32,7 @@ import {
   MatchJobDto,
   MonitoringQueryDto,
   SuggestQuestionsDto,
+  AI_OVERRIDE_KINDS,
 } from './dto/ai.dto';
 import { AiFeedback } from './entities/ai-feedback.entity';
 import {
@@ -51,6 +58,57 @@ export class AiService {
     private timeline: Repository<TimelineEvent>,
     private provider: LocalAdvisoryAiProvider,
   ) {}
+
+  private denied() {
+    // Deliberately do not reveal whether a source record exists outside scope.
+    return new NotFoundException({
+      code: 'AI_SOURCE_NOT_FOUND_OR_FORBIDDEN',
+      message: 'The requested AI source was not found or is not accessible.',
+    });
+  }
+
+  private requireCapability(actor: User, capability: string) {
+    if (!AuthorizationService.hasEvery(actor.role, [capability]))
+      throw new ForbiddenException({
+        code: 'AI_FORBIDDEN',
+        message: 'AI assistance is not permitted.',
+      });
+  }
+
+  private async candidateFor(actor: User, id: number) {
+    if (actor.role === Role.MANAGER) {
+      const authorized = await this.applications.count({
+        where: { candidate: { id }, job: { owner: { id: actor.id } } },
+      });
+      if (!authorized) throw this.denied();
+    }
+    const candidate = await this.candidates.findOne({
+      where: { id, archivedAt: IsNull() },
+    });
+    if (!candidate) throw this.denied();
+    return candidate;
+  }
+
+  private async jobFor(actor: User, id: number) {
+    const job = await this.jobs.findOne({
+      where:
+        actor.role === Role.MANAGER ? { id, owner: { id: actor.id } } : { id },
+    });
+    if (!job) throw this.denied();
+    return job;
+  }
+
+  private async applicationFor(actor: User, id: number) {
+    const application = await this.applications.findOne({
+      where:
+        actor.role === Role.MANAGER
+          ? { id, job: { owner: { id: actor.id } } }
+          : { id },
+      relations: { candidate: true, job: true, currentStage: true },
+    });
+    if (!application) throw this.denied();
+    return application;
+  }
 
   private async record(
     type: AiGenerationType,
@@ -81,28 +139,23 @@ export class AiService {
   }
 
   async extractCv(dto: ExtractCvDto, actor: User) {
+    this.requireCapability(actor, CAPABILITIES.AI_CV_EXTRACT);
     const started = Date.now();
-    const candidate = await this.candidates.findOneBy({ id: dto.candidateId });
-    if (!candidate)
-      throw new NotFoundException(
-        `Candidate with ID ${dto.candidateId} not found`,
-      );
+    const candidate = await this.candidateFor(actor, dto.candidateId);
     let document: Document | null = null;
     if (dto.documentId) {
       document = await this.documents.findOne({
         where: { id: dto.documentId },
         relations: { candidate: true, application: { candidate: true } },
       });
-      if (!document)
-        throw new NotFoundException(
-          `Document with ID ${dto.documentId} not found`,
-        );
+      if (!document) throw this.denied();
       const linkedId =
         document.candidate?.id ?? document.application?.candidate?.id;
       if (linkedId !== candidate.id)
-        throw new BadRequestException(
-          'Document does not belong to the candidate',
-        );
+        throw new BadRequestException({
+          code: 'AI_DOCUMENT_CANDIDATE_MISMATCH',
+          message: 'The document is not linked to the selected candidate.',
+        });
     }
     const extracted = this.provider.extractCv(dto.text);
     const generation = await this.generations.save(
@@ -132,11 +185,13 @@ export class AiService {
   }
 
   async correctExtraction(id: string, dto: CorrectExtractionDto, actor: User) {
+    this.requireCapability(actor, CAPABILITIES.AI_CV_EXTRACT);
     const row = await this.extractions.findOne({
       where: { id },
-      relations: { generation: true },
+      relations: { generation: true, candidate: true },
     });
-    if (!row) throw new NotFoundException(`CV extraction ${id} not found`);
+    if (!row) throw this.denied();
+    await this.candidateFor(actor, row.candidate.id);
     row.corrected = dto.corrected;
     row.correctedBy = actor;
     row.correctedAt = new Date();
@@ -145,23 +200,34 @@ export class AiService {
   }
 
   private candidateText(candidate: Candidate) {
-    return [
-      candidate.firstName,
-      candidate.lastName,
-      candidate.skills?.join(' '),
-      candidate.tags?.join(' '),
-      candidate.source,
-    ]
+    return [candidate.skills?.join(' '), candidate.tags?.join(' ')]
       .filter(Boolean)
       .join(' ');
   }
 
   async search(dto: AiSearchDto, actor: User) {
+    this.requireCapability(actor, CAPABILITIES.AI_CANDIDATE_SEARCH);
     const started = Date.now();
-    const candidates = await this.candidates.find({
-      where: { archivedAt: IsNull() },
-      take: 1000,
-    });
+    const candidates =
+      actor.role === Role.MANAGER
+        ? await this.candidates
+            .createQueryBuilder('candidate')
+            .innerJoin(
+              Application,
+              'application',
+              'application.candidateId = candidate.id',
+            )
+            .innerJoin('application.job', 'job', 'job.ownerId = :managerId', {
+              managerId: actor.id,
+            })
+            .where('candidate.archivedAt IS NULL')
+            .distinct(true)
+            .take(1000)
+            .getMany()
+        : await this.candidates.find({
+            where: { archivedAt: IsNull() },
+            take: 1000,
+          });
     const results = candidates
       .map((candidate) => {
         const similarity = this.provider.similarity(
@@ -194,19 +260,35 @@ export class AiService {
   }
 
   async match(dto: MatchJobDto, actor: User) {
+    this.requireCapability(actor, CAPABILITIES.AI_JOB_MATCH);
     const started = Date.now();
-    const job = await this.jobs.findOneBy({ id: dto.jobId });
-    if (!job) throw new NotFoundException(`Job with ID ${dto.jobId} not found`);
+    const job = await this.jobFor(actor, dto.jobId);
     const candidates = dto.candidateId
-      ? await this.candidates.find({ where: { id: dto.candidateId } })
-      : await this.candidates.find({
-          where: { archivedAt: IsNull() },
-          take: 1000,
-        });
-    if (dto.candidateId && !candidates.length)
-      throw new NotFoundException(
-        `Candidate with ID ${dto.candidateId} not found`,
-      );
+      ? [await this.candidateFor(actor, dto.candidateId)]
+      : actor.role === Role.MANAGER
+        ? await this.candidates
+            .createQueryBuilder('candidate')
+            .innerJoin(
+              Application,
+              'application',
+              'application.candidateId = candidate.id',
+            )
+            .innerJoin(
+              'application.job',
+              'candidateJob',
+              'candidateJob.ownerId = :managerId',
+              {
+                managerId: actor.id,
+              },
+            )
+            .where('candidate.archivedAt IS NULL')
+            .distinct(true)
+            .take(1000)
+            .getMany()
+        : await this.candidates.find({
+            where: { archivedAt: IsNull() },
+            take: 1000,
+          });
     const requirements = `${job.title} ${job.description} ${job.department ?? ''}`;
     const suggestions = candidates
       .map((candidate) => {
@@ -252,18 +334,12 @@ export class AiService {
   }
 
   async questions(dto: SuggestQuestionsDto, actor: User) {
+    this.requireCapability(actor, CAPABILITIES.AI_INTERVIEW_QUESTION_DRAFT);
     const started = Date.now();
-    const job = await this.jobs.findOneBy({ id: dto.jobId });
-    if (!job) throw new NotFoundException(`Job with ID ${dto.jobId} not found`);
+    const job = await this.jobFor(actor, dto.jobId);
     let skills: string[] = [];
     if (dto.candidateId) {
-      const candidate = await this.candidates.findOneBy({
-        id: dto.candidateId,
-      });
-      if (!candidate)
-        throw new NotFoundException(
-          `Candidate with ID ${dto.candidateId} not found`,
-        );
+      const candidate = await this.candidateFor(actor, dto.candidateId);
       skills = candidate.skills ?? [];
     }
     const questions = this.provider.questions(
@@ -289,15 +365,9 @@ export class AiService {
   }
 
   async summarize(applicationId: number, actor: User) {
+    this.requireCapability(actor, CAPABILITIES.AI_APPLICATION_SUMMARY);
     const started = Date.now();
-    const application = await this.applications.findOne({
-      where: { id: applicationId },
-      relations: { candidate: true, job: true, currentStage: true },
-    });
-    if (!application)
-      throw new NotFoundException(
-        `Application with ID ${applicationId} not found`,
-      );
+    const application = await this.applicationFor(actor, applicationId);
     const events = await this.timeline.find({
       where: { applicationId },
       order: { createdAt: 'ASC' },
@@ -325,9 +395,25 @@ export class AiService {
   }
 
   async addFeedback(generationId: string, dto: FeedbackDto, actor: User) {
+    this.requireCapability(actor, CAPABILITIES.AI_GENERATION_FEEDBACK);
     const generation = await this.generations.findOneBy({ id: generationId });
-    if (!generation)
-      throw new NotFoundException(`AI generation ${generationId} not found`);
+    if (!generation) throw this.denied();
+    const input = generation.input;
+    if (typeof input.candidateId === 'number')
+      await this.candidateFor(actor, input.candidateId);
+    if (typeof input.jobId === 'number') await this.jobFor(actor, input.jobId);
+    if (typeof input.applicationId === 'number')
+      await this.applicationFor(actor, input.applicationId);
+    if (
+      dto.override &&
+      (!AI_OVERRIDE_KINDS.includes(dto.override.kind) ||
+        dto.override.rationale.trim().length < 10)
+    )
+      throw new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message:
+          'Override requires an approved kind and a 10–2000 character rationale.',
+      });
     const existing = await this.feedback.findOne({
       where: { generation: { id: generationId }, reviewer: { id: actor.id } },
     });
@@ -343,7 +429,8 @@ export class AiService {
     );
   }
 
-  async monitoring(query: MonitoringQueryDto) {
+  async monitoring(query: MonitoringQueryDto, actor: User) {
+    this.requireCapability(actor, CAPABILITIES.AI_MONITORING_READ);
     const where =
       query.from && query.to
         ? { createdAt: Between(query.from, query.to) }

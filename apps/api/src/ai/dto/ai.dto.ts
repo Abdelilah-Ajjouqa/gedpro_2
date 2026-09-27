@@ -13,6 +13,15 @@ import {
   Min,
 } from 'class-validator';
 
+export const AI_OVERRIDE_KINDS = [
+  'not_applicable',
+  'factually_incorrect',
+  'incomplete_or_misleading',
+  'human_judgment_differs',
+  'unsafe_or_biased',
+  'other',
+] as const;
+
 export class ExtractCvDto {
   @ApiProperty() @IsInt() candidateId: number;
   @ApiPropertyOptional() @IsOptional() @IsInt() documentId?: number;
@@ -27,6 +36,11 @@ export class ExtractCvDto {
 }
 export class CorrectExtractionDto {
   @ApiProperty() @IsObject() corrected: Record<string, unknown>;
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  reason?: string;
 }
 export class AiSearchDto {
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(500) query: string;
@@ -56,6 +70,7 @@ export class SuggestQuestionsDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @MaxLength(200, { each: true })
   focusAreas?: string[];
   @ApiPropertyOptional({ default: 6 })
   @IsOptional()
@@ -76,12 +91,11 @@ export class FeedbackDto {
   @MaxLength(2000)
   comment?: string;
   @ApiPropertyOptional({
-    description:
-      'Human correction or decision that supersedes the advisory output.',
+    description: 'Human review evidence. It never changes ATS state.',
   })
   @IsOptional()
   @IsObject()
-  override?: Record<string, unknown>;
+  override?: { kind: (typeof AI_OVERRIDE_KINDS)[number]; rationale: string };
 }
 export class MonitoringQueryDto {
   @ApiPropertyOptional()
