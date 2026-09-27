@@ -14,6 +14,7 @@ import { candidateKeys, listCandidates } from './api';
 import type { CandidateListItem, CandidateListParams } from './types';
 import { stateLabels } from './types';
 import { decodeCandidateList, encodeCandidateList } from './url-state';
+import { AiCandidateSearchPanel } from '@/features/ai/candidate-search-panel';
 export function CandidatesPage() {
   const router = useRouter(),
     pathname = usePathname(),
@@ -124,6 +125,7 @@ export function CandidatesPage() {
           ) : undefined
         }
       />
+      <AiCandidateSearchPanel />
       <form
         role="search"
         className="mb-5 grid gap-3 rounded-xl border bg-card p-4 md:grid-cols-4"

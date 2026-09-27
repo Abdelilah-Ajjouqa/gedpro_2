@@ -20,6 +20,7 @@ import {
 import { stateLabels, type CandidateState } from './types';
 import { TimelinePanel } from '@/features/timeline/timeline-panel';
 import { timelineKeys } from '@/features/timeline/api';
+import { CvExtractionPanel } from '@/features/ai/cv-extraction-panel';
 export function CandidateWorkspace() {
   const id = Number(useParams<{ candidateId: string }>().candidateId),
     router = useRouter(),
@@ -252,6 +253,9 @@ export function CandidateWorkspace() {
               Document operations will be available in a later phase.
             </p>
           </section>
+          {c.disposition === 'active' && hasCapability('ai:cv-extract') ? (
+            <CvExtractionPanel candidateId={id} />
+          ) : null}
           <TimelinePanel
             target="candidate"
             id={id}
