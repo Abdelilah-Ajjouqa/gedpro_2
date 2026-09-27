@@ -16,6 +16,14 @@ import {
   type AuthSession,
   type AuthUser,
 } from '@/lib/auth';
+import {
+  parseSessionEvent,
+  parseStoredSessionEvent,
+  publishSessionEvent,
+  SESSION_CHANNEL,
+  SESSION_STORAGE_KEY,
+  type SessionEvent,
+} from '@/shared/auth/session-events';
 
 type AuthContextValue = {
   user?: AuthUser;
@@ -40,15 +48,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearLegacySession();
   }, []);
   useEffect(() => {
-    if (typeof BroadcastChannel === 'undefined') return;
-    const channel = new BroadcastChannel('gedpro.session');
-    channel.onmessage = (event) => {
-      if (event.data === 'logout') {
-        queryClient.clear();
-        router.replace('/login?reason=expired');
+    const applyEvent = (event: SessionEvent) => {
+      queryClient.clear();
+      if (event === 'changed') {
+        void queryClient.invalidateQueries({ queryKey: currentUserKey });
+        return;
       }
+      router.replace(event === 'expired' ? '/login?reason=expired' : '/login');
     };
-    return () => channel.close();
+    const channel =
+      typeof BroadcastChannel === 'undefined'
+        ? undefined
+        : new BroadcastChannel(SESSION_CHANNEL);
+    if (channel)
+      channel.onmessage = (message) => {
+        const event = parseSessionEvent(message.data);
+        if (event) applyEvent(event);
+      };
+    const onStorage = (storage: StorageEvent) => {
+      if (storage.key !== SESSION_STORAGE_KEY) return;
+      const event = parseStoredSessionEvent(storage.newValue);
+      if (event) applyEvent(event);
+    };
+    const onExpired = () => applyEvent('expired');
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('gedpro:session-expired', onExpired);
+    return () => {
+      channel?.close();
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('gedpro:session-expired', onExpired);
+    };
   }, [queryClient, router]);
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -57,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user: value.user,
         capabilities: value.capabilities,
       });
+      publishSessionEvent('changed');
       return value.user;
     },
     [queryClient],
@@ -66,11 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       () => undefined,
     );
     queryClient.clear();
-    if (typeof BroadcastChannel !== 'undefined') {
-      const channel = new BroadcastChannel('gedpro.session');
-      channel.postMessage('logout');
-      channel.close();
-    }
+    publishSessionEvent('logout');
     router.replace('/login');
     router.refresh();
   }, [queryClient, router]);

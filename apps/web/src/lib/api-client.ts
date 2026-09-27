@@ -127,6 +127,12 @@ export async function apiRequest<T>(
     const payload = (await response.json().catch(() => undefined)) as
       | ApiErrorPayload
       | undefined;
+    if (
+      response.status === 401 &&
+      !path.startsWith('/auth/') &&
+      typeof window !== 'undefined'
+    )
+      window.dispatchEvent(new Event('gedpro:session-expired'));
     throw new ApiError(
       payload?.message ?? `API request failed (${response.status})`,
       response.status,

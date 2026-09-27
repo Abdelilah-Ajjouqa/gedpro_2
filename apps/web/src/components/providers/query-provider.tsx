@@ -11,7 +11,8 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
           queries: {
             gcTime: 5 * 60_000,
             retry: 1,
-            refetchOnWindowFocus: false,
+            refetchOnWindowFocus: true,
+            refetchOnReconnect: true,
           },
         },
       }),
