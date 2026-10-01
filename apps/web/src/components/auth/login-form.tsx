@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,6 +16,8 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Enter your password.'),
 });
 type LoginValues = z.infer<typeof loginSchema>;
+
+const subscribeToHydration = () => () => undefined;
 
 export function safeNextPath(value: string | null, fallback = '/') {
   const authRoute = value
@@ -36,6 +38,11 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string>();
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
@@ -79,6 +86,7 @@ export function LoginForm() {
       ) : null}
       <form
         className="mt-7 space-y-4"
+        method="post"
         onSubmit={form.handleSubmit(submit)}
         noValidate
       >
@@ -112,7 +120,11 @@ export function LoginForm() {
             {error}
           </p>
         ) : null}
-        <Button className="h-11 w-full" type="submit" disabled={pending}>
+        <Button
+          className="h-11 w-full"
+          type="submit"
+          disabled={pending || !hydrated}
+        >
           {pending ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>

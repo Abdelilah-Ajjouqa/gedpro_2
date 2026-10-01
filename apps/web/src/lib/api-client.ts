@@ -1,6 +1,10 @@
 const API_URL = '/api/bff';
 const CSRF_COOKIE =
   process.env.NODE_ENV === 'production' ? '__Host-gedpro-csrf' : 'gedpro-csrf';
+const SESSION_COOKIE =
+  process.env.NODE_ENV === 'production'
+    ? '__Host-gedpro-session'
+    : 'gedpro-session';
 
 export type ApiErrorPayload = {
   statusCode?: number;
@@ -97,6 +101,7 @@ export async function apiRequest<T>(
   init: RequestInit = {},
 ): Promise<T> {
   const method = (init.method ?? 'GET').toUpperCase();
+  const hadSessionAtStart = Boolean(cookieValue(SESSION_COOKIE));
   const headers = new Headers(init.headers);
   headers.set('accept', headers.get('accept') ?? 'application/json');
   if (
@@ -130,6 +135,7 @@ export async function apiRequest<T>(
     if (
       response.status === 401 &&
       !path.startsWith('/auth/') &&
+      hadSessionAtStart &&
       typeof window !== 'undefined'
     )
       window.dispatchEvent(new Event('gedpro:session-expired'));

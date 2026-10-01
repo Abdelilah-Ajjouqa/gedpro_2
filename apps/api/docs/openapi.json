@@ -16,12 +16,22 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          },
           "201": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "$ref": "#/components/schemas/UserDto"
                 }
               }
             }
@@ -52,24 +62,69 @@
             "bearer": []
           }
         ],
-        "summary": "Create a user with an assigned role",
         "tags": [
           "Users"
         ]
       },
       "get": {
         "operationId": "UsersController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "admin",
+                "rh",
+                "manager",
+                "candidate"
+              ]
+            }
+          },
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/User"
-                  }
+                  "$ref": "#/components/schemas/UserListResponseDto"
                 }
               }
             }
@@ -100,7 +155,6 @@
             "bearer": []
           }
         ],
-        "summary": "List users",
         "tags": [
           "Users"
         ]
@@ -147,7 +201,6 @@
             "bearer": []
           }
         ],
-        "summary": "Get the authenticated user profile",
         "tags": [
           "Users"
         ]
@@ -172,7 +225,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/UserDto"
                 }
               }
             }
@@ -203,7 +256,6 @@
             "bearer": []
           }
         ],
-        "summary": "Get a user by ID",
         "tags": [
           "Users"
         ]
@@ -236,7 +288,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/UserDto"
                 }
               }
             }
@@ -267,13 +319,14 @@
             "bearer": []
           }
         ],
-        "summary": "Update a user",
         "tags": [
           "Users"
         ]
-      },
-      "delete": {
-        "operationId": "UsersController_remove",
+      }
+    },
+    "/users/{id}/deactivate": {
+      "post": {
+        "operationId": "UsersController_deactivate",
         "parameters": [
           {
             "name": "id",
@@ -284,19 +337,33 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountStateDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "affected": {
-                      "type": "integer",
-                      "nullable": true
-                    }
-                  }
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
                 }
               }
             }
@@ -327,7 +394,81 @@
             "bearer": []
           }
         ],
-        "summary": "Delete a user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/{id}/activate": {
+      "post": {
+        "operationId": "UsersController_activate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountStateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Users"
         ]
@@ -3346,6 +3487,14 @@
       "patch": {
         "operationId": "FormsController_review",
         "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "responseId",
             "required": true,
@@ -7498,14 +7647,6 @@
             "type": "string",
             "minLength": 2
           },
-          "password": {
-            "type": "string",
-            "minLength": 12
-          },
-          "confirmPassword": {
-            "type": "string",
-            "minLength": 12
-          },
           "role": {
             "type": "string",
             "enum": [
@@ -7520,11 +7661,10 @@
           "email",
           "firstName",
           "lastName",
-          "password",
-          "confirmPassword"
+          "role"
         ]
       },
-      "User": {
+      "UserDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -7539,23 +7679,6 @@
           "email": {
             "type": "string"
           },
-          "password": {
-            "type": "string"
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "emailVerified": {
-            "type": "boolean"
-          },
-          "failedLoginAttempts": {
-            "type": "number"
-          },
-          "lockedUntil": {
-            "format": "date-time",
-            "type": "string",
-            "nullable": true
-          },
           "role": {
             "enum": [
               "admin",
@@ -7564,6 +7687,12 @@
               "candidate"
             ],
             "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "emailVerified": {
+            "type": "boolean"
           },
           "createdAt": {
             "format": "date-time",
@@ -7579,14 +7708,83 @@
           "firstName",
           "lastName",
           "email",
-          "password",
+          "role",
           "isActive",
           "emailVerified",
-          "failedLoginAttempts",
-          "lockedUntil",
-          "role",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "UserListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "rh",
+              "manager",
+              "candidate"
+            ],
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "role",
+          "isActive",
+          "createdAt"
+        ]
+      },
+      "UserListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserListItemDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit"
         ]
       },
       "PublicUserDto": {
@@ -7671,9 +7869,6 @@
           "lastName": {
             "type": "string"
           },
-          "isActive": {
-            "type": "boolean"
-          },
           "role": {
             "type": "string",
             "enum": [
@@ -7685,9 +7880,18 @@
           }
         }
       },
-      "Object": {
+      "AccountStateDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "DocumentContextRefDto": {
         "type": "object",
@@ -9754,6 +9958,71 @@
         "required": [
           "idempotencyKey",
           "type"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "failedLoginAttempts": {
+            "type": "number"
+          },
+          "lockedUntil": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "rh",
+              "manager",
+              "candidate"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email",
+          "password",
+          "isActive",
+          "emailVerified",
+          "failedLoginAttempts",
+          "lockedUntil",
+          "role",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "CandidateHistory": {
@@ -11850,6 +12119,10 @@
         "properties": {
           "corrected": {
             "type": "object"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000
           }
         },
         "required": [
@@ -11906,7 +12179,8 @@
           "focusAreas": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 200
             }
           },
           "count": {
@@ -11934,7 +12208,18 @@
           },
           "override": {
             "type": "object",
-            "description": "Human correction or decision that supersedes the advisory output."
+            "properties": {
+              "kind": {
+                "type": "object"
+              },
+              "rationale": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "rationale"
+            ]
           }
         },
         "required": [

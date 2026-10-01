@@ -78,6 +78,7 @@ describe('GEDPro health (e2e)', () => {
         email: `${suffix}@example.com`,
         password: await bcrypt.hash('E2ePassword123!', 4),
         role: Role.ADMIN,
+        emailVerified: true,
       }),
     );
     let jobId: number | undefined;
@@ -99,15 +100,21 @@ describe('GEDPro health (e2e)', () => {
             { name: 'Applied', category: 'applied', position: 1 },
             { name: 'Technical review', category: 'screening', position: 2 },
             { name: 'Rejected', category: 'rejected', position: 3 },
+            { name: 'Hired', category: 'hired', position: 4 },
           ],
         })
         .expect(201);
       pipelineId = pipeline.body.id;
-      const [applied, screening] = pipeline.body.stages;
+      const [applied, screening, rejected, hired] = pipeline.body.stages;
       await request(app.getHttpServer())
         .put(`/pipelines/${pipelineId}/stages/${applied.id}/transitions`)
         .set(auth)
         .send({ toStageIds: [screening.id] })
+        .expect(200);
+      await request(app.getHttpServer())
+        .put(`/pipelines/${pipelineId}/stages/${screening.id}/transitions`)
+        .set(auth)
+        .send({ toStageIds: [hired.id, rejected.id] })
         .expect(200);
       const job = await request(app.getHttpServer())
         .post('/jobs')
@@ -122,7 +129,8 @@ describe('GEDPro health (e2e)', () => {
       await request(app.getHttpServer())
         .post(`/jobs/${jobId}/publish`)
         .set(auth)
-        .expect(201);
+        .set('If-Match', `"${job.body.version}"`)
+        .expect(200);
       const candidate = await request(app.getHttpServer())
         .post('/candidates')
         .set(auth)
@@ -133,9 +141,11 @@ describe('GEDPro health (e2e)', () => {
         })
         .expect(201);
       candidateId = candidate.body.id;
-      await request(app.getHttpServer())
+      let candidateVersion = candidate.body.version;
+      const updatedCandidate = await request(app.getHttpServer())
         .patch(`/candidates/${candidateId}`)
         .set(auth)
+        .set('If-Match', `"${candidateVersion}"`)
         .send({
           tags: ['Priority', 'priority'],
           skills: ['TypeScript'],
@@ -143,6 +153,7 @@ describe('GEDPro health (e2e)', () => {
           privacyConsent: true,
         })
         .expect(200);
+      candidateVersion = updatedCandidate.body.version;
       const search = await request(app.getHttpServer())
         .get('/candidates')
         .query({ search: `candidate-${suffix}`, skill: 'typescript' })
@@ -191,7 +202,13 @@ describe('GEDPro health (e2e)', () => {
       await request(app.getHttpServer())
         .post(`/ai/generations/${matches.body.generationId}/feedback`)
         .set(auth)
-        .send({ rating: 4, override: { disposition: 'needs_human_review' } })
+        .send({
+          rating: 4,
+          override: {
+            kind: 'human_judgment_differs',
+            rationale: 'Requires a human review before any hiring decision.',
+          },
+        })
         .expect(201);
       const aiSummary = await request(app.getHttpServer())
         .post(`/ai/applications/${application.body.id}/summary`)
@@ -277,16 +294,19 @@ describe('GEDPro health (e2e)', () => {
       const replacement = await request(app.getHttpServer())
         .post(`/documents/${document.body.id}/replace`)
         .set(auth)
+        .set('If-Match', document.body.etag)
         .attach('file', Buffer.from('%PDF-1.4 updated resume'), 'resume-v2.pdf')
         .expect(201);
       expect(replacement.body).toMatchObject({ version: 2 });
       await request(app.getHttpServer())
         .patch(`/documents/${replacement.body.id}/archive`)
         .set(auth)
+        .set('If-Match', replacement.body.etag)
         .expect(200);
       const moved = await request(app.getHttpServer())
         .patch(`/applications/${application.body.id}/stage`)
         .set(auth)
+        .set('If-Match', `"${application.body.version}"`)
         .send({ stageId: screening.id, comment: 'Qualified' })
         .expect(200);
       expect(moved.body.currentStage.id).toBe(screening.id);
@@ -323,7 +343,7 @@ describe('GEDPro health (e2e)', () => {
           calendarProvider: 'internal',
         })
         .expect(201);
-      expect(interview.body.calendarSyncStatus).toBe('synced');
+      expect(interview.body.syncStatus).toBe('synced');
       expect(interview.body.scorecards).toHaveLength(1);
       await request(app.getHttpServer())
         .post('/interviews')
@@ -335,9 +355,10 @@ describe('GEDPro health (e2e)', () => {
           interviewerIds: [admin.id],
         })
         .expect(409);
-      await request(app.getHttpServer())
+      const rescheduledInterview = await request(app.getHttpServer())
         .patch(`/interviews/${interview.body.id}/reschedule`)
         .set(auth)
+        .set('If-Match', `"${interview.body.version}"`)
         .send({ date: new Date(Date.now() + 9 * 86400000).toISOString() })
         .expect(200);
       await request(app.getHttpServer())
@@ -359,6 +380,7 @@ describe('GEDPro health (e2e)', () => {
       await request(app.getHttpServer())
         .patch(`/interviews/${interview.body.id}/outcome`)
         .set(auth)
+        .set('If-Match', `"${rescheduledInterview.body.version}"`)
         .send({ status: 'COMPLETED' })
         .expect(200);
       const form = await request(app.getHttpServer())
@@ -492,17 +514,20 @@ describe('GEDPro health (e2e)', () => {
         })
         .expect(201);
       mergedSourceId = source.body.id;
-      await request(app.getHttpServer())
+      const mergedCandidate = await request(app.getHttpServer())
         .post(`/candidates/${candidateId}/merge`)
         .set(auth)
+        .set('If-Match', `"${candidateVersion}"`)
         .send({ sourceCandidateId: mergedSourceId })
-        .expect(201);
-      await request(app.getHttpServer())
+        .expect(200);
+      candidateVersion = mergedCandidate.body.version;
+      const mergedSource = await request(app.getHttpServer())
         .get(`/candidates/${mergedSourceId}`)
         .set(auth)
-        .expect(404);
+        .expect(200);
+      expect(mergedSource.body.mergedInto.id).toBe(candidateId);
       const exported = await request(app.getHttpServer())
-        .get(`/candidates/${candidateId}/privacy/export`)
+        .post(`/candidates/${candidateId}/privacy/export`)
         .set(auth)
         .expect(200);
       expect(exported.body.applications).toHaveLength(1);
@@ -527,18 +552,21 @@ describe('GEDPro health (e2e)', () => {
         format: 'csv',
         status: 'pending',
       });
-      await request(app.getHttpServer())
+      const archivedCandidate = await request(app.getHttpServer())
         .post(`/candidates/${candidateId}/archive`)
         .set(auth)
-        .expect(201);
-      await request(app.getHttpServer())
+        .set('If-Match', `"${candidateVersion}"`)
+        .expect(200);
+      const archivedProfile = await request(app.getHttpServer())
         .get(`/candidates/${candidateId}`)
         .set(auth)
-        .expect(404);
+        .expect(200);
+      expect(archivedProfile.body.disposition).toBe('archived');
       await request(app.getHttpServer())
         .post(`/candidates/${candidateId}/restore`)
         .set(auth)
-        .expect(201);
+        .set('If-Match', `"${archivedCandidate.body.version}"`)
+        .expect(200);
     } finally {
       if (mergedSourceId)
         await dataSource.getRepository(Candidate).delete(mergedSourceId);

@@ -183,7 +183,9 @@ export class FormsService {
     const current = source.versions.find(
       (v) => v.version === source.currentVersion,
     )!;
-    const ids = new Map(current.fields.map((field) => [field.id, randomUUID()]));
+    const ids = new Map(
+      current.fields.map((field) => [field.id, randomUUID()]),
+    );
     return this.createForm(
       {
         title: `${current.title} (copy)`,

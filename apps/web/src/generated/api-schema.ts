@@ -11,10 +11,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List users */
         get: operations["UsersController_findAll"];
         put?: never;
-        /** Create a user with an assigned role */
         post: operations["UsersController_create"];
         delete?: never;
         options?: never;
@@ -29,7 +27,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get the authenticated user profile */
         get: operations["UsersController_getProfile"];
         put?: never;
         post?: never;
@@ -46,16 +43,45 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a user by ID */
         get: operations["UsersController_findOne"];
         put?: never;
         post?: never;
-        /** Delete a user */
-        delete: operations["UsersController_remove"];
+        delete?: never;
         options?: never;
         head?: never;
-        /** Update a user */
         patch: operations["UsersController_update"];
+        trace?: never;
+    };
+    "/users/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["UsersController_deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["UsersController_activate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/documents": {
@@ -1582,28 +1608,40 @@ export interface components {
             email: string;
             firstName: string;
             lastName: string;
-            password: string;
-            confirmPassword: string;
             /** @enum {string} */
-            role?: "admin" | "rh" | "manager" | "candidate";
+            role: "admin" | "rh" | "manager" | "candidate";
         };
-        User: {
+        UserDto: {
             id: number;
             firstName: string;
             lastName: string;
             email: string;
-            password: string;
-            isActive: boolean;
-            emailVerified: boolean;
-            failedLoginAttempts: number;
-            /** Format: date-time */
-            lockedUntil: string | null;
             /** @enum {string} */
             role: "admin" | "rh" | "manager" | "candidate";
+            isActive: boolean;
+            emailVerified: boolean;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        Object: Record<string, never>;
+        UserListItemDto: {
+            id: number;
+            firstName: string;
+            lastName: string;
+            email: string;
+            /** @enum {string} */
+            role: "admin" | "rh" | "manager" | "candidate";
+            isActive: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        UserListResponseDto: {
+            data: components["schemas"]["UserListItemDto"][];
+            total: number;
+            page: number;
+            limit: number;
         };
         PublicUserDto: {
             id: number;
@@ -1628,11 +1666,12 @@ export interface components {
             email?: string;
             firstName?: string;
             lastName?: string;
-            isActive?: boolean;
             /** @enum {string} */
             role?: "admin" | "rh" | "manager" | "candidate";
         };
-        Object: Record<string, never>;
+        AccountStateDto: {
+            reason: string;
+        };
         DocumentContextRefDto: {
             id: number;
             label?: string;
@@ -2152,6 +2191,24 @@ export interface components {
             applicationId?: number;
             interviewId?: number;
             variables?: Record<string, never>;
+        };
+        User: {
+            id: number;
+            firstName: string;
+            lastName: string;
+            email: string;
+            password: string;
+            isActive: boolean;
+            emailVerified: boolean;
+            failedLoginAttempts: number;
+            /** Format: date-time */
+            lockedUntil: string | null;
+            /** @enum {string} */
+            role: "admin" | "rh" | "manager" | "candidate";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         CandidateHistory: {
             id: number;
@@ -2678,6 +2735,7 @@ export interface components {
         };
         CorrectExtractionDto: {
             corrected: Record<string, never>;
+            reason?: string;
         };
         AiSearchDto: {
             query: string;
@@ -2700,8 +2758,10 @@ export interface components {
         FeedbackDto: {
             rating: number;
             comment?: string;
-            /** @description Human correction or decision that supersedes the advisory output. */
-            override?: Record<string, never>;
+            override?: {
+                kind: Record<string, never>;
+                rationale: string;
+            };
         };
         AiGeneration: {
             id: string;
@@ -2742,7 +2802,13 @@ export type $defs = Record<string, never>;
 export interface operations {
     UsersController_findAll: {
         parameters: {
-            query?: never;
+            query?: {
+                q?: string;
+                role?: "admin" | "rh" | "manager" | "candidate";
+                active?: boolean;
+                page?: components["schemas"]["Object"];
+                limit?: components["schemas"]["Object"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2754,7 +2820,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"][];
+                    "application/json": components["schemas"]["UserListResponseDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -2790,12 +2856,20 @@ export interface operations {
             };
         };
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"];
+                    "application/json": components["schemas"]["UserDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -2871,48 +2945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-            /** @description Missing, invalid, or expired access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-            /** @description The authenticated user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorDto"];
-                };
-            };
-        };
-    };
-    UsersController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        affected?: number | null;
-                    };
+                    "application/json": components["schemas"]["UserDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -2955,7 +2988,109 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    UsersController_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountStateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
+            /** @description Missing, invalid, or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description The authenticated user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    UsersController_activate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountStateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
                 };
             };
             /** @description Missing, invalid, or expired access token */
@@ -4851,6 +4986,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                id: string;
                 responseId: string;
             };
             cookie?: never;

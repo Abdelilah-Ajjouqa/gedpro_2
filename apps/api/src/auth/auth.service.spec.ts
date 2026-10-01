@@ -25,6 +25,13 @@ describe('AuthService security rules', () => {
     users = {
       findByEmail: jest.fn().mockResolvedValue(user),
       findAuthUser: jest.fn().mockResolvedValue(user),
+      toDto: jest.fn((value) => ({
+        id: value.id,
+        email: value.email,
+        role: value.role,
+        isActive: value.isActive,
+        emailVerified: value.emailVerified,
+      })),
       create: jest.fn(),
       update: jest.fn(),
     };

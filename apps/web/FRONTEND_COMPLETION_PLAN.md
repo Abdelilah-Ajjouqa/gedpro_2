@@ -671,19 +671,19 @@ Record unresolved product decisions explicitly instead of guessing them.
 
 | Phase | Area | Status | Phase-specific plan | Notes |
 |---:|---|---|---|---|
-| 0 | Frontend platform and contract foundation | In progress | `plans/PHASE_0_PLAN.md` | BFF, contracts, session, capabilities, shared UI, and tests implemented; manager-scope audit remains |
-| 1 | Jobs and hiring-pipeline administration | Planned | `plans/PHASE_1_PLAN.md` | Core ATS release |
-| 2 | Candidate directory and candidate profile | Planned | `plans/PHASE_2_PLAN.md` | Core ATS release |
-| 3 | Applications and recruiter pipeline workflow | Planned | `plans/PHASE_3_PLAN.md` | Core ATS release |
-| 4 | Unified timeline and collaboration notes | Planned | `plans/PHASE_4_PLAN.md` | Core ATS release |
-| 5 | Interviews, scorecards, and hiring decisions | Planned | `plans/PHASE_5_PLAN.md` | Core ATS release |
-| 6 | Recruitment document management | Planned | `plans/PHASE_6_PLAN.md` | Recruitment operations release |
-| 7 | Forms and evaluations | Not started | — | Recruitment operations release |
-| 8 | Candidate communications | Not started | — | Recruitment operations release |
-| 9 | Reporting and exports | Not started | — | Governance and insight release |
-| 10 | User and access administration | Not started | — | Governance and insight release |
-| 11 | Responsible AI assistance and oversight | Not started | — | Begins after core workflows stabilize |
-| 12 | Product-wide integration and release readiness | Not started | — | Final cross-product verification |
+| 0 | Frontend platform and contract foundation | Complete | `plans/PHASE_0_PLAN.md` | Contract generation/drift checks, BFF session lifecycle, capabilities, shared UI, and automated gates verified |
+| 1 | Jobs and hiring-pipeline administration | Complete | `plans/PHASE_1_PLAN.md` | Job and pipeline administration implemented and covered by the connected workflow |
+| 2 | Candidate directory and candidate profile | Complete | `plans/PHASE_2_PLAN.md` | Candidate lifecycle, duplicate handling, and privacy operations implemented |
+| 3 | Applications and recruiter pipeline workflow | Complete | `plans/PHASE_3_PLAN.md` | Application creation, transitions, terminal outcomes, history, and concurrency handling implemented |
+| 4 | Unified timeline and collaboration notes | Complete | `plans/PHASE_4_PLAN.md` | Candidate/application history and collaboration notes implemented |
+| 5 | Interviews, scorecards, and hiring decisions | Complete | `plans/PHASE_5_PLAN.md` | Scheduling, scorecards, feedback, and decision support implemented |
+| 6 | Recruitment document management | Complete | `plans/PHASE_6_PLAN.md` | Secure document lifecycle and context views implemented |
+| 7 | Forms and evaluations | Complete | `plans/PHASE_7_PLAN.md` | Form design, assignment, submission, review, and export implemented |
+| 8 | Candidate communications | Complete | `plans/PHASE_8_PLAN.md` | Templates, delivery state, retry, preferences, and history implemented |
+| 9 | Reporting and exports | Complete | `plans/PHASE_9_PLAN.md` | Scoped reporting and asynchronous export workflow implemented |
+| 10 | User and access administration | Complete | `plans/PHASE_10_PLAN.md` | Role-aware user administration and safeguards implemented |
+| 11 | Responsible AI assistance and oversight | Complete | `plans/PHASE_11_PLAN.md` | Advisory AI workflows, human review, feedback, and oversight implemented |
+| 12 | Product-wide integration and release readiness | Complete | `plans/PHASE_12_PLAN.md` | Repository release candidate verified across API, frontend, accessibility, and authenticated browser gates |
 
 Allowed statuses are `Not started`, `Planning`, `Planned`, `In progress`, `Blocked`, and `Complete`.
 

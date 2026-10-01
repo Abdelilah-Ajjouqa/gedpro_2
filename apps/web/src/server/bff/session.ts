@@ -6,6 +6,7 @@ const prefix = secure ? '__Host-' : '';
 export const ACCESS_COOKIE = `${prefix}gedpro-access`;
 export const REFRESH_COOKIE = `${prefix}gedpro-refresh`;
 export const CSRF_COOKIE = `${prefix}gedpro-csrf`;
+export const SESSION_COOKIE = `${prefix}gedpro-session`;
 const baseCookie = {
   httpOnly: true,
   secure,
@@ -33,11 +34,23 @@ export function setSessionCookies(
     ...baseCookie,
     maxAge: Number(process.env.REFRESH_TOKEN_TTL_SECONDS ?? 604800),
   });
+  response.cookies.set(SESSION_COOKIE, '1', {
+    secure,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: Number(process.env.REFRESH_TOKEN_TTL_SECONDS ?? 604800),
+  });
 }
 
 export function clearSessionCookies(response: NextResponse) {
   response.cookies.set(ACCESS_COOKIE, '', { ...baseCookie, maxAge: 0 });
   response.cookies.set(REFRESH_COOKIE, '', { ...baseCookie, maxAge: 0 });
+  response.cookies.set(SESSION_COOKIE, '', {
+    secure,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
 }
 
 export function publicSession(session: BackendSession) {

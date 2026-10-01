@@ -28,6 +28,7 @@ function qs(p: Partial<InterviewListParams>) {
     if (v !== undefined && v !== '') q.set(k, String(v));
   });
   q.delete('view');
+  q.delete('tz');
   return q;
 }
 export const listInterviews = (p: InterviewListParams, signal?: AbortSignal) =>

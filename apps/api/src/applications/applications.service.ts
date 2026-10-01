@@ -400,7 +400,7 @@ export class ApplicationsService {
         .innerJoinAndSelect('job.owner', 'jobOwner')
         .innerJoinAndSelect('job.pipeline', 'pipeline')
         .leftJoinAndSelect('application.owner', 'owner')
-        .setLock('pessimistic_write')
+        .setLock('pessimistic_write', undefined, ['application'])
         .where('application.id = :id', { id });
       if (actor.role === Role.MANAGER)
         builder.andWhere('jobOwner.id = :actorId', { actorId: actor.id });

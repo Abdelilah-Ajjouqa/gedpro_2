@@ -81,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient, router]);
   const signIn = useCallback(
     async (email: string, password: string) => {
+      await queryClient.cancelQueries({ queryKey: currentUserKey });
       const value: AuthSession = await loginRequest(email, password);
       queryClient.setQueryData(currentUserKey, {
         user: value.user,
