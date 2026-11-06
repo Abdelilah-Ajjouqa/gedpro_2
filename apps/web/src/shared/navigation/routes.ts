@@ -121,3 +121,13 @@ export function releasedRoutesFor(capabilities: readonly string[]) {
     capabilities.includes(route.capability),
   );
 }
+
+export function releasedRoutesByGroup(capabilities: readonly string[]) {
+  const allowed = releasedRoutesFor(capabilities);
+  return {
+    work: allowed.filter((route) => !route.group || route.group === 'Work'),
+    operations: allowed.filter((route) => route.group === 'Operations'),
+    insights: allowed.filter((route) => route.group === 'Insights'),
+    settings: allowed.filter((route) => route.group === 'Settings'),
+  };
+}

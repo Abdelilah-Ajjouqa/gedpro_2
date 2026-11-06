@@ -3,7 +3,11 @@
 import { LogOut, Menu, Settings, UserRound } from 'lucide-react';
 import Link from 'next/link';
 
-import { MobileNav, PrimaryNav } from '@/components/app-shell/navigation';
+import {
+  MobileNav,
+  PrimaryNav,
+  SettingsMenu,
+} from '@/components/app-shell/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { ThemeToggle } from '@/components/app-shell/theme-toggle';
 import { Avatar } from '@/components/ui/avatar';
@@ -105,10 +109,13 @@ function UserMenu() {
 
 function AppHeader() {
   return (
-    <header className="flex h-16 items-center justify-between gap-3 border-b border-border px-4 sm:px-6 lg:h-[4.5rem] lg:px-8">
-      <Brand />
-      <PrimaryNav />
-      <div className="flex items-center gap-0.5">
+    <header className="flex h-16 items-center justify-between gap-4 border-b border-border px-4 sm:px-6 lg:h-[4.5rem] lg:px-8">
+      <div className="flex items-center gap-4 xl:gap-8">
+        <Brand />
+        <PrimaryNav />
+      </div>
+      <div className="flex items-center gap-1">
+        <SettingsMenu />
         <ThemeToggle />
         <UserMenu />
         <Sheet>
@@ -116,7 +123,7 @@ function AppHeader() {
             <Button
               variant="ghost"
               size="icon"
-              className="xl:hidden"
+              className="lg:hidden"
               aria-label="Open navigation"
             >
               <Menu className="size-5" />
@@ -130,7 +137,7 @@ function AppHeader() {
               Recruitment workspace
             </SheetDescription>
             <MobileNav />
-            <div className="mt-auto border-t border-border pt-5 text-xs leading-relaxed text-muted-foreground">
+            <div className="mt-auto border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
               Manage candidates, interviews, jobs, and documents from one
               focused workspace.
             </div>
