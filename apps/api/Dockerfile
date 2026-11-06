@@ -38,4 +38,4 @@ RUN mkdir -p uploads
 EXPOSE 3001
 
 # Start the application
-CMD ["node", "apps/api/dist/main"]
+CMD ["node", "apps/api/dist/src/main"]
